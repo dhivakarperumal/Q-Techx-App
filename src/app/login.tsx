@@ -14,6 +14,7 @@ import {
   TextInput,
   View,
 } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import api from "../api";
 import { useAuth } from "../auth/AuthContext";
 import { getRoleHome } from "../auth/roleUtils";
@@ -28,6 +29,16 @@ export default function LoginScreen() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [serverError, setServerError] = useState("");
   const [fieldError, setFieldError] = useState("");
+
+  // ─── Static fallback credentials ────────────────────────────────────────────
+  const STATIC_USERS = [
+    {
+      email: "admin@gmail.com",
+      password: "admin@123",
+      user: { id: "static-admin-1", name: "Admin", role: "superadmin", email: "admin@gmail.com" },
+      token: "static-admin-token",
+    },
+  ];
 
   const handleSubmit = async () => {
     if (!username.trim()) {
@@ -50,6 +61,22 @@ export default function LoginScreen() {
     setIsSubmitting(true);
 
     try {
+      // 1️⃣ Check static credentials first (works offline / no Wi-Fi needed)
+      const staticMatch = STATIC_USERS.find(
+        (u) =>
+          u.email.toLowerCase() === username.trim().toLowerCase() &&
+          u.password === password,
+      );
+
+      if (staticMatch) {
+        const roleHome = getRoleHome(staticMatch.user.role);
+        if (!roleHome) throw new Error("Static user has no supported role");
+        await login(staticMatch.user, staticMatch.token);
+        router.replace(roleHome);
+        return;
+      }
+
+      // 2️⃣ Fall back to real API
       const { data } = await api.post("/users/login", {
         identifier: username.trim(),
         password,
@@ -72,7 +99,7 @@ export default function LoginScreen() {
 
       setServerError(
         isNetworkError
-          ? `Cannot reach the API at ${api.defaults.baseURL}. Confirm the API is running and the phone is on the same Wi-Fi network.`
+          ? `Network error. Check that the API server is running and your phone is on the same Wi-Fi network.`
           : message,
       );
     } finally {
@@ -81,16 +108,16 @@ export default function LoginScreen() {
   };
 
   return (
-    <KeyboardAvoidingView
-      className="flex-1 bg-[#111317]"
-      behavior={Platform.OS === "ios" ? "padding" : undefined}
-    >
-      <ScrollView
+    <SafeAreaView className="flex-1 bg-[#111317]" edges={["top", "bottom"]}>
+      <KeyboardAvoidingView
         className="flex-1"
-        contentContainerClassName="flex-grow justify-center px-5 py-8"
-        keyboardShouldPersistTaps="handled"
+        behavior={Platform.OS === "ios" ? "padding" : undefined}
       >
-      
+        <ScrollView
+          className="flex-1"
+          contentContainerClassName="flex-grow justify-center px-5 py-8"
+          keyboardShouldPersistTaps="handled"
+        >
 
         <View className="rounded-[28px] border border-gray-800 bg-[#181a1f] p-6">
           <Text className="text-3xl font-bold text-white">Sign In</Text>
@@ -180,8 +207,9 @@ export default function LoginScreen() {
             <Ionicons name="arrow-back" size={16} color="#9ca3af" />
             <Text className="ml-1 text-sm text-gray-400">Back Home</Text>
           </Pressable>
-        </View>
-      </ScrollView>
-    </KeyboardAvoidingView>
+          </View>
+        </ScrollView>
+      </KeyboardAvoidingView>
+    </SafeAreaView>
   );
 }

@@ -1,6 +1,7 @@
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import { Alert, Pressable, Text, View } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { useAuth } from "../auth/AuthContext";
 
 type TopHeaderProps = {
@@ -27,8 +28,8 @@ export function TopHeader({ title, subtitle }: TopHeaderProps) {
   };
 
   return (
-    <View className="border-b border-slate-200 bg-white px-5 pb-4 pt-5">
-      <View className="flex-row items-center justify-between">
+    <SafeAreaView edges={["top"]} className="border-b border-slate-200 bg-white">
+      <View className="flex-row items-center justify-between px-5 pb-4 pt-3">
         <Pressable onPress={() => router.back()}>
           <Text className="text-xl font-bold text-slate-950">Q TECHX</Text>
           {subtitle ? <Text className="mt-1 text-xs text-slate-500">{subtitle}</Text> : null}
@@ -47,6 +48,6 @@ export function TopHeader({ title, subtitle }: TopHeaderProps) {
           </Pressable>
         </View>
       </View>
-    </View>
+    </SafeAreaView>
   );
-}
+}
