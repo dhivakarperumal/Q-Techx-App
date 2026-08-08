@@ -1,9 +1,10 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, TextInput, Image } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 
 import { AdminBottomBar } from "../../components/admin-bottom-bar";
+import api, { API_BASE_URL } from "../../api";
 import { TopHeader } from "../../components/TopHeader";
 import { FAB } from "../../components/FAB";
 
@@ -21,81 +22,50 @@ const filters = [
   { label: 'Marketing', active: false, icon: 'megaphone' },
 ];
 
-const team = [
-  {
-    name: 'Arun Kumar',
-    role: 'Project Manager',
-    roleColor: 'text-orange-500',
-    roleBg: 'bg-orange-50',
-    team: 'Project Management',
-    email: 'arun.kumar@company.com',
-    phone: '+91 98765 43210',
-    status: 'Active',
-    statusColor: 'text-green-600',
-    statusBg: 'bg-green-100',
-    avatar: 'https://i.pravatar.cc/100?img=11',
-    onlineDot: 'bg-green-500',
-  },
-  {
-    name: 'Priya Sharma',
-    role: 'UI/UX Designer',
-    roleColor: 'text-blue-500',
-    roleBg: 'bg-blue-50',
-    team: 'Design Team',
-    email: 'priya.sharma@company.com',
-    phone: '+91 87654 32109',
-    status: 'Active',
-    statusColor: 'text-green-600',
-    statusBg: 'bg-green-100',
-    avatar: 'https://i.pravatar.cc/100?img=5',
-    onlineDot: 'bg-green-500',
-  },
-  {
-    name: 'Vignesh R',
-    role: 'Frontend Developer',
-    roleColor: 'text-blue-500',
-    roleBg: 'bg-blue-50',
-    team: 'Development Team',
-    email: 'vignesh.r@company.com',
-    phone: '+91 76543 21098',
-    status: 'Active',
-    statusColor: 'text-green-600',
-    statusBg: 'bg-green-100',
-    avatar: 'https://i.pravatar.cc/100?img=12',
-    onlineDot: 'bg-green-500',
-  },
-  {
-    name: 'Sneha Patel',
-    role: 'Content Writer',
-    roleColor: 'text-purple-500',
-    roleBg: 'bg-purple-50',
-    team: 'Marketing Team',
-    email: 'sneha.patel@company.com',
-    phone: '+91 65432 10987',
-    status: 'On Leave',
-    statusColor: 'text-orange-500',
-    statusBg: 'bg-orange-50',
-    avatar: 'https://i.pravatar.cc/100?img=9',
-    onlineDot: 'bg-orange-500',
-  },
-  {
-    name: 'Karthik B',
-    role: 'Backend Developer',
-    roleColor: 'text-slate-600',
-    roleBg: 'bg-slate-100',
-    team: 'Development Team',
-    email: 'karthik.b@company.com',
-    phone: '+91 54321 09876',
-    status: 'Inactive',
-    statusColor: 'text-slate-600',
-    statusBg: 'bg-slate-100',
-    avatar: 'https://i.pravatar.cc/100?img=14',
-    onlineDot: 'bg-slate-300',
-  },
-];
-
 export default function TeamScreen() {
   const router = useRouter();
+  const [team, setTeam] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchTeam = async () => {
+      try {
+        const { data } = await api.get("/employees");
+        
+        // Handle both possible response shapes: { data: [...] } or just [...]
+        const usersArray = Array.isArray(data) ? data : (data?.data || data?.users || []);
+        
+        const mappedTeam = usersArray.map((emp: any) => {
+          // Resolve profile photo URL (e.g., /uploads/... -> http://192.168.1.4:5000/uploads/...)
+          const baseUrl = API_BASE_URL.replace(/\/api$/, "");
+          const avatarUrl = emp.profile_photo 
+            ? (emp.profile_photo.startsWith('http') ? emp.profile_photo : `${baseUrl}${emp.profile_photo}`) 
+            : 'https://i.pravatar.cc/100';
+
+          return {
+            name: `${emp.first_name || ''} ${emp.last_name || ''}`.trim() || 'Unknown',
+            role: emp.role || 'Employee',
+            roleColor: 'text-blue-500',
+            roleBg: 'bg-blue-50',
+            team: emp.department || emp.team || emp.employee_code || 'General',
+            email: emp.email || 'N/A',
+            phone: emp.phone || emp.mobile || 'N/A',
+            status: emp.status || 'Active',
+            statusColor: emp.status === 'Inactive' ? 'text-slate-600' : 'text-green-600',
+            statusBg: emp.status === 'Inactive' ? 'bg-slate-100' : 'bg-green-100',
+            avatar: avatarUrl,
+            onlineDot: emp.status === 'Inactive' ? 'bg-slate-300' : 'bg-green-500',
+          };
+        });
+        setTeam(mappedTeam);
+      } catch (error) {
+        console.error("Failed to fetch team members:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchTeam();
+  }, []);
 
   return (
     <View className="flex-1 bg-[#F9FAFB]">
@@ -163,7 +133,7 @@ export default function TeamScreen() {
 
         {/* ── LIST HEADER ── */}
         <View className="px-5 mb-4 flex-row items-center justify-between">
-          <Text className="text-slate-800 font-bold text-sm">Team Members (24)</Text>
+          <Text className="text-slate-800 font-bold text-sm">Team Members ({team.length})</Text>
           <TouchableOpacity className="flex-row items-center">
             <Text className="text-slate-500 text-xs font-medium mr-1">Sort by: Recent</Text>
             <Ionicons name="chevron-down" size={14} color="#94a3b8" />
@@ -172,7 +142,9 @@ export default function TeamScreen() {
 
         {/* ── TEAM LIST ── */}
         <View className="px-5">
-          {team.map((member, idx) => (
+          {loading ? (
+            <Text className="text-center text-slate-500 mt-4">Loading team...</Text>
+          ) : team.map((member, idx) => (
             <View key={idx} className="bg-white rounded-[24px] p-4 mb-4 border border-slate-100 shadow-sm flex-row items-start justify-between">
               
               {/* Left Side: Avatar and Info */}

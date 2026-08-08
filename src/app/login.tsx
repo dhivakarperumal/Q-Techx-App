@@ -29,32 +29,6 @@ export default function LoginScreen() {
   const [serverError, setServerError] = useState("");
   const [fieldError, setFieldError] = useState("");
 
-  // ─── Static fallback credentials ────────────────────────────────────────────
-  const STATIC_USERS = [
-    {
-      email: "admin@gmail.com",
-      password: "admin@123",
-      user: {
-        id: "static-admin-1",
-        name: "Admin",
-        role: "superadmin",
-        email: "admin@gmail.com",
-      },
-      token: "static-admin-token",
-    },
-    {
-      email: "emp@gmail.com",
-      password: "emp@123",
-      user: {
-        id: "static-employee-1",
-        name: "Employee",
-        role: "employee",
-        email: "emp@gmail.com",
-      },
-      token: "static-employee-token",
-    },
-  ];
-
   const handleSubmit = async () => {
     if (!username.trim()) {
       setFieldError("Email address is required");
@@ -76,22 +50,7 @@ export default function LoginScreen() {
     setIsSubmitting(true);
 
     try {
-      // 1️⃣ Check static credentials first (works offline / no Wi-Fi needed)
-      const staticMatch = STATIC_USERS.find(
-        (u) =>
-          u.email.toLowerCase() === username.trim().toLowerCase() &&
-          u.password === password,
-      );
-
-      if (staticMatch) {
-        const roleHome = getRoleHome(staticMatch.user.role);
-        if (!roleHome) throw new Error("Static user has no supported role");
-        await login(staticMatch.user, staticMatch.token);
-        router.replace(roleHome);
-        return;
-      }
-
-      // 2️⃣ Fall back to real API
+      // Send login request to the real API
       const { data } = await api.post("/users/login", {
         identifier: username.trim(),
         password,
