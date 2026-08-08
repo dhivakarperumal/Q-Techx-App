@@ -1,6 +1,6 @@
-import React from 'react';
-import { TouchableOpacity } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import { Ionicons } from "@expo/vector-icons";
+import React from "react";
+import { TouchableOpacity } from "react-native";
 
 type FABProps = {
   onPress: () => void;
@@ -14,16 +14,16 @@ export function FAB({ onPress }: FABProps) {
       accessibilityRole="button"
       accessibilityLabel="Create project"
       style={{
-        position: 'absolute',
+        position: "absolute",
         bottom: 100,
         right: 22,
         width: 56,
         height: 56,
         borderRadius: 28,
-        backgroundColor: '#f97316',
-        alignItems: 'center',
-        justifyContent: 'center',
-        shadowColor: '#f97316',
+        backgroundColor: "#f97316",
+        alignItems: "center",
+        justifyContent: "center",
+        shadowColor: "#f97316",
         shadowOffset: { width: 0, height: 8 },
         shadowOpacity: 0.45,
         shadowRadius: 16,

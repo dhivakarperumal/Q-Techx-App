@@ -3,7 +3,13 @@ import { usePathname, useRouter } from "expo-router";
 import { Pressable, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-type AdminRoute = "/admin" | "/admin/team" | "/admin/clients" | "/admin/projects" | "/admin/tasks" | "/admin/more";
+type AdminRoute =
+  | "/admin"
+  | "/admin/team"
+  | "/admin/clients"
+  | "/admin/projects"
+  | "/admin/tasks"
+  | "/admin/more";
 
 const adminTabs: {
   label: string;
@@ -11,12 +17,42 @@ const adminTabs: {
   icon: keyof typeof Ionicons.glyphMap;
   activeIcon: keyof typeof Ionicons.glyphMap;
 }[] = [
-  { label: "Home", route: "/admin", icon: "home-outline" as const, activeIcon: "home" as const },
-  { label: "Team", route: "/admin/team", icon: "people-outline" as const, activeIcon: "people" as const },
-  { label: "Clients", route: "/admin/clients", icon: "people-circle-outline" as const, activeIcon: "people-circle" as const },
-  { label: "Projects", route: "/admin/projects", icon: "folder-outline" as const, activeIcon: "folder" as const },
-  { label: "Tasks", route: "/admin/tasks", icon: "checkmark-circle-outline" as const, activeIcon: "checkmark-circle" as const },
-  { label: "More", route: "/admin/more", icon: "ellipsis-horizontal-outline" as const, activeIcon: "ellipsis-horizontal" as const },
+  {
+    label: "Home",
+    route: "/admin",
+    icon: "home-outline" as const,
+    activeIcon: "home" as const,
+  },
+  {
+    label: "Team",
+    route: "/admin/team",
+    icon: "people-outline" as const,
+    activeIcon: "people" as const,
+  },
+  {
+    label: "Clients",
+    route: "/admin/clients",
+    icon: "people-circle-outline" as const,
+    activeIcon: "people-circle" as const,
+  },
+  {
+    label: "Projects",
+    route: "/admin/projects",
+    icon: "folder-outline" as const,
+    activeIcon: "folder" as const,
+  },
+  {
+    label: "Tasks",
+    route: "/admin/tasks",
+    icon: "checkmark-circle-outline" as const,
+    activeIcon: "checkmark-circle" as const,
+  },
+  {
+    label: "More",
+    route: "/admin/more",
+    icon: "ellipsis-horizontal-outline" as const,
+    activeIcon: "ellipsis-horizontal" as const,
+  },
 ];
 
 export function AdminBottomBar() {
@@ -24,7 +60,10 @@ export function AdminBottomBar() {
   const pathname = usePathname();
 
   return (
-    <SafeAreaView edges={["bottom"]} className="border-t border-slate-100 bg-white">
+    <SafeAreaView
+      edges={["bottom"]}
+      className="border-t border-slate-100 bg-white"
+    >
       <View className="flex-row items-center justify-around px-2 pb-2 pt-3">
         {adminTabs.map((tab) => {
           const isActive = pathname === tab.route;
@@ -46,8 +85,18 @@ export function AdminBottomBar() {
               {isActive && (
                 <View className="absolute -top-3 w-8 h-1 bg-orange-500 rounded-b-full" />
               )}
-              <Ionicons name={isActive ? tab.activeIcon : tab.icon} size={24} color={iconColor} />
-              <Text className={isActive ? "mt-1 text-[10px] font-bold text-orange-600" : "mt-1 text-[10px] font-medium text-slate-500"}>
+              <Ionicons
+                name={isActive ? tab.activeIcon : tab.icon}
+                size={24}
+                color={iconColor}
+              />
+              <Text
+                className={
+                  isActive
+                    ? "mt-1 text-[10px] font-bold text-orange-600"
+                    : "mt-1 text-[10px] font-medium text-slate-500"
+                }
+              >
                 {tab.label}
               </Text>
             </Pressable>
