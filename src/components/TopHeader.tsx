@@ -13,26 +13,14 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useAuth } from "../auth/AuthContext";
 
-type TopHeaderProps = {
-  title: string;
-  subtitle?: string;
-};
-
-type DropdownItem = {
-  icon: keyof typeof import("@expo/vector-icons").Ionicons.glyphMap;
-  label: string;
-  color?: string;
-  onPress: () => void;
-};
-
-export function TopHeader({ title, subtitle }: TopHeaderProps) {
+export function TopHeader() {
   const router = useRouter();
   const { user, logout } = useAuth();
   const [dropdownVisible, setDropdownVisible] = useState(false);
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const slideAnim = useRef(new Animated.Value(-8)).current;
 
-  // Derive display name — check every common API field name
+  // Derive display name
   const rawName =
     (user?.name as string) ||
     (user?.full_name as string) ||
@@ -42,13 +30,11 @@ export function TopHeader({ title, subtitle }: TopHeaderProps) {
     (user?.displayName as string) ||
     "";
 
-  // If no name field found, use the part before @ in the email
   const userEmail = (user?.email as string) || "";
   const emailUsername = userEmail.includes("@")
     ? userEmail.split("@")[0]
     : userEmail;
 
-  // Capitalise first letter of each word for clean display
   const capitalise = (str: string) =>
     str.replace(/\b\w/g, (c) => c.toUpperCase());
 
@@ -58,10 +44,9 @@ export function TopHeader({ title, subtitle }: TopHeaderProps) {
       ? capitalise(emailUsername)
       : "User";
 
-  // Always take the first letter of the resolved display name
   const avatarLetter = displayName.charAt(0).toUpperCase();
   const userRole =
-    (user?.role as string)?.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase()) || title;
+    (user?.role as string)?.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase()) || "Admin";
 
   const openDropdown = () => {
     setDropdownVisible(true);
@@ -111,9 +96,9 @@ export function TopHeader({ title, subtitle }: TopHeaderProps) {
     }, 200);
   };
 
-  const dropdownItems: DropdownItem[] = [
+  const dropdownItems = [
     {
-      icon: "person-circle-outline",
+      icon: "person-circle-outline" as const,
       label: "My Profile",
       onPress: () => {
         closeDropdown();
@@ -121,7 +106,7 @@ export function TopHeader({ title, subtitle }: TopHeaderProps) {
       },
     },
     {
-      icon: "settings-outline",
+      icon: "settings-outline" as const,
       label: "Settings",
       onPress: () => {
         closeDropdown();
@@ -129,15 +114,7 @@ export function TopHeader({ title, subtitle }: TopHeaderProps) {
       },
     },
     {
-      icon: "help-circle-outline",
-      label: "Help & Support",
-      onPress: () => {
-        closeDropdown();
-        Alert.alert("Help", "Help & Support coming soon.");
-      },
-    },
-    {
-      icon: "log-out-outline",
+      icon: "log-out-outline" as const,
       label: "Log Out",
       color: "#ef4444",
       onPress: handleLogout,
@@ -145,19 +122,27 @@ export function TopHeader({ title, subtitle }: TopHeaderProps) {
   ];
 
   return (
-    <SafeAreaView edges={["top"]} className="border-b border-slate-200 bg-white">
-      <View className="flex-row items-center justify-between px-5 pb-4 pt-3">
-        {/* Left — brand */}
-        <View>
-          <Text className="text-xl font-bold text-slate-950">Q TECHX</Text>
-          {subtitle ? (
-            <Text className="mt-0.5 text-xs text-slate-500">{subtitle}</Text>
-          ) : null}
-        </View>
+    <SafeAreaView edges={["top"]} className="bg-white">
+      <View className="flex-row items-center justify-between px-5 py-4">
+        {/* Left — Hamburger Menu */}
+        <TouchableOpacity
+          activeOpacity={0.7}
+          onPress={() => Alert.alert("Menu", "Drawer menu coming soon.")}
+          className="p-1 -ml-1"
+        >
+          <Ionicons name="menu-outline" size={32} color="#1e293b" />
+        </TouchableOpacity>
 
-        {/* Right — role badge + avatar */}
-        <View className="flex-row items-center gap-3">
-        
+        {/* Right — Notification + Avatar */}
+        <View className="flex-row items-center gap-5">
+          {/* Notification Bell */}
+          <TouchableOpacity activeOpacity={0.7} className="relative">
+            <Ionicons name="notifications-outline" size={26} color="#1e293b" />
+            {/* Badge */}
+            <View className="absolute -top-1 -right-1 h-4 w-4 items-center justify-center rounded-full bg-orange-500 border border-white">
+              <Text className="text-[9px] font-bold text-white">3</Text>
+            </View>
+          </TouchableOpacity>
 
           {/* Avatar button */}
           <TouchableOpacity
@@ -165,8 +150,9 @@ export function TopHeader({ title, subtitle }: TopHeaderProps) {
             onPress={openDropdown}
             accessibilityLabel="Open profile menu"
             accessibilityRole="button"
-            className="h-10 w-10 items-center justify-center rounded-full bg-orange-500 shadow-sm"
+            className="h-10 w-10 items-center justify-center rounded-full bg-slate-800 shadow-sm overflow-hidden"
           >
+            {/* Can easily replace with Image later */}
             <Text className="text-base font-bold text-white">{avatarLetter}</Text>
           </TouchableOpacity>
         </View>
@@ -180,18 +166,13 @@ export function TopHeader({ title, subtitle }: TopHeaderProps) {
         onRequestClose={closeDropdown}
         statusBarTranslucent
       >
-        {/* Backdrop — tap to close */}
-        <Pressable
-          className="flex-1"
-          onPress={closeDropdown}
-        >
-          {/* Dropdown panel */}
+        <Pressable className="flex-1" onPress={closeDropdown}>
           <Animated.View
             style={{
               opacity: fadeAnim,
               transform: [{ translateY: slideAnim }],
               position: "absolute",
-              top: 100,
+              top: 90,
               right: 16,
               minWidth: 220,
               borderRadius: 16,
@@ -205,7 +186,7 @@ export function TopHeader({ title, subtitle }: TopHeaderProps) {
           >
             {/* User info header */}
             <View className="border-b border-slate-100 px-4 py-4">
-              <View className="mb-2 h-12 w-12 items-center justify-center rounded-full bg-orange-500">
+              <View className="mb-2 h-12 w-12 items-center justify-center rounded-full bg-slate-800">
                 <Text className="text-xl font-bold text-white">{avatarLetter}</Text>
               </View>
               <Text className="text-sm font-bold text-slate-900" numberOfLines={1}>
