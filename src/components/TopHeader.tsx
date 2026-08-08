@@ -147,7 +147,7 @@ export function TopHeader() {
       label: "My Profile",
       onPress: () => {
         closeDropdown();
-        Alert.alert("Profile", "Profile page coming soon.");
+        setTimeout(() => router.push("/admin/profile" as any), 150);
       },
     },
     {
@@ -197,11 +197,11 @@ export function TopHeader() {
             </View>
           </TouchableOpacity>
 
-          {/* Avatar button — tapping navigates to Profile */}
+          {/* Avatar button — tapping opens profile dropdown */}
           <TouchableOpacity
             activeOpacity={0.8}
-            onPress={() => router.push('/admin/profile')}
-            accessibilityLabel="Open profile"
+            onPress={openDropdown}
+            accessibilityLabel="Open profile menu"
             accessibilityRole="button"
             className="h-10 w-10 items-center justify-center rounded-full bg-slate-800 shadow-sm overflow-hidden"
           >

@@ -120,39 +120,86 @@ export default function MoreScreen() {
 
         {/* ── FEATURE CARDS — single column full width ── */}
         <View style={{ paddingHorizontal: 20, marginBottom: 8 }}>
-          <Text style={{
-            fontSize: 11, fontWeight: "700", letterSpacing: 1.4,
-            textTransform: "uppercase", color: "#94a3b8", marginBottom: 14,
-          }}>
+          <Text
+            style={{
+              fontSize: 11,
+              fontWeight: "700",
+              letterSpacing: 1.4,
+              textTransform: "uppercase",
+              color: "#94a3b8",
+              marginBottom: 14,
+            }}
+          >
             Features
           </Text>
 
           <View style={{ gap: 12 }}>
-
             {/* PayRole */}
             <TouchableOpacity
               activeOpacity={0.85}
               onPress={() => router.push("/admin/payroll" as any)}
               style={{
-                borderRadius: 20, backgroundColor: "#16a34a",
-                padding: 18, flexDirection: "row", alignItems: "center",
-                shadowColor: "#16a34a", shadowOpacity: 0.3,
-                shadowRadius: 10, shadowOffset: { width: 0, height: 5 }, elevation: 5,
+                borderRadius: 20,
+                backgroundColor: "#16a34a",
+                padding: 18,
+                flexDirection: "row",
+                alignItems: "center",
+                shadowColor: "#16a34a",
+                shadowOpacity: 0.3,
+                shadowRadius: 10,
+                shadowOffset: { width: 0, height: 5 },
+                elevation: 5,
               }}
             >
-              <View style={{
-                width: 52, height: 52, borderRadius: 16,
-                backgroundColor: "rgba(255,255,255,0.22)",
-                alignItems: "center", justifyContent: "center",
-              }}>
+              <View
+                style={{
+                  width: 52,
+                  height: 52,
+                  borderRadius: 16,
+                  backgroundColor: "rgba(255,255,255,0.22)",
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
+              >
                 <Ionicons name="cash-outline" size={26} color="#fff" />
               </View>
               <View style={{ flex: 1, marginLeft: 16 }}>
-                <Text style={{ color: "rgba(255,255,255,0.65)", fontSize: 10, fontWeight: "700", letterSpacing: 1, textTransform: "uppercase" }}>Payroll</Text>
-                <Text style={{ color: "#fff", fontSize: 17, fontWeight: "800", marginTop: 2 }}>PayRole</Text>
-                <Text style={{ color: "rgba(255,255,255,0.7)", fontSize: 12, marginTop: 2 }}>Salary slips & payment history</Text>
+                <Text
+                  style={{
+                    color: "rgba(255,255,255,0.65)",
+                    fontSize: 10,
+                    fontWeight: "700",
+                    letterSpacing: 1,
+                    textTransform: "uppercase",
+                  }}
+                >
+                  Payroll
+                </Text>
+                <Text
+                  style={{
+                    color: "#fff",
+                    fontSize: 17,
+                    fontWeight: "800",
+                    marginTop: 2,
+                  }}
+                >
+                  PayRole
+                </Text>
+                <Text
+                  style={{
+                    color: "rgba(255,255,255,0.7)",
+                    fontSize: 12,
+                    marginTop: 2,
+                  }}
+                >
+                  Salary slips & payment history
+                </Text>
               </View>
-              <Ionicons name="chevron-forward" size={20} color="rgba(255,255,255,0.6)" />
+              <Ionicons
+                name="chevron-forward"
+                size={20}
+                color="rgba(255,255,255,0.6)"
+              />
             </TouchableOpacity>
 
             {/* Calendar */}
@@ -160,25 +207,71 @@ export default function MoreScreen() {
               activeOpacity={0.85}
               onPress={() => router.push("/admin/calendar" as any)}
               style={{
-                borderRadius: 20, backgroundColor: "#7c3aed",
-                padding: 18, flexDirection: "row", alignItems: "center",
-                shadowColor: "#7c3aed", shadowOpacity: 0.3,
-                shadowRadius: 10, shadowOffset: { width: 0, height: 5 }, elevation: 5,
+                borderRadius: 20,
+                backgroundColor: "#7c3aed",
+                padding: 18,
+                flexDirection: "row",
+                alignItems: "center",
+                shadowColor: "#7c3aed",
+                shadowOpacity: 0.3,
+                shadowRadius: 10,
+                shadowOffset: { width: 0, height: 5 },
+                elevation: 5,
               }}
             >
-              <View style={{
-                width: 52, height: 52, borderRadius: 16,
-                backgroundColor: "rgba(255,255,255,0.22)",
-                alignItems: "center", justifyContent: "center",
-              }}>
-                <Ionicons name="calendar-number-outline" size={26} color="#fff" />
+              <View
+                style={{
+                  width: 52,
+                  height: 52,
+                  borderRadius: 16,
+                  backgroundColor: "rgba(255,255,255,0.22)",
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
+              >
+                <Ionicons
+                  name="calendar-number-outline"
+                  size={26}
+                  color="#fff"
+                />
               </View>
               <View style={{ flex: 1, marginLeft: 16 }}>
-                <Text style={{ color: "rgba(255,255,255,0.65)", fontSize: 10, fontWeight: "700", letterSpacing: 1, textTransform: "uppercase" }}>Schedule</Text>
-                <Text style={{ color: "#fff", fontSize: 17, fontWeight: "800", marginTop: 2 }}>Calendar</Text>
-                <Text style={{ color: "rgba(255,255,255,0.7)", fontSize: 12, marginTop: 2 }}>Holidays, events & schedules</Text>
+                <Text
+                  style={{
+                    color: "rgba(255,255,255,0.65)",
+                    fontSize: 10,
+                    fontWeight: "700",
+                    letterSpacing: 1,
+                    textTransform: "uppercase",
+                  }}
+                >
+                  Schedule
+                </Text>
+                <Text
+                  style={{
+                    color: "#fff",
+                    fontSize: 17,
+                    fontWeight: "800",
+                    marginTop: 2,
+                  }}
+                >
+                  Calendar
+                </Text>
+                <Text
+                  style={{
+                    color: "rgba(255,255,255,0.7)",
+                    fontSize: 12,
+                    marginTop: 2,
+                  }}
+                >
+                  Holidays, events & schedules
+                </Text>
               </View>
-              <Ionicons name="chevron-forward" size={20} color="rgba(255,255,255,0.6)" />
+              <Ionicons
+                name="chevron-forward"
+                size={20}
+                color="rgba(255,255,255,0.6)"
+              />
             </TouchableOpacity>
 
             {/* Trainee & Internship */}
@@ -186,29 +279,69 @@ export default function MoreScreen() {
               activeOpacity={0.85}
               onPress={() => router.push("/admin/trainee" as any)}
               style={{
-                borderRadius: 20, backgroundColor: "#ea580c",
-                padding: 18, flexDirection: "row", alignItems: "center",
-                shadowColor: "#ea580c", shadowOpacity: 0.3,
-                shadowRadius: 10, shadowOffset: { width: 0, height: 5 }, elevation: 5,
+                borderRadius: 20,
+                backgroundColor: "#ea580c",
+                padding: 18,
+                flexDirection: "row",
+                alignItems: "center",
+                shadowColor: "#ea580c",
+                shadowOpacity: 0.3,
+                shadowRadius: 10,
+                shadowOffset: { width: 0, height: 5 },
+                elevation: 5,
               }}
             >
-              <View style={{
-                width: 52, height: 52, borderRadius: 16,
-                backgroundColor: "rgba(255,255,255,0.22)",
-                alignItems: "center", justifyContent: "center",
-              }}>
+              <View
+                style={{
+                  width: 52,
+                  height: 52,
+                  borderRadius: 16,
+                  backgroundColor: "rgba(255,255,255,0.22)",
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
+              >
                 <Ionicons name="school-outline" size={26} color="#fff" />
               </View>
               <View style={{ flex: 1, marginLeft: 16 }}>
-                <Text style={{ color: "rgba(255,255,255,0.65)", fontSize: 10, fontWeight: "700", letterSpacing: 1, textTransform: "uppercase" }}>Learning</Text>
-                <Text style={{ color: "#fff", fontSize: 17, fontWeight: "800", marginTop: 2 }}>Trainee & Internship</Text>
-                <Text style={{ color: "rgba(255,255,255,0.7)", fontSize: 12, marginTop: 2 }}>Training programs & internship info</Text>
+                <Text
+                  style={{
+                    color: "rgba(255,255,255,0.65)",
+                    fontSize: 10,
+                    fontWeight: "700",
+                    letterSpacing: 1,
+                    textTransform: "uppercase",
+                  }}
+                >
+                  Learning
+                </Text>
+                <Text
+                  style={{
+                    color: "#fff",
+                    fontSize: 17,
+                    fontWeight: "800",
+                    marginTop: 2,
+                  }}
+                >
+                  Trainee & Internship
+                </Text>
+                <Text
+                  style={{
+                    color: "rgba(255,255,255,0.7)",
+                    fontSize: 12,
+                    marginTop: 2,
+                  }}
+                >
+                  Training programs & internship info
+                </Text>
               </View>
-              <Ionicons name="chevron-forward" size={20} color="rgba(255,255,255,0.6)" />
+              <Ionicons
+                name="chevron-forward"
+                size={20}
+                color="rgba(255,255,255,0.6)"
+              />
             </TouchableOpacity>
-
           </View>
-
         </View>
 
         {/* ── MENU ITEMS ── */}
