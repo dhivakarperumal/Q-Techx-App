@@ -1,5 +1,5 @@
 import { Ionicons } from "@expo/vector-icons";
-import React from "react";
+import React, { useState, useEffect } from "react";
 import {
     Alert,
     ScrollView,
@@ -12,6 +12,7 @@ import {
 import { AdminBottomBar } from "../../components/admin-bottom-bar";
 import { FAB } from "../../components/FAB";
 import { TopHeader } from "../../components/TopHeader";
+import api from "../../api";
 
 const stats = [
   {
@@ -55,75 +56,40 @@ const filters = [
   { label: "On Hold", active: false, dot: "#a855f7" },
 ];
 
-const projects = [
-  {
-    title: "Website Redesign",
-    company: "TechCorp Solutions",
-    date: "May 20, 2024 – Aug 20, 2024",
-    status: "In Progress",
-    progress: 65,
-    icon: "desktop-outline",
-    iconColor: "#f97316",
-    iconBg: "bg-orange-50",
-    progressColor: "#10b981",
-    statusColor: "text-green-600",
-    statusBg: "bg-green-100",
-  },
-  {
-    title: "E-Commerce Platform",
-    company: "ShopEase Inc.",
-    date: "Apr 10, 2024 – Jul 10, 2024",
-    status: "In Progress",
-    progress: 40,
-    icon: "cart-outline",
-    iconColor: "#3b82f6",
-    iconBg: "bg-blue-50",
-    progressColor: "#3b82f6",
-    statusColor: "text-green-600",
-    statusBg: "bg-green-100",
-  },
-  {
-    title: "Mobile App Development",
-    company: "HealthPlus",
-    date: "Mar 15, 2024 – Jun 15, 2024",
-    status: "On Hold",
-    progress: 25,
-    icon: "phone-portrait-outline",
-    iconColor: "#10b981",
-    iconBg: "bg-green-50",
-    progressColor: "#a855f7",
-    statusColor: "text-purple-600",
-    statusBg: "bg-purple-100",
-  },
-  {
-    title: "Digital Marketing Campaign",
-    company: "BrandBoost",
-    date: "Feb 01, 2024 – Apr 30, 2024",
-    status: "Completed",
-    progress: 100,
-    icon: "megaphone-outline",
-    iconColor: "#eab308",
-    iconBg: "bg-yellow-50",
-    progressColor: "#10b981",
-    statusColor: "text-green-600",
-    statusBg: "bg-green-100",
-  },
-  {
-    title: "Admin Dashboard",
-    company: "Internal Project",
-    date: "Jan 10, 2024 – Mar 10, 2024",
-    status: "Completed",
-    progress: 100,
-    icon: "grid-outline",
-    iconColor: "#ef4444",
-    iconBg: "bg-red-50",
-    progressColor: "#10b981",
-    statusColor: "text-green-600",
-    statusBg: "bg-green-100",
-  },
-];
-
 export default function ProjectsScreen() {
+  const [projects, setProjects] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchProjects = async () => {
+      try {
+        const { data } = await api.get("/projects");
+        const projectsArray = Array.isArray(data) ? data : (data?.data || data?.projects || []);
+        
+        const mappedProjects = projectsArray.map((proj: any) => ({
+          title: proj.title || proj.name || proj.project_name || "Untitled Project",
+          company: proj.company || proj.client_name || "Internal",
+          date: proj.date || (proj.start_date ? `${proj.start_date} – ${proj.end_date || 'Ongoing'}` : "No Date Provided"),
+          status: proj.status || "In Progress",
+          progress: proj.progress || 0,
+          icon: "folder-outline",
+          iconColor: "#3b82f6",
+          iconBg: "bg-blue-50",
+          progressColor: "#3b82f6",
+          statusColor: proj.status === 'Completed' ? "text-green-600" : (proj.status === 'On Hold' ? "text-purple-600" : "text-blue-600"),
+          statusBg: proj.status === 'Completed' ? "bg-green-100" : (proj.status === 'On Hold' ? "bg-purple-100" : "bg-blue-100"),
+        }));
+        
+        setProjects(mappedProjects);
+      } catch (error) {
+        console.error("Failed to fetch projects:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchProjects();
+  }, []);
+
   return (
     <View className="flex-1 bg-[#F9FAFB]">
       <TopHeader />
@@ -221,7 +187,9 @@ export default function ProjectsScreen() {
 
         {/* ── PROJECT LIST ── */}
         <View className="px-5">
-          {projects.map((project, idx) => (
+          {loading ? (
+            <Text className="text-center text-slate-500 mt-4">Loading projects...</Text>
+          ) : projects.map((project, idx) => (
             <View
               key={idx}
               className="bg-white rounded-3xl p-4 mb-4 border border-slate-100 shadow-sm"
