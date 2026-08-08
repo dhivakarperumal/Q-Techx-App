@@ -8,7 +8,7 @@ const adminTabs = [
   { label: "Projects", icon: "folder-outline" as const, activeIcon: "folder" as const },
   { label: "Tasks", icon: "checkmark-circle-outline" as const, activeIcon: "checkmark-circle" as const },
   { label: "Team", icon: "people-outline" as const, activeIcon: "people" as const },
-  { label: "Profile", icon: "person-outline" as const, activeIcon: "person" as const },
+  { label: "More", icon: "apps-outline" as const, activeIcon: "apps" as const },
 ];
 
 export function AdminBottomBar() {
