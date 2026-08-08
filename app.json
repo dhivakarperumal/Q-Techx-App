@@ -4,11 +4,15 @@
     "slug": "qtechxapp",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/images/icon.png",
+    "icon": "./assets/images/appicon.png",
     "scheme": "qtechxapp",
     "userInterfaceStyle": "automatic",
+    "androidStatusBar": {
+      "backgroundColor": "#FFFFFF",
+      "barStyle": "dark-content"
+    },
     "ios": {
-      "icon": "./assets/images/icon.png"
+      "icon": "./assets/images/appicon.png"
     },
     "android": {
       "usesCleartextTraffic": true,
@@ -16,7 +20,7 @@
     },
     "web": {
       "output": "static",
-      "favicon": "./assets/images/favicon.png",
+      "favicon": "./assets/images/appicon.png",
       "bundler": "metro"
     },
     "plugins": [
@@ -24,9 +28,9 @@
       [
         "expo-splash-screen",
         {
-          "backgroundColor": "#208AEF",
-          "image": "./assets/images/splash-icon.png",
-          "imageWidth": 76
+          "backgroundColor": "#FFFFFF",
+          "image": "./assets/images/appicon.png",
+          "imageWidth": 220
         }
       ]
     ],
