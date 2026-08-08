@@ -1,10 +1,10 @@
 import React from 'react';
-import { View, Text, ScrollView, TouchableOpacity, TextInput } from 'react-native';
-import { useRouter } from 'expo-router';
+import { Alert, View, Text, ScrollView, TouchableOpacity, TextInput } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 
 import { AdminBottomBar } from "../../components/admin-bottom-bar";
 import { TopHeader } from "../../components/TopHeader";
+import { FAB } from "../../components/FAB";
 
 const stats = [
   { label: 'Total Projects', value: '86', sub: 'All Projects', icon: 'folder', color: '#f97316', bg: 'bg-orange-50' },
@@ -89,26 +89,13 @@ const projects = [
 ];
 
 export default function ProjectsScreen() {
-  const router = useRouter();
-
   return (
     <View className="flex-1 bg-[#F9FAFB]">
       <TopHeader />
       
       <ScrollView className="flex-1" contentContainerClassName="pb-32 pt-2">
         
-        {/* ── HEADER SECTION ── */}
-        <View className="px-5 mb-6 flex-row items-center justify-between">
-          <View className="flex-1">
-            <Text className="text-slate-900 text-3xl font-black tracking-tight">Projects</Text>
-            <Text className="text-slate-500 text-xs mt-1">Manage and monitor all your projects</Text>
-          </View>
-          <TouchableOpacity className="bg-orange-500 flex-row items-center px-4 py-2.5 rounded-xl shadow-sm">
-            <Ionicons name="add" size={18} color="#fff" />
-            <Text className="text-white font-bold text-sm ml-1">New Project</Text>
-          </TouchableOpacity>
-        </View>
-
+    
         {/* ── STATS SCROLLVIEW ── */}
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerClassName="px-5 mb-6" className="overflow-visible">
           {stats.map((stat, idx) => (
@@ -213,6 +200,9 @@ export default function ProjectsScreen() {
 
       {/* Bottom Bar */}
       <AdminBottomBar />
+
+      {/* Floating Action Button */}
+      <FAB onPress={() => Alert.alert('Create Project', 'Project creation is ready to connect.')} />
     </View>
   );
 }

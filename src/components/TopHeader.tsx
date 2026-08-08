@@ -197,11 +197,11 @@ export function TopHeader() {
             </View>
           </TouchableOpacity>
 
-          {/* Avatar button */}
+          {/* Avatar button — tapping navigates to Profile */}
           <TouchableOpacity
             activeOpacity={0.8}
-            onPress={openDropdown}
-            accessibilityLabel="Open profile menu"
+            onPress={() => router.push('/admin/profile')}
+            accessibilityLabel="Open profile"
             accessibilityRole="button"
             className="h-10 w-10 items-center justify-center rounded-full bg-slate-800 shadow-sm overflow-hidden"
           >

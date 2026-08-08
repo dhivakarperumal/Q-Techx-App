@@ -1,9 +1,11 @@
 import React from 'react';
-import { View, Text, ScrollView, TouchableOpacity } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, Dimensions } from 'react-native';
+import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 
 import { AdminBottomBar } from "../../components/admin-bottom-bar";
 import { TopHeader } from "../../components/TopHeader";
+
 import { LinearGradient } from 'expo-linear-gradient';
 
 const quickActions = [
@@ -167,6 +169,8 @@ export default function AdminDashboard() {
 
       {/* Bottom Bar */}
       <AdminBottomBar />
+
+
     </View>
   );
 }

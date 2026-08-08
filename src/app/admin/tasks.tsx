@@ -5,6 +5,7 @@ import { Ionicons } from '@expo/vector-icons';
 
 import { AdminBottomBar } from "../../components/admin-bottom-bar";
 import { TopHeader } from "../../components/TopHeader";
+import { FAB } from "../../components/FAB";
 
 const stats = [
   { label: 'Total Tasks', value: '356', sub: 'All Tasks', icon: 'clipboard-outline', color: '#f97316', bg: 'bg-orange-50' },
@@ -253,6 +254,9 @@ export default function TasksScreen() {
 
       {/* Bottom Bar */}
       <AdminBottomBar />
+
+      {/* Floating Action Button */}
+      <FAB onPress={() => {}} />
     </View>
   );
 }

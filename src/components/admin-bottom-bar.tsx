@@ -3,7 +3,7 @@ import { usePathname, useRouter } from "expo-router";
 import { Pressable, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-type AdminRoute = "/admin" | "/admin/projects" | "/admin/tasks" | "/admin/team" | "/admin/more";
+type AdminRoute = "/admin" | "/admin/team" | "/admin/clients" | "/admin/projects" | "/admin/tasks" | "/admin/more";
 
 const adminTabs: {
   label: string;
@@ -13,6 +13,7 @@ const adminTabs: {
 }[] = [
   { label: "Home", route: "/admin", icon: "home-outline" as const, activeIcon: "home" as const },
   { label: "Team", route: "/admin/team", icon: "people-outline" as const, activeIcon: "people" as const },
+  { label: "Clients", route: "/admin/clients", icon: "people-circle-outline" as const, activeIcon: "people-circle" as const },
   { label: "Projects", route: "/admin/projects", icon: "folder-outline" as const, activeIcon: "folder" as const },
   { label: "Tasks", route: "/admin/tasks", icon: "checkmark-circle-outline" as const, activeIcon: "checkmark-circle" as const },
   { label: "More", route: "/admin/more", icon: "ellipsis-horizontal-outline" as const, activeIcon: "ellipsis-horizontal" as const },

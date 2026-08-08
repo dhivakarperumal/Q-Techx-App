@@ -5,6 +5,7 @@ import { Ionicons } from '@expo/vector-icons';
 
 import { AdminBottomBar } from "../../components/admin-bottom-bar";
 import { TopHeader } from "../../components/TopHeader";
+import { FAB } from "../../components/FAB";
 
 const stats = [
   { label: 'Total Members', value: '24', sub: 'All Members', icon: 'people-outline', color: '#f97316', bg: 'bg-orange-50' },
@@ -102,17 +103,7 @@ export default function TeamScreen() {
       
       <ScrollView className="flex-1" contentContainerClassName="pb-32 pt-2">
         
-        {/* ── HEADER SECTION ── */}
-        <View className="px-5 mb-6 flex-row items-center justify-between">
-          <View className="flex-1">
-            <Text className="text-slate-900 text-3xl font-black tracking-tight">Team</Text>
-            <Text className="text-slate-500 text-xs mt-1">Manage your team members and their activities</Text>
-          </View>
-          <TouchableOpacity className="bg-orange-500 flex-row items-center px-4 py-2.5 rounded-xl shadow-sm">
-            <Ionicons name="add" size={18} color="#fff" />
-            <Text className="text-white font-bold text-sm ml-1">Add Member</Text>
-          </TouchableOpacity>
-        </View>
+    
 
         {/* ── STATS SCROLLVIEW ── */}
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerClassName="px-5 mb-6" className="overflow-visible">
@@ -130,18 +121,18 @@ export default function TeamScreen() {
 
         {/* ── SEARCH & FILTER ── */}
         <View className="px-5 mb-4 flex-row items-center gap-3">
-          <View className="flex-1 bg-white border border-slate-200 rounded-2xl flex-row items-center px-4 py-3 shadow-sm">
-            <Ionicons name="search" size={20} color="#94a3b8" />
+          <View className="flex-1 bg-white border border-slate-200 rounded-2xl flex-row items-center px-4 py-2 shadow-sm">
+            <Ionicons name="search" size={16} color="#94a3b8" />
             <TextInput
               placeholder="Search team members..."
               placeholderTextColor="#94a3b8"
               className="flex-1 ml-2 text-sm font-medium text-slate-800"
             />
           </View>
-          <TouchableOpacity className="bg-white border border-slate-200 rounded-2xl flex-row items-center px-4 py-3 shadow-sm">
-            <Ionicons name="filter" size={18} color="#64748b" />
+          <TouchableOpacity className="bg-white border border-slate-200 rounded-2xl flex-row items-center px-4 py-2 shadow-sm">
+            <Ionicons name="filter" size={16} color="#64748b" />
             <Text className="text-slate-700 font-bold text-sm ml-2 mr-1">Filter</Text>
-            <Ionicons name="chevron-down" size={16} color="#64748b" />
+            <Ionicons name="chevron-down" size={14} color="#64748b" />
           </TouchableOpacity>
         </View>
 
@@ -231,25 +222,15 @@ export default function TeamScreen() {
             </View>
           ))}
           
-          {/* Invite New Member Bottom Card */}
-          <View className="bg-orange-50 rounded-[24px] p-5 mb-8 border border-orange-100 flex-row items-center">
-            <View className="w-12 h-12 rounded-full bg-orange-500 items-center justify-center mr-4 shadow-sm shadow-orange-200">
-              <Ionicons name="person-add" size={20} color="white" />
-            </View>
-            <View className="flex-1 mr-4">
-              <Text className="text-slate-900 font-bold text-sm mb-1">Invite New Member</Text>
-              <Text className="text-slate-500 text-[10px] leading-4">Add new member to your team and collaborate together.</Text>
-            </View>
-            <TouchableOpacity className="bg-white border border-orange-200 px-4 py-2 rounded-xl shadow-sm">
-              <Text className="text-orange-600 font-bold text-[10px]">Invite Member</Text>
-            </TouchableOpacity>
-          </View>
         </View>
 
       </ScrollView>
 
       {/* Bottom Bar */}
       <AdminBottomBar />
+
+      {/* Floating Action Button */}
+      <FAB onPress={() => {}} />
     </View>
   );
 }
