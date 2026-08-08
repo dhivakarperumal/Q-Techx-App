@@ -1,13 +1,10 @@
 import React from 'react';
-import { View, Text, ScrollView, TouchableOpacity, Dimensions } from 'react-native';
-import { useRouter } from 'expo-router';
+import { View, Text, ScrollView, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 
 import { AdminBottomBar } from "../../components/admin-bottom-bar";
 import { TopHeader } from "../../components/TopHeader";
 import { LinearGradient } from 'expo-linear-gradient';
-
-const { width } = Dimensions.get('window');
 
 const quickActions = [
   { label: 'Users', icon: 'people', color: '#f97316' },
@@ -50,9 +47,18 @@ const recentActivity = [
   },
 ];
 
-export default function AdminDashboard() {
-  const router = useRouter();
+const dashboardStats = [
+  { label: 'Total Employees', value: '248', icon: 'people', color: '#f97316', background: 'bg-orange-50' },
+  { label: 'Active Projects', value: '24', icon: 'briefcase', color: '#3b82f6', background: 'bg-blue-50' },
+  { label: 'Total Tasks', value: '356', icon: 'checkmark-square', color: '#10b981', background: 'bg-green-50' },
+  { label: 'Active Trainees', value: '42', icon: 'school', color: '#8b5cf6', background: 'bg-purple-50' },
+  { label: 'Internship Students', value: '18', icon: 'book', color: '#d946ef', background: 'bg-fuchsia-50' },
+  { label: 'Monthly Payroll', value: '₹2.45M', icon: 'cash', color: '#0f766e', background: 'bg-teal-50' },
+  { label: 'Pending Follow-ups', value: '12', icon: 'chatbubbles', color: '#ef4444', background: 'bg-red-50' },
+  { label: 'Attendance Today', value: '92%', icon: 'calendar', color: '#2563eb', background: 'bg-indigo-50' },
+];
 
+export default function AdminDashboard() {
   return (
     <View className="flex-1 bg-[#F9FAFB]">
       <TopHeader />
@@ -67,7 +73,7 @@ export default function AdminDashboard() {
               <Text className="text-slate-900 text-3xl font-black mr-2">Admin</Text>
               <Ionicons name="checkmark-circle" size={24} color="#f97316" />
             </View>
-            <Text className="text-slate-500 text-sm mt-1">Here's what's happening today.</Text>
+            <Text className="text-slate-500 text-sm mt-1">Here&apos;s what&apos;s happening today.</Text>
           </View>
           
           {/* Logo Placeholder */}
@@ -97,63 +103,17 @@ export default function AdminDashboard() {
           </TouchableOpacity>
         </LinearGradient>
 
-        {/* ── 2x2 STAT CARDS ── */}
+        {/* ── DASHBOARD STAT CARDS ── */}
         <View className="flex-row flex-wrap justify-between mb-6">
-          {/* Total Users */}
-          <View className="w-[48%] bg-white rounded-3xl p-4 mb-4 shadow-sm border border-slate-100">
-            <View className="w-12 h-12 bg-orange-50 rounded-2xl items-center justify-center mb-3">
-              <Ionicons name="people" size={24} color="#f97316" />
+          {dashboardStats.map((stat) => (
+            <View key={stat.label} className="w-[48%] bg-white rounded-3xl p-4 mb-4 shadow-sm border border-slate-100">
+              <View className={`w-12 h-12 ${stat.background} rounded-2xl items-center justify-center mb-3`}>
+                <Ionicons name={stat.icon as any} size={24} color={stat.color} />
+              </View>
+              <Text className="text-slate-500 font-bold text-xs mb-1">{stat.label}</Text>
+              <Text className="text-slate-900 font-black text-2xl tracking-tight">{stat.value}</Text>
             </View>
-            <Text className="text-slate-500 font-bold text-xs mb-1">Total Users</Text>
-            <Text className="text-slate-900 font-black text-2xl tracking-tight mb-2">1,248</Text>
-            <View className="flex-row items-center">
-              <Ionicons name="arrow-up" size={12} color="#f97316" />
-              <Text className="text-orange-500 font-bold text-[10px] mx-1">12.5%</Text>
-              <Text className="text-slate-400 text-[10px]">from last month</Text>
-            </View>
-          </View>
-
-          {/* Total Projects */}
-          <View className="w-[48%] bg-white rounded-3xl p-4 mb-4 shadow-sm border border-slate-100">
-            <View className="w-12 h-12 bg-blue-50 rounded-2xl items-center justify-center mb-3">
-              <Ionicons name="briefcase" size={24} color="#3b82f6" />
-            </View>
-            <Text className="text-slate-500 font-bold text-xs mb-1">Total Projects</Text>
-            <Text className="text-slate-900 font-black text-2xl tracking-tight mb-2">86</Text>
-            <View className="flex-row items-center">
-              <Ionicons name="arrow-up" size={12} color="#3b82f6" />
-              <Text className="text-blue-500 font-bold text-[10px] mx-1">8.3%</Text>
-              <Text className="text-slate-400 text-[10px]">from last month</Text>
-            </View>
-          </View>
-
-          {/* Total Tasks */}
-          <View className="w-[48%] bg-white rounded-3xl p-4 shadow-sm border border-slate-100">
-            <View className="w-12 h-12 bg-green-50 rounded-2xl items-center justify-center mb-3">
-              <Ionicons name="checkmark-square" size={24} color="#10b981" />
-            </View>
-            <Text className="text-slate-500 font-bold text-xs mb-1">Total Tasks</Text>
-            <Text className="text-slate-900 font-black text-2xl tracking-tight mb-2">356</Text>
-            <View className="flex-row items-center">
-              <Ionicons name="arrow-up" size={12} color="#10b981" />
-              <Text className="text-green-500 font-bold text-[10px] mx-1">15.7%</Text>
-              <Text className="text-slate-400 text-[10px]">from last month</Text>
-            </View>
-          </View>
-
-          {/* Total Revenue */}
-          <View className="w-[48%] bg-white rounded-3xl p-4 shadow-sm border border-slate-100">
-            <View className="w-12 h-12 bg-purple-50 rounded-2xl items-center justify-center mb-3">
-              <Ionicons name="cash" size={24} color="#a855f7" />
-            </View>
-            <Text className="text-slate-500 font-bold text-xs mb-1">Total Revenue</Text>
-            <Text className="text-slate-900 font-black text-2xl tracking-tight mb-2">₹2.45M</Text>
-            <View className="flex-row items-center">
-              <Ionicons name="arrow-up" size={12} color="#a855f7" />
-              <Text className="text-purple-500 font-bold text-[10px] mx-1">10.2%</Text>
-              <Text className="text-slate-400 text-[10px]">from last month</Text>
-            </View>
-          </View>
+          ))}
         </View>
 
         {/* ── QUICK ACTIONS ── */}
