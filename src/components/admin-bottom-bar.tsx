@@ -3,7 +3,14 @@ import { usePathname, useRouter } from "expo-router";
 import { Pressable, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-const adminTabs = [
+type AdminRoute = "/admin" | "/admin/projects" | "/admin/tasks" | "/admin/team" | "/admin/more";
+
+const adminTabs: {
+  label: string;
+  route: AdminRoute;
+  icon: keyof typeof Ionicons.glyphMap;
+  activeIcon: keyof typeof Ionicons.glyphMap;
+}[] = [
   { label: "Home", route: "/admin", icon: "home-outline" as const, activeIcon: "home" as const },
   { label: "Projects", route: "/admin/projects", icon: "folder-outline" as const, activeIcon: "folder" as const },
   { label: "Tasks", route: "/admin/tasks", icon: "checkmark-circle-outline" as const, activeIcon: "checkmark-circle" as const },
@@ -29,7 +36,11 @@ export function AdminBottomBar() {
               accessibilityRole="tab"
               accessibilityState={{ selected: isActive }}
               className="flex-1 items-center rounded-xl px-1 py-1 active:bg-blue-50"
-              onPress={() => router.replace(tab.route as "/admin")}
+              onPress={() => {
+                if (!isActive) {
+                  router.replace(tab.route);
+                }
+              }}
             >
               <Ionicons name={isActive ? tab.activeIcon : tab.icon} size={22} color={iconColor} />
               <Text className={isActive ? "mt-1 text-xs font-bold text-blue-700" : "mt-1 text-xs text-slate-500"}>

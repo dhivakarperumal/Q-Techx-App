@@ -38,6 +38,12 @@ export default function LoginScreen() {
       user: { id: "static-admin-1", name: "Admin", role: "superadmin", email: "admin@gmail.com" },
       token: "static-admin-token",
     },
+    {
+      email: "emp@gmail.com",
+      password: "emp@123",
+      user: { id: "static-employee-1", name: "Employee", role: "employee", email: "emp@gmail.com" },
+      token: "static-employee-token",
+    },
   ];
 
   const handleSubmit = async () => {
