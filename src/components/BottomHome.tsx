@@ -5,8 +5,13 @@ import { SafeAreaView } from "react-native-safe-area-context";
 
 type Tab = {
   label: string;
-  href: "/employee" | "/employee/tasks" | "/employee/attendance" | "/employee/more";
-  icon: "home-outline" | "checkmark-circle-outline" | "calendar-outline" | "apps-outline";
+  href:
+    "/employee" | "/employee/tasks" | "/employee/attendance" | "/employee/more";
+  icon:
+    | "home-outline"
+    | "checkmark-circle-outline"
+    | "calendar-outline"
+    | "apps-outline";
   activeIcon: "home" | "checkmark-circle" | "calendar" | "apps";
 };
 
@@ -42,7 +47,10 @@ export function BottomHome() {
   const pathname = usePathname();
 
   return (
-    <SafeAreaView edges={["bottom"]} className="border-t border-slate-200 bg-white">
+    <SafeAreaView
+      edges={["bottom"]}
+      className="border-t border-slate-200 bg-white"
+    >
       <View className="flex-row items-center justify-around px-3 pb-1 pt-2">
         {tabs.map((tab) => {
           const isActive = pathname === tab.href;
@@ -61,8 +69,18 @@ export function BottomHome() {
                 }
               }}
             >
-              <Ionicons name={isActive ? tab.activeIcon : tab.icon} size={22} color={iconColor} />
-              <Text className={isActive ? "mt-1 text-xs font-bold text-blue-700" : "mt-1 text-xs text-slate-500"}>
+              <Ionicons
+                name={isActive ? tab.activeIcon : tab.icon}
+                size={22}
+                color={iconColor}
+              />
+              <Text
+                className={
+                  isActive
+                    ? "mt-1 text-xs font-bold text-blue-700"
+                    : "mt-1 text-xs text-slate-500"
+                }
+              >
                 {tab.label}
               </Text>
             </Pressable>

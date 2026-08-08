@@ -15,18 +15,27 @@ export default function AttendanceScreen() {
       <TopHeader title="Attendance" subtitle="Your time and presence" />
       <ScrollView className="flex-1" contentContainerClassName="px-5 py-6">
         <Text className="text-3xl font-bold text-slate-950">Attendance</Text>
-        <Text className="mt-2 text-base text-slate-500">Review your recent attendance records.</Text>
+        <Text className="mt-2 text-base text-slate-500">
+          Review your recent attendance records.
+        </Text>
         <View className="mt-6 gap-3">
           {attendance.map(([day, status, hours, color]) => (
-            <View key={day} className="flex-row items-center rounded-2xl border border-slate-200 bg-white p-4">
+            <View
+              key={day}
+              className="flex-row items-center rounded-2xl border border-slate-200 bg-white p-4"
+            >
               <View className="h-11 w-11 items-center justify-center rounded-xl bg-blue-50">
                 <Ionicons name="calendar-outline" size={22} color="#2563eb" />
               </View>
               <View className="ml-3 flex-1">
-                <Text className="text-base font-bold text-slate-900">{day}</Text>
+                <Text className="text-base font-bold text-slate-900">
+                  {day}
+                </Text>
                 <Text className="mt-1 text-sm text-slate-500">{hours}</Text>
               </View>
-              <Text className="text-sm font-semibold" style={{ color }}>{status}</Text>
+              <Text className="text-sm font-semibold" style={{ color }}>
+                {status}
+              </Text>
             </View>
           ))}
         </View>
