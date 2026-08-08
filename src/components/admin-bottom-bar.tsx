@@ -12,7 +12,7 @@ const adminTabs: {
   activeIcon: keyof typeof Ionicons.glyphMap;
 }[] = [
   { label: "Home", route: "/admin", icon: "home-outline" as const, activeIcon: "home" as const },
-  { label: "Users", route: "/admin/team", icon: "people-outline" as const, activeIcon: "people" as const },
+  { label: "Team", route: "/admin/team", icon: "people-outline" as const, activeIcon: "people" as const },
   { label: "Projects", route: "/admin/projects", icon: "folder-outline" as const, activeIcon: "folder" as const },
   { label: "Tasks", route: "/admin/tasks", icon: "checkmark-circle-outline" as const, activeIcon: "checkmark-circle" as const },
   { label: "More", route: "/admin/more", icon: "ellipsis-horizontal-outline" as const, activeIcon: "ellipsis-horizontal" as const },

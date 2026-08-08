@@ -15,7 +15,7 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useAuth } from "../auth/AuthContext";
 
-const { width, height } = Dimensions.get("window");
+const { width } = Dimensions.get("window");
 
 export function TopHeader() {
   const router = useRouter();
@@ -26,9 +26,9 @@ export function TopHeader() {
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const slideAnim = useRef(new Animated.Value(-8)).current;
 
-  // Sidebar state
+  // Sidebar (Full-Screen Menu) state
   const [sidebarVisible, setSidebarVisible] = useState(false);
-  const sidebarSlideAnim = useRef(new Animated.Value(-width * 0.75)).current;
+  const sidebarSlideAnim = useRef(new Animated.Value(-width)).current;
   const sidebarFadeAnim = useRef(new Animated.Value(0)).current;
 
   // Derive display name
@@ -91,13 +91,13 @@ export function TopHeader() {
     ]).start(() => setDropdownVisible(false));
   };
 
-  // -- Sidebar Logic --
+  // -- Sidebar (Full Screen) Logic --
   const openSidebar = () => {
     setSidebarVisible(true);
     Animated.parallel([
       Animated.timing(sidebarFadeAnim, {
         toValue: 1,
-        duration: 200,
+        duration: 250,
         useNativeDriver: true,
       }),
       Animated.timing(sidebarSlideAnim, {
@@ -116,7 +116,7 @@ export function TopHeader() {
         useNativeDriver: true,
       }),
       Animated.timing(sidebarSlideAnim, {
-        toValue: -width * 0.75,
+        toValue: -width,
         duration: 250,
         useNativeDriver: true,
       }),
@@ -183,7 +183,6 @@ export function TopHeader() {
           onPress={openSidebar}
           className="p-1 -ml-1"
         >
-          {/* Changed to AlignLeft to match the user's image (middle line shorter) */}
           <AlignLeft size={28} color="#1e293b" strokeWidth={2.5} />
         </TouchableOpacity>
 
@@ -211,7 +210,7 @@ export function TopHeader() {
         </View>
       </View>
 
-      {/* ─── SIDEBAR MODAL ─── */}
+      {/* ─── FULL-SCREEN MENU MODAL ─── */}
       <Modal
         transparent
         visible={sidebarVisible}
@@ -219,76 +218,58 @@ export function TopHeader() {
         onRequestClose={closeSidebar}
         statusBarTranslucent
       >
-        <View className="flex-1 flex-row">
-          {/* Sidebar Panel */}
-          <Animated.View
-            style={{
-              width: width * 0.75,
-              height: height,
-              backgroundColor: "#ffffff",
-              transform: [{ translateX: sidebarSlideAnim }],
-              zIndex: 2,
-              shadowColor: "#000",
-              shadowOffset: { width: 4, height: 0 },
-              shadowOpacity: 0.1,
-              shadowRadius: 10,
-              elevation: 10,
-            }}
-          >
-            <SafeAreaView edges={["top", "bottom"]} className="flex-1">
-              <View className="px-6 py-6 border-b border-slate-100 flex-row items-center justify-between">
-                <Text className="text-xl font-black text-slate-900 tracking-tight">Q TECHX</Text>
-                <TouchableOpacity onPress={closeSidebar}>
-                  <Ionicons name="close" size={24} color="#64748b" />
-                </TouchableOpacity>
-              </View>
+        <Animated.View
+          style={{
+            flex: 1,
+            backgroundColor: "#ffffff",
+            transform: [{ translateX: sidebarSlideAnim }],
+            zIndex: 2,
+            opacity: sidebarFadeAnim, // Subtle fade along with the slide
+          }}
+        >
+          <SafeAreaView edges={["top", "bottom"]} className="flex-1 bg-white">
+            <View className="px-6 py-6 border-b border-slate-100 flex-row items-center justify-between">
+              <Text className="text-xl font-black text-slate-900 tracking-tight">Q TECHX</Text>
+              {/* Close Button */}
+              <TouchableOpacity onPress={closeSidebar} className="p-2 bg-slate-50 rounded-full">
+                <Ionicons name="close" size={24} color="#64748b" />
+              </TouchableOpacity>
+            </View>
 
-              <View className="flex-1 py-4">
-                {sidebarItems.map((item, index) => (
-                  <TouchableOpacity
-                    key={index}
-                    activeOpacity={0.7}
-                    onPress={() => {
-                      closeSidebar();
-                      if (item.route) router.push(item.route as any);
-                      else Alert.alert(item.label, `${item.label} coming soon!`);
-                    }}
-                    className="flex-row items-center px-6 py-4"
-                  >
-                    <Ionicons name={item.icon} size={22} color="#64748b" />
-                    <Text className="text-slate-700 font-semibold text-base ml-4">
-                      {item.label}
-                    </Text>
-                  </TouchableOpacity>
-                ))}
-              </View>
-
-              <View className="px-6 py-6 border-t border-slate-100">
+            <View className="flex-1 py-4 px-2">
+              {sidebarItems.map((item, index) => (
                 <TouchableOpacity
+                  key={index}
                   activeOpacity={0.7}
-                  onPress={handleLogout}
-                  className="flex-row items-center"
+                  onPress={() => {
+                    closeSidebar();
+                    if (item.route) router.push(item.route as any);
+                    else Alert.alert(item.label, `${item.label} coming soon!`);
+                  }}
+                  className="flex-row items-center px-6 py-5 mx-2 rounded-2xl mb-1 active:bg-slate-50"
                 >
-                  <Ionicons name="log-out-outline" size={22} color="#ef4444" />
-                  <Text className="text-red-500 font-semibold text-base ml-4">
-                    Log Out
+                  <Ionicons name={item.icon} size={24} color="#f97316" />
+                  <Text className="text-slate-700 font-bold text-lg ml-5">
+                    {item.label}
                   </Text>
                 </TouchableOpacity>
-              </View>
-            </SafeAreaView>
-          </Animated.View>
+              ))}
+            </View>
 
-          {/* Backdrop overlay */}
-          <Animated.View
-            style={{
-              flex: 1,
-              backgroundColor: "rgba(0,0,0,0.4)",
-              opacity: sidebarFadeAnim,
-            }}
-          >
-            <Pressable className="flex-1" onPress={closeSidebar} />
-          </Animated.View>
-        </View>
+            <View className="px-8 py-8 border-t border-slate-100">
+              <TouchableOpacity
+                activeOpacity={0.7}
+                onPress={handleLogout}
+                className="flex-row items-center bg-red-50 p-4 rounded-2xl justify-center"
+              >
+                <Ionicons name="log-out-outline" size={22} color="#ef4444" />
+                <Text className="text-red-500 font-bold text-base ml-3">
+                  Log Out
+                </Text>
+              </TouchableOpacity>
+            </View>
+          </SafeAreaView>
+        </Animated.View>
       </Modal>
 
       {/* ─── PROFILE DROPDOWN MODAL ─── */}
