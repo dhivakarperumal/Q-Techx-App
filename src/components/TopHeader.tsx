@@ -1,9 +1,11 @@
 import { Ionicons } from "@expo/vector-icons";
+import { AlignLeft } from "lucide-react-native";
 import { useRouter } from "expo-router";
 import { useRef, useState } from "react";
 import {
   Alert,
   Animated,
+  Dimensions,
   Modal,
   Pressable,
   Text,
@@ -13,12 +15,21 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useAuth } from "../auth/AuthContext";
 
+const { width, height } = Dimensions.get("window");
+
 export function TopHeader() {
   const router = useRouter();
   const { user, logout } = useAuth();
+  
+  // Profile Dropdown state
   const [dropdownVisible, setDropdownVisible] = useState(false);
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const slideAnim = useRef(new Animated.Value(-8)).current;
+
+  // Sidebar state
+  const [sidebarVisible, setSidebarVisible] = useState(false);
+  const sidebarSlideAnim = useRef(new Animated.Value(-width * 0.75)).current;
+  const sidebarFadeAnim = useRef(new Animated.Value(0)).current;
 
   // Derive display name
   const rawName =
@@ -48,6 +59,7 @@ export function TopHeader() {
   const userRole =
     (user?.role as string)?.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase()) || "Admin";
 
+  // -- Profile Dropdown Logic --
   const openDropdown = () => {
     setDropdownVisible(true);
     Animated.parallel([
@@ -79,8 +91,41 @@ export function TopHeader() {
     ]).start(() => setDropdownVisible(false));
   };
 
+  // -- Sidebar Logic --
+  const openSidebar = () => {
+    setSidebarVisible(true);
+    Animated.parallel([
+      Animated.timing(sidebarFadeAnim, {
+        toValue: 1,
+        duration: 200,
+        useNativeDriver: true,
+      }),
+      Animated.timing(sidebarSlideAnim, {
+        toValue: 0,
+        duration: 250,
+        useNativeDriver: true,
+      }),
+    ]).start();
+  };
+
+  const closeSidebar = () => {
+    Animated.parallel([
+      Animated.timing(sidebarFadeAnim, {
+        toValue: 0,
+        duration: 200,
+        useNativeDriver: true,
+      }),
+      Animated.timing(sidebarSlideAnim, {
+        toValue: -width * 0.75,
+        duration: 250,
+        useNativeDriver: true,
+      }),
+    ]).start(() => setSidebarVisible(false));
+  };
+
   const handleLogout = () => {
     closeDropdown();
+    closeSidebar();
     setTimeout(() => {
       Alert.alert("Log out", "Are you sure you want to log out?", [
         { text: "Cancel", style: "cancel" },
@@ -121,16 +166,25 @@ export function TopHeader() {
     },
   ];
 
+  const sidebarItems = [
+    { label: "Dashboard", icon: "home-outline" as const, route: "/admin" },
+    { label: "Projects", icon: "folder-outline" as const, route: "/admin/projects" },
+    { label: "Tasks", icon: "checkmark-square-outline" as const, route: "/admin/tasks" },
+    { label: "Team", icon: "people-outline" as const, route: "/admin/team" },
+    { label: "Settings", icon: "settings-outline" as const, route: null },
+  ];
+
   return (
     <SafeAreaView edges={["top"]} className="bg-white">
       <View className="flex-row items-center justify-between px-5 py-4">
         {/* Left — Hamburger Menu */}
         <TouchableOpacity
           activeOpacity={0.7}
-          onPress={() => Alert.alert("Menu", "Drawer menu coming soon.")}
+          onPress={openSidebar}
           className="p-1 -ml-1"
         >
-          <Ionicons name="menu-outline" size={32} color="#1e293b" />
+          {/* Changed to AlignLeft to match the user's image (middle line shorter) */}
+          <AlignLeft size={28} color="#1e293b" strokeWidth={2.5} />
         </TouchableOpacity>
 
         {/* Right — Notification + Avatar */}
@@ -152,13 +206,92 @@ export function TopHeader() {
             accessibilityRole="button"
             className="h-10 w-10 items-center justify-center rounded-full bg-slate-800 shadow-sm overflow-hidden"
           >
-            {/* Can easily replace with Image later */}
             <Text className="text-base font-bold text-white">{avatarLetter}</Text>
           </TouchableOpacity>
         </View>
       </View>
 
-      {/* Dropdown modal */}
+      {/* ─── SIDEBAR MODAL ─── */}
+      <Modal
+        transparent
+        visible={sidebarVisible}
+        animationType="none"
+        onRequestClose={closeSidebar}
+        statusBarTranslucent
+      >
+        <View className="flex-1 flex-row">
+          {/* Sidebar Panel */}
+          <Animated.View
+            style={{
+              width: width * 0.75,
+              height: height,
+              backgroundColor: "#ffffff",
+              transform: [{ translateX: sidebarSlideAnim }],
+              zIndex: 2,
+              shadowColor: "#000",
+              shadowOffset: { width: 4, height: 0 },
+              shadowOpacity: 0.1,
+              shadowRadius: 10,
+              elevation: 10,
+            }}
+          >
+            <SafeAreaView edges={["top", "bottom"]} className="flex-1">
+              <View className="px-6 py-6 border-b border-slate-100 flex-row items-center justify-between">
+                <Text className="text-xl font-black text-slate-900 tracking-tight">Q TECHX</Text>
+                <TouchableOpacity onPress={closeSidebar}>
+                  <Ionicons name="close" size={24} color="#64748b" />
+                </TouchableOpacity>
+              </View>
+
+              <View className="flex-1 py-4">
+                {sidebarItems.map((item, index) => (
+                  <TouchableOpacity
+                    key={index}
+                    activeOpacity={0.7}
+                    onPress={() => {
+                      closeSidebar();
+                      if (item.route) router.push(item.route as any);
+                      else Alert.alert(item.label, `${item.label} coming soon!`);
+                    }}
+                    className="flex-row items-center px-6 py-4"
+                  >
+                    <Ionicons name={item.icon} size={22} color="#64748b" />
+                    <Text className="text-slate-700 font-semibold text-base ml-4">
+                      {item.label}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+
+              <View className="px-6 py-6 border-t border-slate-100">
+                <TouchableOpacity
+                  activeOpacity={0.7}
+                  onPress={handleLogout}
+                  className="flex-row items-center"
+                >
+                  <Ionicons name="log-out-outline" size={22} color="#ef4444" />
+                  <Text className="text-red-500 font-semibold text-base ml-4">
+                    Log Out
+                  </Text>
+                </TouchableOpacity>
+              </View>
+            </SafeAreaView>
+          </Animated.View>
+
+          {/* Backdrop overlay */}
+          <Animated.View
+            style={{
+              flex: 1,
+              backgroundColor: "rgba(0,0,0,0.4)",
+              opacity: sidebarFadeAnim,
+            }}
+          >
+            <Pressable className="flex-1" onPress={closeSidebar} />
+          </Animated.View>
+        </View>
+      </Modal>
+
+      {/* ─── PROFILE DROPDOWN MODAL ─── */}
       <Modal
         transparent
         visible={dropdownVisible}
