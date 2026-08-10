@@ -1,14 +1,19 @@
 import { Ionicons } from "@expo/vector-icons";
+import * as DocumentPicker from "expo-document-picker";
 import { useFocusEffect } from "expo-router";
 import type { ReactNode } from "react";
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import {
     ActivityIndicator,
+    Alert,
+    KeyboardAvoidingView,
     Modal,
+    Platform,
     Pressable,
     RefreshControl,
     ScrollView,
     Text,
+    TextInput,
     View,
 } from "react-native";
 import api from "../../api";
@@ -92,6 +97,113 @@ const formatDate = (value?: string) => {
 };
 const asList = (value?: string[] | string) => Array.isArray(value) ? value : value ? value.split(",").map((item) => item.trim()).filter(Boolean) : [];
 
+type CreateEventValues = {
+  planTitle: string;
+  description: string;
+  planDate: string;
+  startTime: string;
+  endTime: string;
+  category: string;
+  priority: string;
+  status: string;
+  checklistItems: string[];
+  notes: string;
+  location: string;
+  meetingLink: string;
+};
+
+const createEventDefaults = (date: Date): CreateEventValues => ({
+  planTitle: "",
+  description: "",
+  planDate: dateKey(date),
+  startTime: "09:00",
+  endTime: "10:00",
+  category: "",
+  priority: "Medium",
+  status: "Pending",
+  checklistItems: [""],
+  notes: "",
+  location: "",
+  meetingLink: "",
+});
+
+const inputStyle = { borderWidth: 1, borderColor: "#e2e8f0", borderRadius: 12, backgroundColor: "#f8fafc", paddingHorizontal: 12, paddingVertical: 10, color: "#0f172a", fontSize: 14 } as const;
+
+function CreateEventModal({ visible, initialDate, userId, onClose, onSaved }: { visible: boolean; initialDate: Date; userId?: string | number; onClose: () => void; onSaved: () => Promise<void> }) {
+  const [values, setValues] = useState<CreateEventValues>(() => createEventDefaults(initialDate));
+  const [documentFile, setDocumentFile] = useState<DocumentPicker.DocumentPickerAsset | null>(null);
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    if (visible) {
+      setValues(createEventDefaults(initialDate));
+      setDocumentFile(null);
+    }
+  }, [initialDate, visible]);
+
+  const update = (field: keyof CreateEventValues, value: string) => setValues((current) => ({ ...current, [field]: value }));
+  const updateChecklist = (index: number, value: string) => setValues((current) => ({ ...current, checklistItems: current.checklistItems.map((item, itemIndex) => itemIndex === index ? value : item) }));
+
+  const pickDocument = async () => {
+    const result = await DocumentPicker.getDocumentAsync({ type: "*/*", copyToCacheDirectory: true });
+    if (!result.canceled) setDocumentFile(result.assets[0]);
+  };
+
+  const save = async () => {
+    if (!values.planTitle.trim() || !values.planDate || !values.startTime || !values.endTime) {
+      Alert.alert("Required fields", "Please enter a title, date, start time, and end time.");
+      return;
+    }
+    setSaving(true);
+    try {
+      const formData = new FormData();
+      const payload: Record<string, string | number> = {
+        ...values,
+        checklistItems: JSON.stringify(values.checklistItems.map((item) => item.trim()).filter(Boolean)),
+        user_id: userId || "",
+        progress: 0,
+      };
+      Object.entries(payload).forEach(([key, value]) => formData.append(key, String(value)));
+      if (documentFile) {
+        formData.append("document", { uri: documentFile.uri, name: documentFile.name || "document", type: documentFile.mimeType || "application/octet-stream" } as unknown as Blob);
+      }
+      await api.post("/myevents", formData, { headers: { "Content-Type": "multipart/form-data" } });
+      await onSaved();
+      onClose();
+    } catch (error) {
+      Alert.alert("Unable to save", error instanceof Error ? error.message : "Please try again.");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const Field = ({ label, field, placeholder, multiline = false }: { label: string; field: keyof CreateEventValues; placeholder?: string; multiline?: boolean }) => (
+    <View style={{ gap: 6 }}>
+      <Text style={{ fontSize: 12, fontWeight: "700", color: "#475569" }}>{label}</Text>
+      <TextInput value={String(values[field])} onChangeText={(value) => update(field, value)} placeholder={placeholder} placeholderTextColor="#94a3b8" multiline={multiline} numberOfLines={multiline ? 3 : 1} style={[inputStyle, multiline && { minHeight: 78, textAlignVertical: "top" }]} />
+    </View>
+  );
+
+  return <Modal visible={visible} animationType="slide" presentationStyle="pageSheet" onRequestClose={onClose}>
+    <KeyboardAvoidingView style={{ flex: 1, backgroundColor: "#f8fafc" }} behavior={Platform.OS === "ios" ? "padding" : undefined}>
+      <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", padding: 20, backgroundColor: "#fff", borderBottomWidth: 1, borderBottomColor: "#e2e8f0" }}><View><Text style={{ fontSize: 22, fontWeight: "800", color: "#0f172a" }}>Plan My Day</Text><Text style={{ marginTop: 3, color: "#64748b", fontSize: 13 }}>Create a personal calendar event</Text></View><Pressable onPress={onClose} accessibilityLabel="Close add event" style={{ borderRadius: 20, backgroundColor: "#f1f5f9", padding: 8 }}><Ionicons name="close" size={20} color="#475569" /></Pressable></View>
+      <ScrollView contentContainerStyle={{ gap: 14, padding: 20, paddingBottom: 36 }} keyboardShouldPersistTaps="handled">
+        <Field label="Plan title *" field="planTitle" placeholder="Enter plan title" />
+        <Field label="Description" field="description" placeholder="Describe your plan" multiline />
+        <View style={{ flexDirection: "row", gap: 10 }}><View style={{ flex: 1 }}><Field label="Plan date *" field="planDate" placeholder="YYYY-MM-DD" /></View><View style={{ flex: 1 }}><Field label="Category" field="category" placeholder="Meeting, task..." /></View></View>
+        <View style={{ flexDirection: "row", gap: 10 }}><View style={{ flex: 1 }}><Field label="Start time *" field="startTime" /></View><View style={{ flex: 1 }}><Field label="End time *" field="endTime" /></View></View>
+        <View style={{ flexDirection: "row", gap: 10 }}><View style={{ flex: 1 }}><Field label="Priority" field="priority" placeholder="Low / Medium / High" /></View><View style={{ flex: 1 }}><Field label="Status" field="status" placeholder="Pending" /></View></View>
+        <Field label="Location" field="location" placeholder="Office, room, or address" />
+        <Field label="Meeting link" field="meetingLink" placeholder="https://..." />
+        <Field label="Notes" field="notes" placeholder="Additional notes" multiline />
+        <View style={{ gap: 8 }}><Text style={{ fontSize: 12, fontWeight: "700", color: "#475569" }}>Checklist items</Text>{values.checklistItems.map((item, index) => <View key={`checklist-${index}`} style={{ flexDirection: "row", gap: 8 }}><TextInput value={item} onChangeText={(value) => updateChecklist(index, value)} placeholder="Add checklist item" placeholderTextColor="#94a3b8" style={[inputStyle, { flex: 1 }]} /><Pressable onPress={() => setValues((current) => ({ ...current, checklistItems: current.checklistItems.length > 1 ? current.checklistItems.filter((_, itemIndex) => itemIndex !== index) : [""] }))} accessibilityLabel="Remove checklist item" style={{ justifyContent: "center", padding: 8 }}><Ionicons name="trash-outline" size={20} color="#dc2626" /></Pressable></View>)}<Pressable onPress={() => setValues((current) => ({ ...current, checklistItems: [...current.checklistItems, ""] }))} style={{ flexDirection: "row", alignItems: "center", gap: 6, alignSelf: "flex-start", borderRadius: 10, borderWidth: 1, borderStyle: "dashed", borderColor: "#93c5fd", paddingHorizontal: 12, paddingVertical: 8 }}><Ionicons name="add" size={17} color="#2563eb" /><Text style={{ color: "#2563eb", fontWeight: "700" }}>Add item</Text></Pressable></View>
+        <View style={{ gap: 8 }}><Text style={{ fontSize: 12, fontWeight: "700", color: "#475569" }}>Upload document (optional)</Text><Pressable onPress={pickDocument} style={{ flexDirection: "row", alignItems: "center", gap: 8, borderRadius: 12, borderWidth: 1, borderColor: "#cbd5e1", backgroundColor: "#fff", padding: 12 }}><Ionicons name="document-attach-outline" size={20} color="#2563eb" /><Text style={{ flex: 1, color: "#475569" }}>{documentFile?.name || "Choose a document"}</Text></Pressable></View>
+        <Pressable disabled={saving} onPress={save} style={{ flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8, borderRadius: 14, backgroundColor: saving ? "#93c5fd" : "#2563eb", paddingVertical: 14 }}><Ionicons name={saving ? "hourglass-outline" : "save-outline"} size={18} color="#fff" /><Text style={{ color: "#fff", fontSize: 15, fontWeight: "800" }}>{saving ? "Saving..." : "Save event"}</Text></Pressable>
+      </ScrollView>
+    </KeyboardAvoidingView>
+  </Modal>;
+}
+
 const Section = ({ title, icon, children }: { title: string; icon: React.ComponentProps<typeof Ionicons>["name"]; children: ReactNode }) => (
   <View style={{ marginBottom: 16 }}>
     <View style={{ flexDirection: "row", alignItems: "center", gap: 7, marginBottom: 8 }}>
@@ -159,6 +271,7 @@ export default function MyCalendarScreen() {
   const [selectedDate, setSelectedDate] = useState(() => new Date());
   const [viewMode, setViewMode] = useState<ViewMode>("Month");
   const [selectedEvent, setSelectedEvent] = useState<MyEvent | null>(null);
+  const [showCreateModal, setShowCreateModal] = useState(false);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState("");
@@ -202,6 +315,7 @@ export default function MyCalendarScreen() {
 
   const changeMonth = (amount: number) => setMonth((current) => new Date(current.getFullYear(), current.getMonth() + amount, 1));
   const openEvent = (event: MyEvent) => setSelectedEvent(event);
+  const currentUserId = [user?.id, user?.userId, user?.employee_id, user?.employeeId, user?.user_id, user?.uuid].find(Boolean) as string | number | undefined;
 
   const EventCard = ({ event }: { event: MyEvent }) => {
     const color = eventColor(event);
@@ -211,7 +325,7 @@ export default function MyCalendarScreen() {
   return <View style={{ flex: 1, backgroundColor: "#f8fafc" }}>
     <TopHeader title="My Calendar" subtitle="Plan your day and track your events" />
     <ScrollView style={{ flex: 1 }} contentContainerStyle={{ padding: 20, paddingBottom: 32 }} refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => fetchEvents(true)} />}>
-      <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}><View style={{ flex: 1 }}><Text style={{ fontSize: 28, fontWeight: "800", color: "#0f172a" }}>My Calendar</Text><Text style={{ marginTop: 6, fontSize: 15, color: "#64748b" }}>Your personal plans, tasks and daily schedule.</Text></View><Pressable onPress={() => fetchEvents(true)} accessibilityLabel="Refresh my calendar" style={{ padding: 10, borderRadius: 12, backgroundColor: "#eff6ff" }}><Ionicons name="refresh-outline" size={22} color="#2563eb" /></Pressable></View>
+      <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: 10 }}><View style={{ flex: 1 }}><Text style={{ fontSize: 28, fontWeight: "800", color: "#0f172a" }}>My Calendar</Text><Text style={{ marginTop: 6, fontSize: 15, color: "#64748b" }}>Your personal plans, tasks and daily schedule.</Text></View><View style={{ flexDirection: "row", gap: 8 }}><Pressable onPress={() => setShowCreateModal(true)} accessibilityLabel="Add calendar event" style={{ flexDirection: "row", alignItems: "center", gap: 5, borderRadius: 12, backgroundColor: "#2563eb", paddingHorizontal: 12, paddingVertical: 10 }}><Ionicons name="add" size={19} color="#fff" /><Text style={{ color: "#fff", fontSize: 12, fontWeight: "800" }}>Add event</Text></Pressable><Pressable onPress={() => fetchEvents(true)} accessibilityLabel="Refresh my calendar" style={{ padding: 10, borderRadius: 12, backgroundColor: "#eff6ff" }}><Ionicons name="refresh-outline" size={22} color="#2563eb" /></Pressable></View></View>
       <View style={{ flexDirection: "row", marginTop: 20, borderRadius: 12, backgroundColor: "#e2e8f0", padding: 3 }}>{(["Month", "Week", "Day", "Agenda"] as ViewMode[]).map((mode) => <Pressable key={mode} onPress={() => setViewMode(mode)} style={{ flex: 1, alignItems: "center", borderRadius: 9, backgroundColor: viewMode === mode ? "#fff" : "transparent", paddingVertical: 9 }}><Text style={{ color: viewMode === mode ? "#2563eb" : "#64748b", fontSize: 12, fontWeight: "700" }}>{mode}</Text></Pressable>)}</View>
 
       {viewMode !== "Agenda" && <View style={{ marginTop: 16, borderRadius: 20, borderWidth: 1, borderColor: "#e2e8f0", backgroundColor: "#fff", padding: 16 }}><View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: 14 }}><Pressable onPress={() => viewMode === "Day" ? setSelectedDate((current) => new Date(current.getFullYear(), current.getMonth(), current.getDate() - 1)) : viewMode === "Week" ? setSelectedDate((current) => new Date(current.getFullYear(), current.getMonth(), current.getDate() - 7)) : changeMonth(-1)} style={{ padding: 6 }}><Ionicons name="chevron-back" size={20} color="#475569" /></Pressable><Text style={{ fontSize: 17, fontWeight: "800", color: "#0f172a" }}>{viewMode === "Day" ? selectedDate.toLocaleDateString(undefined, { weekday: "long", month: "long", day: "numeric" }) : viewMode === "Week" ? `${weekDays[0].toLocaleDateString(undefined, { month: "short", day: "numeric" })} - ${weekDays[6].toLocaleDateString(undefined, { month: "short", day: "numeric" })}` : month.toLocaleDateString(undefined, { month: "long", year: "numeric" })}</Text><Pressable onPress={() => viewMode === "Day" ? setSelectedDate((current) => new Date(current.getFullYear(), current.getMonth(), current.getDate() + 1)) : viewMode === "Week" ? setSelectedDate((current) => new Date(current.getFullYear(), current.getMonth(), current.getDate() + 7)) : changeMonth(1)} style={{ padding: 6 }}><Ionicons name="chevron-forward" size={20} color="#475569" /></Pressable></View>
@@ -224,6 +338,7 @@ export default function MyCalendarScreen() {
       {loading ? <View style={{ alignItems: "center", paddingVertical: 40 }}><ActivityIndicator size="large" color="#2563eb" /></View> : error ? <View style={{ alignItems: "center", paddingVertical: 40 }}><Text style={{ color: "#64748b", textAlign: "center" }}>{error}</Text><Pressable onPress={() => fetchEvents()} style={{ marginTop: 14, borderRadius: 10, backgroundColor: "#2563eb", paddingHorizontal: 16, paddingVertical: 10 }}><Text style={{ color: "#fff", fontWeight: "700" }}>Try again</Text></Pressable></View> : viewMode === "Agenda" ? (monthEvents.length ? <View style={{ gap: 10 }}>{monthEvents.map((event, index) => <EventCard key={event.id || event._id || `${eventName(event)}-${index}`} event={event} />)}</View> : <Text style={{ paddingVertical: 30, textAlign: "center", color: "#64748b" }}>No events in this month.</Text>) : (dayEvents.length ? <View style={{ gap: 10 }}>{dayEvents.map((event) => <EventCard key={event.id || event._id || eventName(event)} event={event} />)}</View> : <Text style={{ paddingVertical: 30, textAlign: "center", color: "#64748b" }}>No events for this day.</Text>)}
     </ScrollView>
     <BottomHome />
+    <CreateEventModal visible={showCreateModal} initialDate={selectedDate} userId={currentUserId} onClose={() => setShowCreateModal(false)} onSaved={() => fetchEvents(true)} />
     <EventDetails event={selectedEvent} onClose={() => setSelectedEvent(null)} />
   </View>;
 }
