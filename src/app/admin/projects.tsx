@@ -1,38 +1,287 @@
 import { Ionicons } from "@expo/vector-icons";
-import { ScrollView, Text, View } from "react-native";
-import { AdminBottomBar } from "../../components/admin-bottom-bar";
-import { TopHeader } from "../../components/TopHeader";
+import React, { useState, useEffect } from "react";
+import {
+    Alert,
+    ScrollView,
+    Text,
+    TextInput,
+    TouchableOpacity,
+    View,
+} from "react-native";
 
-const projects = [
-  ["Q TECHX Mobile App", "In progress", "68%", "#2563eb"],
-  ["Website Redesign", "Planning", "24%", "#f97316"],
-  ["Internal Dashboard", "Review", "86%", "#16a34a"],
-] as const;
+import { AdminBottomBar } from "../../components/admin-bottom-bar";
+import { FAB } from "../../components/FAB";
+import { TopHeader } from "../../components/TopHeader";
+import api from "../../api";
+
+const stats = [
+  {
+    label: "Total Projects",
+    value: "86",
+    sub: "All Projects",
+    icon: "folder",
+    color: "#f97316",
+    bg: "bg-orange-50",
+  },
+  {
+    label: "In Progress",
+    value: "42",
+    sub: "48.8%",
+    icon: "briefcase",
+    color: "#3b82f6",
+    bg: "bg-blue-50",
+  },
+  {
+    label: "Completed",
+    value: "28",
+    sub: "32.6%",
+    icon: "checkmark-circle",
+    color: "#10b981",
+    bg: "bg-green-50",
+  },
+  {
+    label: "On Hold",
+    value: "16",
+    sub: "18.6%",
+    icon: "pause-circle",
+    color: "#a855f7",
+    bg: "bg-purple-50",
+  },
+];
+
+const filters = [
+  { label: "All Projects", active: true, dot: "#f97316" },
+  { label: "In Progress", active: false, dot: "#3b82f6" },
+  { label: "Completed", active: false, dot: "#10b981" },
+  { label: "On Hold", active: false, dot: "#a855f7" },
+];
 
 export default function ProjectsScreen() {
+  const [projects, setProjects] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchProjects = async () => {
+      try {
+        const { data } = await api.get("/projects");
+        const projectsArray = Array.isArray(data) ? data : (data?.data || data?.projects || []);
+        
+        const mappedProjects = projectsArray.map((proj: any) => ({
+          title: proj.title || proj.name || proj.project_name || "Untitled Project",
+          company: proj.company || proj.client_name || "Internal",
+          date: proj.date || (proj.start_date ? `${proj.start_date} – ${proj.end_date || 'Ongoing'}` : "No Date Provided"),
+          status: proj.status || "In Progress",
+          progress: proj.progress || 0,
+          icon: "folder-outline",
+          iconColor: "#3b82f6",
+          iconBg: "bg-blue-50",
+          progressColor: "#3b82f6",
+          statusColor: proj.status === 'Completed' ? "text-green-600" : (proj.status === 'On Hold' ? "text-purple-600" : "text-blue-600"),
+          statusBg: proj.status === 'Completed' ? "bg-green-100" : (proj.status === 'On Hold' ? "bg-purple-100" : "bg-blue-100"),
+        }));
+        
+        setProjects(mappedProjects);
+      } catch (error) {
+        console.error("Failed to fetch projects:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchProjects();
+  }, []);
+
   return (
-    <View className="flex-1 bg-slate-50">
-      <TopHeader title="Projects" subtitle="Track company work" />
-      <ScrollView className="flex-1" contentContainerClassName="px-5 py-6">
-        <Text className="text-3xl font-bold text-slate-950">Projects</Text>
-        <Text className="mt-2 text-base text-slate-500">Keep every delivery moving in the right direction.</Text>
-        <View className="mt-6 gap-3">
-          {projects.map(([name, status, progress, color]) => (
-            <View key={name} className="rounded-2xl border border-slate-200 bg-white p-4">
-              <View className="flex-row items-center">
-                <Ionicons name="folder-open-outline" size={22} color={color} />
-                <Text className="ml-3 flex-1 text-base font-bold text-slate-900">{name}</Text>
-                <Text className="text-sm font-bold" style={{ color }}>{progress}</Text>
+    <View className="flex-1 bg-[#F9FAFB]">
+      <TopHeader />
+
+      <ScrollView className="flex-1" contentContainerClassName="pb-32 pt-2">
+        {/* ── STATS SCROLLVIEW ── */}
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerClassName="px-5 mb-6"
+          className="overflow-visible"
+        >
+          {stats.map((stat, idx) => (
+            <View
+              key={idx}
+              className="bg-white rounded-[24px] p-4 mr-4 border border-slate-100 shadow-sm w-[130px]"
+            >
+              <View
+                className={`w-10 h-10 rounded-[14px] ${stat.bg} items-center justify-center mb-3`}
+              >
+                <Ionicons
+                  name={stat.icon as any}
+                  size={20}
+                  color={stat.color}
+                />
               </View>
-              <Text className="mt-3 text-sm text-slate-500">{status}</Text>
-              <View className="mt-3 h-2 overflow-hidden rounded-full bg-slate-100">
-                <View className="h-full rounded-full" style={{ width: progress, backgroundColor: color }} />
+              <Text className="text-slate-500 font-bold text-[10px] mb-1">
+                {stat.label}
+              </Text>
+              <Text className="text-slate-900 font-black text-2xl tracking-tight mb-1">
+                {stat.value}
+              </Text>
+              <Text className="text-slate-400 text-[10px] font-medium">
+                {stat.sub}
+              </Text>
+            </View>
+          ))}
+        </ScrollView>
+
+        {/* ── SEARCH & FILTER ── */}
+        <View className="px-5 mb-4 flex-row items-center gap-3">
+          <View className="flex-1 bg-white border border-slate-200 rounded-2xl flex-row items-center px-4 py-3 shadow-sm">
+            <Ionicons name="search" size={20} color="#94a3b8" />
+            <TextInput
+              placeholder="Search projects..."
+              placeholderTextColor="#94a3b8"
+              className="flex-1 ml-2 text-sm font-medium text-slate-800"
+            />
+          </View>
+          <TouchableOpacity className="bg-white border border-slate-200 rounded-2xl flex-row items-center px-4 py-3 shadow-sm">
+            <Ionicons name="filter" size={18} color="#64748b" />
+            <Text className="text-slate-700 font-bold text-sm ml-2 mr-1">
+              Filter
+            </Text>
+            <Ionicons name="chevron-down" size={16} color="#64748b" />
+          </TouchableOpacity>
+        </View>
+
+        {/* ── FILTER PILLS ── */}
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerClassName="px-5 mb-6"
+        >
+          {filters.map((filter, idx) => (
+            <TouchableOpacity
+              key={idx}
+              className={`flex-row items-center px-4 py-2 rounded-full mr-3 border ${
+                filter.active
+                  ? "border-orange-500 bg-orange-50"
+                  : "border-slate-200 bg-white"
+              }`}
+            >
+              {filter.active ? (
+                <Ionicons
+                  name="grid"
+                  size={14}
+                  color="#f97316"
+                  className="mr-2"
+                />
+              ) : (
+                <View
+                  className="w-2 h-2 rounded-full mr-2"
+                  style={{ backgroundColor: filter.dot }}
+                />
+              )}
+              <Text
+                className={`text-xs font-bold ${filter.active ? "text-orange-600 ml-1.5" : "text-slate-600"}`}
+              >
+                {filter.label}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </ScrollView>
+
+        {/* ── PROJECT LIST ── */}
+        <View className="px-5">
+          {loading ? (
+            <Text className="text-center text-slate-500 mt-4">Loading projects...</Text>
+          ) : projects.map((project, idx) => (
+            <View
+              key={idx}
+              className="bg-white rounded-3xl p-4 mb-4 border border-slate-100 shadow-sm"
+            >
+              <View className="flex-row items-start justify-between mb-4">
+                <View className="flex-row items-center flex-1">
+                  <View
+                    className={`w-14 h-14 rounded-[18px] ${project.iconBg} items-center justify-center mr-4`}
+                  >
+                    <Ionicons
+                      name={project.icon as any}
+                      size={28}
+                      color={project.iconColor}
+                    />
+                  </View>
+                  <View className="flex-1">
+                    <Text className="text-slate-900 font-bold text-base mb-1">
+                      {project.title}
+                    </Text>
+                    <View className="flex-row items-center mb-1">
+                      <Ionicons
+                        name="business-outline"
+                        size={12}
+                        color="#94a3b8"
+                      />
+                      <Text className="text-slate-500 text-xs ml-1">
+                        {project.company}
+                      </Text>
+                    </View>
+                    <View className="flex-row items-center">
+                      <Ionicons
+                        name="calendar-outline"
+                        size={12}
+                        color="#94a3b8"
+                      />
+                      <Text className="text-slate-500 text-xs ml-1">
+                        {project.date}
+                      </Text>
+                    </View>
+                  </View>
+                </View>
+
+                <View className="items-end justify-between h-14 py-1">
+                  <TouchableOpacity>
+                    <Ionicons
+                      name="ellipsis-vertical"
+                      size={20}
+                      color="#94a3b8"
+                    />
+                  </TouchableOpacity>
+                  <View className={`px-2 py-1 rounded-md ${project.statusBg}`}>
+                    <Text
+                      className={`text-[10px] font-bold ${project.statusColor}`}
+                    >
+                      {project.status}
+                    </Text>
+                  </View>
+                </View>
+              </View>
+
+              {/* Progress Bar */}
+              <View className="flex-row items-center mt-2">
+                <View className="flex-1 h-2 bg-slate-100 rounded-full overflow-hidden mr-3">
+                  <View
+                    className="h-full rounded-full"
+                    style={{
+                      width: `${project.progress}%`,
+                      backgroundColor: project.progressColor,
+                    }}
+                  />
+                </View>
+                <Text
+                  className="text-slate-600 font-bold text-xs"
+                  style={{ color: project.progressColor }}
+                >
+                  {project.progress}%
+                </Text>
               </View>
             </View>
           ))}
         </View>
       </ScrollView>
+
+      {/* Bottom Bar */}
       <AdminBottomBar />
+
+      {/* Floating Action Button */}
+      <FAB
+        onPress={() =>
+          Alert.alert("Create Project", "Project creation is ready to connect.")
+        }
+      />
     </View>
   );
 }

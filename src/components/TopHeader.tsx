@@ -1,9 +1,11 @@
 import { Ionicons } from "@expo/vector-icons";
+import { AlignLeft } from "lucide-react-native";
 import { useRouter } from "expo-router";
 import { useRef, useState } from "react";
 import {
   Alert,
   Animated,
+  Dimensions,
   Modal,
   Pressable,
   Text,
@@ -13,26 +15,23 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useAuth } from "../auth/AuthContext";
 
-type TopHeaderProps = {
-  title: string;
-  subtitle?: string;
-};
+const { width } = Dimensions.get("window");
 
-type DropdownItem = {
-  icon: keyof typeof import("@expo/vector-icons").Ionicons.glyphMap;
-  label: string;
-  color?: string;
-  onPress: () => void;
-};
-
-export function TopHeader({ title, subtitle }: TopHeaderProps) {
+export function TopHeader() {
   const router = useRouter();
   const { user, logout } = useAuth();
+  
+  // Profile Dropdown state
   const [dropdownVisible, setDropdownVisible] = useState(false);
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const slideAnim = useRef(new Animated.Value(-8)).current;
 
-  // Derive display name — check every common API field name
+  // Sidebar (Full-Screen Menu) state
+  const [sidebarVisible, setSidebarVisible] = useState(false);
+  const sidebarSlideAnim = useRef(new Animated.Value(-width)).current;
+  const sidebarFadeAnim = useRef(new Animated.Value(0)).current;
+
+  // Derive display name
   const rawName =
     (user?.name as string) ||
     (user?.full_name as string) ||
@@ -42,13 +41,11 @@ export function TopHeader({ title, subtitle }: TopHeaderProps) {
     (user?.displayName as string) ||
     "";
 
-  // If no name field found, use the part before @ in the email
   const userEmail = (user?.email as string) || "";
   const emailUsername = userEmail.includes("@")
     ? userEmail.split("@")[0]
     : userEmail;
 
-  // Capitalise first letter of each word for clean display
   const capitalise = (str: string) =>
     str.replace(/\b\w/g, (c) => c.toUpperCase());
 
@@ -58,11 +55,11 @@ export function TopHeader({ title, subtitle }: TopHeaderProps) {
       ? capitalise(emailUsername)
       : "User";
 
-  // Always take the first letter of the resolved display name
   const avatarLetter = displayName.charAt(0).toUpperCase();
   const userRole =
-    (user?.role as string)?.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase()) || title;
+    (user?.role as string)?.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase()) || "Admin";
 
+  // -- Profile Dropdown Logic --
   const openDropdown = () => {
     setDropdownVisible(true);
     Animated.parallel([
@@ -94,8 +91,41 @@ export function TopHeader({ title, subtitle }: TopHeaderProps) {
     ]).start(() => setDropdownVisible(false));
   };
 
+  // -- Sidebar (Full Screen) Logic --
+  const openSidebar = () => {
+    setSidebarVisible(true);
+    Animated.parallel([
+      Animated.timing(sidebarFadeAnim, {
+        toValue: 1,
+        duration: 250,
+        useNativeDriver: true,
+      }),
+      Animated.timing(sidebarSlideAnim, {
+        toValue: 0,
+        duration: 250,
+        useNativeDriver: true,
+      }),
+    ]).start();
+  };
+
+  const closeSidebar = () => {
+    Animated.parallel([
+      Animated.timing(sidebarFadeAnim, {
+        toValue: 0,
+        duration: 200,
+        useNativeDriver: true,
+      }),
+      Animated.timing(sidebarSlideAnim, {
+        toValue: -width,
+        duration: 250,
+        useNativeDriver: true,
+      }),
+    ]).start(() => setSidebarVisible(false));
+  };
+
   const handleLogout = () => {
     closeDropdown();
+    closeSidebar();
     setTimeout(() => {
       Alert.alert("Log out", "Are you sure you want to log out?", [
         { text: "Cancel", style: "cancel" },
@@ -111,17 +141,17 @@ export function TopHeader({ title, subtitle }: TopHeaderProps) {
     }, 200);
   };
 
-  const dropdownItems: DropdownItem[] = [
+  const dropdownItems = [
     {
-      icon: "person-circle-outline",
+      icon: "person-circle-outline" as const,
       label: "My Profile",
       onPress: () => {
         closeDropdown();
-        Alert.alert("Profile", "Profile page coming soon.");
+        setTimeout(() => router.push("/admin/profile" as any), 150);
       },
     },
     {
-      icon: "settings-outline",
+      icon: "settings-outline" as const,
       label: "Settings",
       onPress: () => {
         closeDropdown();
@@ -129,50 +159,120 @@ export function TopHeader({ title, subtitle }: TopHeaderProps) {
       },
     },
     {
-      icon: "help-circle-outline",
-      label: "Help & Support",
-      onPress: () => {
-        closeDropdown();
-        Alert.alert("Help", "Help & Support coming soon.");
-      },
-    },
-    {
-      icon: "log-out-outline",
+      icon: "log-out-outline" as const,
       label: "Log Out",
       color: "#ef4444",
       onPress: handleLogout,
     },
   ];
 
+  const sidebarItems = [
+    { label: "Dashboard", icon: "home-outline" as const, route: "/admin" },
+    { label: "Projects", icon: "folder-outline" as const, route: "/admin/projects" },
+    { label: "Tasks", icon: "checkmark-square-outline" as const, route: "/admin/tasks" },
+    { label: "Team", icon: "people-outline" as const, route: "/admin/team" },
+    { label: "Settings", icon: "settings-outline" as const, route: null },
+  ];
+
   return (
-    <SafeAreaView edges={["top"]} className="border-b border-slate-200 bg-white">
-      <View className="flex-row items-center justify-between px-5 pb-4 pt-3">
-        {/* Left — brand */}
-        <View>
-          <Text className="text-xl font-bold text-slate-950">Q TECHX</Text>
-          {subtitle ? (
-            <Text className="mt-0.5 text-xs text-slate-500">{subtitle}</Text>
-          ) : null}
-        </View>
+    <SafeAreaView edges={["top"]} className="bg-white">
+      <View className="flex-row items-center justify-between px-5 py-4">
+        {/* Left — Hamburger Menu */}
+        <TouchableOpacity
+          activeOpacity={0.7}
+          onPress={openSidebar}
+          className="p-1 -ml-1"
+        >
+          <AlignLeft size={28} color="#1e293b" strokeWidth={2.5} />
+        </TouchableOpacity>
 
-        {/* Right — role badge + avatar */}
-        <View className="flex-row items-center gap-3">
-        
+        {/* Right — Notification + Avatar */}
+        <View className="flex-row items-center gap-5">
+          {/* Notification Bell */}
+          <TouchableOpacity activeOpacity={0.7} className="relative">
+            <Ionicons name="notifications-outline" size={26} color="#1e293b" />
+            {/* Badge */}
+            <View className="absolute -top-1 -right-1 h-4 w-4 items-center justify-center rounded-full bg-orange-500 border border-white">
+              <Text className="text-[9px] font-bold text-white">3</Text>
+            </View>
+          </TouchableOpacity>
 
-          {/* Avatar button */}
+          {/* Avatar button — tapping opens profile dropdown */}
           <TouchableOpacity
             activeOpacity={0.8}
             onPress={openDropdown}
             accessibilityLabel="Open profile menu"
             accessibilityRole="button"
-            className="h-10 w-10 items-center justify-center rounded-full bg-orange-500 shadow-sm"
+            className="h-10 w-10 items-center justify-center rounded-full bg-slate-800 shadow-sm overflow-hidden"
           >
             <Text className="text-base font-bold text-white">{avatarLetter}</Text>
           </TouchableOpacity>
         </View>
       </View>
 
-      {/* Dropdown modal */}
+      {/* ─── FULL-SCREEN MENU MODAL ─── */}
+      <Modal
+        transparent
+        visible={sidebarVisible}
+        animationType="none"
+        onRequestClose={closeSidebar}
+        statusBarTranslucent
+      >
+        <Animated.View
+          style={{
+            flex: 1,
+            backgroundColor: "#ffffff",
+            transform: [{ translateX: sidebarSlideAnim }],
+            zIndex: 2,
+            opacity: sidebarFadeAnim, // Subtle fade along with the slide
+          }}
+        >
+          <SafeAreaView edges={["top", "bottom"]} className="flex-1 bg-white">
+            <View className="px-6 py-6 border-b border-slate-100 flex-row items-center justify-between">
+              <Text className="text-xl font-black text-slate-900 tracking-tight">Q TECHX</Text>
+              {/* Close Button */}
+              <TouchableOpacity onPress={closeSidebar} className="p-2 bg-slate-50 rounded-full">
+                <Ionicons name="close" size={24} color="#64748b" />
+              </TouchableOpacity>
+            </View>
+
+            <View className="flex-1 py-4 px-2">
+              {sidebarItems.map((item, index) => (
+                <TouchableOpacity
+                  key={index}
+                  activeOpacity={0.7}
+                  onPress={() => {
+                    closeSidebar();
+                    if (item.route) router.push(item.route as any);
+                    else Alert.alert(item.label, `${item.label} coming soon!`);
+                  }}
+                  className="flex-row items-center px-6 py-5 mx-2 rounded-2xl mb-1 active:bg-slate-50"
+                >
+                  <Ionicons name={item.icon} size={24} color="#f97316" />
+                  <Text className="text-slate-700 font-bold text-lg ml-5">
+                    {item.label}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+
+            <View className="px-8 py-8 border-t border-slate-100">
+              <TouchableOpacity
+                activeOpacity={0.7}
+                onPress={handleLogout}
+                className="flex-row items-center bg-red-50 p-4 rounded-2xl justify-center"
+              >
+                <Ionicons name="log-out-outline" size={22} color="#ef4444" />
+                <Text className="text-red-500 font-bold text-base ml-3">
+                  Log Out
+                </Text>
+              </TouchableOpacity>
+            </View>
+          </SafeAreaView>
+        </Animated.View>
+      </Modal>
+
+      {/* ─── PROFILE DROPDOWN MODAL ─── */}
       <Modal
         transparent
         visible={dropdownVisible}
@@ -180,18 +280,13 @@ export function TopHeader({ title, subtitle }: TopHeaderProps) {
         onRequestClose={closeDropdown}
         statusBarTranslucent
       >
-        {/* Backdrop — tap to close */}
-        <Pressable
-          className="flex-1"
-          onPress={closeDropdown}
-        >
-          {/* Dropdown panel */}
+        <Pressable className="flex-1" onPress={closeDropdown}>
           <Animated.View
             style={{
               opacity: fadeAnim,
               transform: [{ translateY: slideAnim }],
               position: "absolute",
-              top: 100,
+              top: 90,
               right: 16,
               minWidth: 220,
               borderRadius: 16,
@@ -205,7 +300,7 @@ export function TopHeader({ title, subtitle }: TopHeaderProps) {
           >
             {/* User info header */}
             <View className="border-b border-slate-100 px-4 py-4">
-              <View className="mb-2 h-12 w-12 items-center justify-center rounded-full bg-orange-500">
+              <View className="mb-2 h-12 w-12 items-center justify-center rounded-full bg-slate-800">
                 <Text className="text-xl font-bold text-white">{avatarLetter}</Text>
               </View>
               <Text className="text-sm font-bold text-slate-900" numberOfLines={1}>

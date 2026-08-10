@@ -5,23 +5,40 @@ import { SafeAreaView } from "react-native-safe-area-context";
 
 type Tab = {
   label: string;
-  href: "/admin" | "/employee";
-  icon: "shield-checkmark-outline" | "briefcase-outline";
-  activeIcon: "shield-checkmark" | "briefcase";
+  href:
+    "/employee" | "/employee/tasks" | "/employee/attendance" | "/employee/more";
+  icon:
+    | "home-outline"
+    | "checkmark-circle-outline"
+    | "calendar-outline"
+    | "apps-outline";
+  activeIcon: "home" | "checkmark-circle" | "calendar" | "apps";
 };
 
 const tabs: Tab[] = [
   {
-    label: "Admin",
-    href: "/admin",
-    icon: "shield-checkmark-outline",
-    activeIcon: "shield-checkmark",
+    label: "Home",
+    href: "/employee",
+    icon: "home-outline",
+    activeIcon: "home",
   },
   {
-    label: "Employee",
-    href: "/employee",
-    icon: "briefcase-outline",
-    activeIcon: "briefcase",
+    label: "Tasks",
+    href: "/employee/tasks",
+    icon: "checkmark-circle-outline",
+    activeIcon: "checkmark-circle",
+  },
+  {
+    label: "Attendance",
+    href: "/employee/attendance",
+    icon: "calendar-outline",
+    activeIcon: "calendar",
+  },
+  {
+    label: "More",
+    href: "/employee/more",
+    icon: "apps-outline",
+    activeIcon: "apps",
   },
 ];
 
@@ -30,10 +47,13 @@ export function BottomHome() {
   const pathname = usePathname();
 
   return (
-    <SafeAreaView edges={["bottom"]} className="border-t border-slate-200 bg-white">
+    <SafeAreaView
+      edges={["bottom"]}
+      className="border-t border-slate-200 bg-white"
+    >
       <View className="flex-row items-center justify-around px-3 pb-1 pt-2">
         {tabs.map((tab) => {
-          const isActive = pathname.startsWith(`/${tab.href.split("/")[1]}`);
+          const isActive = pathname === tab.href;
           const iconColor = isActive ? "#1d4ed8" : "#64748b";
 
           return (
@@ -43,10 +63,24 @@ export function BottomHome() {
               accessibilityRole="tab"
               accessibilityState={{ selected: isActive }}
               className="min-w-[88px] items-center rounded-xl px-3 py-1 active:bg-blue-50"
-              onPress={() => router.replace(tab.href)}
+              onPress={() => {
+                if (!isActive) {
+                  router.replace(tab.href);
+                }
+              }}
             >
-              <Ionicons name={isActive ? tab.activeIcon : tab.icon} size={22} color={iconColor} />
-              <Text className={isActive ? "mt-1 text-xs font-bold text-blue-700" : "mt-1 text-xs text-slate-500"}>
+              <Ionicons
+                name={isActive ? tab.activeIcon : tab.icon}
+                size={22}
+                color={iconColor}
+              />
+              <Text
+                className={
+                  isActive
+                    ? "mt-1 text-xs font-bold text-blue-700"
+                    : "mt-1 text-xs text-slate-500"
+                }
+              >
                 {tab.label}
               </Text>
             </Pressable>
