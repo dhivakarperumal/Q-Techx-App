@@ -31,10 +31,10 @@ const routeOptions: RouteOption[] = [
     bg: "#ecfeff",
   },
   {
-    label: "Calendar",
+    label: "Office Calendar",
     icon: "calendar-number-outline",
-    subtitle: "Holidays, events & schedules",
-    href: "/employee/calendar",
+    subtitle: "Company events, holidays & schedules",
+    href: "/employee/office-calendar",
     color: "#7c3aed",
     bg: "#f5f3ff",
   },
