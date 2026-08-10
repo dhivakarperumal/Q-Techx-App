@@ -39,6 +39,14 @@ const routeOptions: RouteOption[] = [
     bg: "#f5f3ff",
   },
   {
+    label: "My Calendar",
+    icon: "calendar-outline",
+    subtitle: "Plan your day and track your events",
+    href: "/employee/my-calendar",
+    color: "#2563eb",
+    bg: "#eff6ff",
+  },
+  {
     label: "Trainee & Internship",
     icon: "school-outline",
     subtitle: "Training programs & internship info",
