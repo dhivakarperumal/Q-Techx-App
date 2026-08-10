@@ -8,16 +8,18 @@ type Tab = {
   href:
     | "/employee"
     | "/employee/tasks"
+    | "/employee/projects"
     | "/employee/leave"
     | "/employee/attendance"
     | "/employee/more";
   icon:
     | "home-outline"
     | "checkmark-circle-outline"
+    | "folder-outline"
     | "calendar-clear-outline"
     | "calendar-outline"
     | "apps-outline";
-  activeIcon: "home" | "checkmark-circle" | "calendar-clear" | "calendar" | "apps";
+  activeIcon: "home" | "checkmark-circle" | "folder" | "calendar-clear" | "calendar" | "apps";
 };
 
 const tabs: Tab[] = [
@@ -32,6 +34,12 @@ const tabs: Tab[] = [
     href: "/employee/tasks",
     icon: "checkmark-circle-outline",
     activeIcon: "checkmark-circle",
+  },
+  {
+    label: "Project",
+    href: "/employee/projects",
+    icon: "folder-outline",
+    activeIcon: "folder",
   },
   {
     label: "Leave",

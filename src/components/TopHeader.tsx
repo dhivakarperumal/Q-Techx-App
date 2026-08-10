@@ -1,23 +1,28 @@
 import { Ionicons } from "@expo/vector-icons";
-import { AlignLeft } from "lucide-react-native";
 import { useRouter } from "expo-router";
+import { AlignLeft } from "lucide-react-native";
 import { useRef, useState } from "react";
 import {
-  Alert,
-  Animated,
-  Dimensions,
-  Modal,
-  Pressable,
-  Text,
-  TouchableOpacity,
-  View,
+    Alert,
+    Animated,
+    Dimensions,
+    Modal,
+    Pressable,
+    Text,
+    TouchableOpacity,
+    View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useAuth } from "../auth/AuthContext";
 
 const { width } = Dimensions.get("window");
 
-export function TopHeader() {
+type TopHeaderProps = {
+  title?: string;
+  subtitle?: string;
+};
+
+export function TopHeader({ title, subtitle }: TopHeaderProps) {
   const router = useRouter();
   const { user, logout } = useAuth();
   
@@ -169,7 +174,7 @@ export function TopHeader() {
   const sidebarItems = [
     { label: "Dashboard", icon: "home-outline" as const, route: "/admin" },
     { label: "Projects", icon: "folder-outline" as const, route: "/admin/projects" },
-    { label: "Tasks", icon: "checkmark-square-outline" as const, route: "/admin/tasks" },
+    { label: "Tasks", icon: "checkmark-outline" as const, route: "/admin/tasks" },
     { label: "Team", icon: "people-outline" as const, route: "/admin/team" },
     { label: "Settings", icon: "settings-outline" as const, route: null },
   ];
@@ -185,6 +190,11 @@ export function TopHeader() {
         >
           <AlignLeft size={28} color="#1e293b" strokeWidth={2.5} />
         </TouchableOpacity>
+
+        <View className="mx-3 flex-1">
+          <Text className="text-base font-black text-slate-900">{title || "Q TECHX"}</Text>
+          {subtitle ? <Text className="mt-0.5 text-xs text-slate-500">{subtitle}</Text> : null}
+        </View>
 
         {/* Right — Notification + Avatar */}
         <View className="flex-row items-center gap-5">
