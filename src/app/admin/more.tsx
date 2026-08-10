@@ -341,6 +341,34 @@ export default function MoreScreen() {
                 color="rgba(255,255,255,0.6)"
               />
             </TouchableOpacity>
+
+            {/* Attendance */}
+            <TouchableOpacity
+              activeOpacity={0.85}
+              onPress={() => router.push("/admin/attendance" as any)}
+              style={{
+                borderRadius: 20,
+                backgroundColor: "#0f766e",
+                padding: 18,
+                flexDirection: "row",
+                alignItems: "center",
+                shadowColor: "#0f766e",
+                shadowOpacity: 0.3,
+                shadowRadius: 10,
+                shadowOffset: { width: 0, height: 5 },
+                elevation: 5,
+              }}
+            >
+              <View style={{ width: 52, height: 52, borderRadius: 16, backgroundColor: "rgba(255,255,255,0.22)", alignItems: "center", justifyContent: "center" }}>
+                <Ionicons name="checkmark-done-outline" size={26} color="#fff" />
+              </View>
+              <View style={{ flex: 1, marginLeft: 16 }}>
+                <Text style={{ color: "rgba(255,255,255,0.65)", fontSize: 10, fontWeight: "700", letterSpacing: 1, textTransform: "uppercase" }}>People</Text>
+                <Text style={{ color: "#fff", fontSize: 17, fontWeight: "800", marginTop: 2 }}>Attendance</Text>
+                <Text style={{ color: "rgba(255,255,255,0.7)", fontSize: 12, marginTop: 2 }}>Track presence, timesheets & leave</Text>
+              </View>
+              <Ionicons name="chevron-forward" size={20} color="rgba(255,255,255,0.6)" />
+            </TouchableOpacity>
           </View>
         </View>
 
