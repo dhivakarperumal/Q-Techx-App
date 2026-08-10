@@ -23,6 +23,14 @@ const routeOptions: RouteOption[] = [
     bg: "#f0fdf4",
   },
   {
+    label: "Meetings",
+    icon: "videocam-outline",
+    subtitle: "View your scheduled meetings",
+    href: "/employee/meetings",
+    color: "#0891b2",
+    bg: "#ecfeff",
+  },
+  {
     label: "Calendar",
     icon: "calendar-number-outline",
     subtitle: "Holidays, events & schedules",
