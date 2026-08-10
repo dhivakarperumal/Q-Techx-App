@@ -49,7 +49,28 @@ function AssignmentModal({ visible, member, employees, onClose, onSaved }: { vis
     if (!member || !employeeId) return Alert.alert("Select employee", "Please select an employee to assign.");
     setSaving(true);
     try {
-      await api.post(`/trainee-intern/${member.uuid}/assign`, { employee_id: employeeId });
+      await api.post("/trainee-assignments", {
+        trainee_id: member.id || member.uuid,
+        employee_id: employeeId,
+        trainee_name: member.full_name,
+        trainee_code: member.person_id,
+        trainee_email: member.email_address,
+        trainee_phone: member.mobile_number,
+        trainee_department: member.department,
+        trainee_designation: member.designation,
+        trainee_course: member.course,
+        trainee_joining_date: joiningDateOf(member),
+        person_type: member.type,
+        person_name: member.full_name,
+        person_id: member.person_id,
+        person_email: member.email_address,
+        person_phone: member.mobile_number,
+        department: member.department,
+        designation: member.designation,
+        course: member.course,
+        joining_date: joiningDateOf(member),
+        status: "Active",
+      });
       Alert.alert("Assigned", "Employee assigned successfully.");
       onSaved();
       onClose();
@@ -57,19 +78,7 @@ function AssignmentModal({ visible, member, employees, onClose, onSaved }: { vis
       Alert.alert("Unable to assign employee", error?.message || "The assignment endpoint may not be available on the server.");
     } finally { setSaving(false); }
   };
-  const unassign = async () => {
-    if (!member) return;
-    setSaving(true);
-    try {
-      await api.delete(`/trainee-intern/${member.uuid}/assign`);
-      Alert.alert("Unassigned", "Employee assignment removed.");
-      onSaved();
-      onClose();
-    } catch (error: any) {
-      Alert.alert("Unable to unassign employee", error?.message || "Please try again.");
-    } finally { setSaving(false); }
-  };
-  return <Modal visible={visible} animationType="slide" transparent onRequestClose={onClose}><View className="flex-1 justify-end bg-black/50"><View className="max-h-[80%] rounded-t-3xl bg-white p-5"><View className="flex-row items-center justify-between"><View><Text className="text-xl font-black text-slate-900">Assign Employee</Text><Text className="mt-1 text-xs text-slate-500">{member ? nameOf(member) : ""}</Text></View><Pressable onPress={onClose}><Ionicons name="close-circle" size={28} color="#94a3b8" /></Pressable></View><ScrollView className="mt-4" contentContainerStyle={{ paddingBottom: 10 }}>{employees.map((employee) => <Pressable key={String(employee.employee_id)} onPress={() => setEmployeeId(String(employee.employee_id))} className={`mb-2 flex-row items-center rounded-2xl border p-3 ${employeeId === String(employee.employee_id) ? "border-orange-400 bg-orange-50" : "border-slate-200 bg-white"}`}><View className="h-10 w-10 items-center justify-center rounded-xl bg-blue-50"><Text className="font-black text-blue-600">{initials(employeeName(employee))}</Text></View><View className="ml-3 flex-1"><Text className="font-bold text-slate-800">{employeeName(employee)}</Text><Text className="mt-1 text-xs text-slate-500">{employee.employee_code || ""}{employee.designation ? ` - ${employee.designation}` : ""}</Text></View><Ionicons name={employeeId === String(employee.employee_id) ? "radio-button-on" : "radio-button-off"} size={21} color={employeeId === String(employee.employee_id) ? "#f97316" : "#94a3b8"} /></Pressable>)}</ScrollView><View className="mt-3 flex-row gap-3"><Pressable disabled={saving} onPress={unassign} className="flex-1 items-center rounded-xl border border-rose-200 py-3"><Text className="font-bold text-rose-600">Unassign</Text></Pressable><Pressable disabled={saving} onPress={submit} className="flex-1 items-center rounded-xl bg-orange-500 py-3"><Text className="font-bold text-white">{saving ? "Saving..." : "Assign"}</Text></Pressable></View></View></View></Modal>;
+  return <Modal visible={visible} animationType="slide" transparent onRequestClose={onClose}><View className="flex-1 justify-end bg-black/50"><View className="max-h-[80%] rounded-t-3xl bg-white p-5"><View className="flex-row items-center justify-between"><View><Text className="text-xl font-black text-slate-900">Assign Employee</Text><Text className="mt-1 text-xs text-slate-500">{member ? nameOf(member) : ""}</Text></View><Pressable onPress={onClose}><Ionicons name="close-circle" size={28} color="#94a3b8" /></Pressable></View><ScrollView className="mt-4" contentContainerStyle={{ paddingBottom: 10 }}>{employees.map((employee) => <Pressable key={String(employee.employee_id)} onPress={() => setEmployeeId(String(employee.employee_id))} className={`mb-2 flex-row items-center rounded-2xl border p-3 ${employeeId === String(employee.employee_id) ? "border-orange-400 bg-orange-50" : "border-slate-200 bg-white"}`}><View className="h-10 w-10 items-center justify-center rounded-xl bg-blue-50"><Text className="font-black text-blue-600">{initials(employeeName(employee))}</Text></View><View className="ml-3 flex-1"><Text className="font-bold text-slate-800">{employeeName(employee)}</Text><Text className="mt-1 text-xs text-slate-500">{employee.employee_code || ""}{employee.designation ? ` - ${employee.designation}` : ""}</Text></View><Ionicons name={employeeId === String(employee.employee_id) ? "radio-button-on" : "radio-button-off"} size={21} color={employeeId === String(employee.employee_id) ? "#f97316" : "#94a3b8"} /></Pressable>)}</ScrollView><Pressable disabled={saving} onPress={submit} className="mt-3 items-center rounded-xl bg-orange-500 py-3"><Text className="font-bold text-white">{saving ? "Saving..." : "Assign / Reassign"}</Text></Pressable></View></View></Modal>;
 }
 
 function TraineeForm({ visible, member, onClose, onSaved }: { visible: boolean; member: Member | null; onClose: () => void; onSaved: () => void }) {
@@ -87,7 +96,7 @@ function DetailModal({ member, onClose, onEdit, onDelete }: { member: Member; on
 
 export default function AdminTraineeScreen() {
   const [members, setMembers] = useState<Member[]>([]); const [employees, setEmployees] = useState<Employee[]>([]); const [loading, setLoading] = useState(true); const [refreshing, setRefreshing] = useState(false); const [search, setSearch] = useState(""); const [type, setType] = useState("All"); const [status, setStatus] = useState("All"); const [formVisible, setFormVisible] = useState(false); const [assignmentVisible, setAssignmentVisible] = useState(false); const [editing, setEditing] = useState<Member | null>(null); const [selected, setSelected] = useState<Member | null>(null); const [assignmentMember, setAssignmentMember] = useState<Member | null>(null);
-  const loadMembers = useCallback(async (refresh = false) => { if (refresh) setRefreshing(true); else setLoading(true); try { const query = new URLSearchParams({ page: "1", limit: "100" }); if (search) query.set("search", search); if (type !== "All") query.set("type", type); if (status !== "All") query.set("status", status); const [membersResponse, employeesResponse] = await Promise.all([api.get(`/trainee-intern?${query.toString()}`), api.get("/employees?limit=200")]); setMembers(membersResponse.data?.data || []); setEmployees(employeesResponse.data?.data || employeesResponse.data?.employees || []); } catch (error: any) { Alert.alert("Unable to load members", error?.message || "Please try again."); } finally { setLoading(false); setRefreshing(false); } }, [search, type, status]);
+  const loadMembers = useCallback(async (refresh = false) => { if (refresh) setRefreshing(true); else setLoading(true); try { const query = new URLSearchParams({ page: "1", limit: "100" }); if (search) query.set("search", search); if (type !== "All") query.set("type", type); if (status !== "All") query.set("status", status); const membersResponse = await api.get(`/trainee-intern?${query.toString()}`); setMembers(membersResponse.data?.data || []); try { const employeesResponse = await api.get("/trainee-assignments/available-employees"); setEmployees(employeesResponse.data?.data || []); } catch { const employeesResponse = await api.get("/employees?limit=200"); setEmployees(employeesResponse.data?.data || employeesResponse.data?.employees || []); } } catch (error: any) { Alert.alert("Unable to load members", error?.message || "Please try again."); } finally { setLoading(false); setRefreshing(false); } }, [search, type, status]);
   useEffect(() => { loadMembers(); }, [loadMembers]);
   const remove = (member: Member) => Alert.alert("Delete member", `Delete ${nameOf(member)}?`, [{ text: "Cancel", style: "cancel" }, { text: "Delete", style: "destructive", onPress: async () => { try { await api.delete(`/trainee-intern/${member.uuid}`); setSelected(null); loadMembers(true); } catch (error: any) { Alert.alert("Delete failed", error?.message || "Please try again."); } } }]);
   const stats = { total: members.length, active: members.filter((item) => item.status === "Active").length, trainees: members.filter((item) => item.type === "Trainee").length, interns: members.filter((item) => item.type === "Intern").length };
