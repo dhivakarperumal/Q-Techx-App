@@ -31,6 +31,14 @@ const routeOptions: RouteOption[] = [
     bg: "#f5f3ff",
   },
   {
+    label: "Leave",
+    icon: "calendar-clear-outline",
+    subtitle: "Apply for leave & view request history",
+    href: "/employee/leave",
+    color: "#2563eb",
+    bg: "#eff6ff",
+  },
+  {
     label: "Trainee & Internship",
     icon: "school-outline",
     subtitle: "Training programs & internship info",

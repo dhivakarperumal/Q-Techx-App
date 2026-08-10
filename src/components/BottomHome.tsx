@@ -6,13 +6,18 @@ import { SafeAreaView } from "react-native-safe-area-context";
 type Tab = {
   label: string;
   href:
-    "/employee" | "/employee/tasks" | "/employee/attendance" | "/employee/more";
+    | "/employee"
+    | "/employee/tasks"
+    | "/employee/leave"
+    | "/employee/attendance"
+    | "/employee/more";
   icon:
     | "home-outline"
     | "checkmark-circle-outline"
+    | "calendar-clear-outline"
     | "calendar-outline"
     | "apps-outline";
-  activeIcon: "home" | "checkmark-circle" | "calendar" | "apps";
+  activeIcon: "home" | "checkmark-circle" | "calendar-clear" | "calendar" | "apps";
 };
 
 const tabs: Tab[] = [
@@ -27,6 +32,12 @@ const tabs: Tab[] = [
     href: "/employee/tasks",
     icon: "checkmark-circle-outline",
     activeIcon: "checkmark-circle",
+  },
+  {
+    label: "Leave",
+    href: "/employee/leave",
+    icon: "calendar-clear-outline",
+    activeIcon: "calendar-clear",
   },
   {
     label: "Attendance",
@@ -62,7 +73,7 @@ export function BottomHome() {
               accessibilityLabel={tab.label}
               accessibilityRole="tab"
               accessibilityState={{ selected: isActive }}
-              className="min-w-[88px] items-center rounded-xl px-3 py-1 active:bg-blue-50"
+              className="flex-1 items-center rounded-xl px-1 py-1 active:bg-blue-50"
               onPress={() => {
                 if (!isActive) {
                   router.replace(tab.href);
