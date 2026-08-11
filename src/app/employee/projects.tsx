@@ -64,7 +64,11 @@ function StatusBadge({ status }: { status?: string }) {
 export default function EmployeeProjectsScreen() {
   const router = useRouter();
   const { user } = useAuth();
-  const [projects, setProjects] = useState<Project[]>([]);
+  const [assignedProjects, setAssignedProjects] = useState<Project[]>([]);
+  const [unassignedProjects, setUnassignedProjects] = useState<Project[]>([]);
+  const [projectTab, setProjectTab] = useState<"assigned" | "unassigned">(
+    "assigned",
+  );
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState("All");
   const [loading, setLoading] = useState(true);
@@ -82,9 +86,34 @@ export default function EmployeeProjectsScreen() {
       const allProjects: Project[] = projectsResponse.data?.data || [];
       const groups: AssignmentGroup[] = assignmentsResponse.data?.grouped || [];
       const userId = employeeReference(user);
-      const userName = String(user?.profileName || user?.name || user?.username || "").toLowerCase();
-      const assigned = new Set(groups.filter((group) => group.employees?.some((employee) => String(employee.employee_id) === userId)).map((group) => group.project_uuid));
-      setProjects(allProjects.filter((project) => assigned.has(project.uuid) || (project.project_manager || "").toLowerCase() === userName));
+      const userName = String(
+        user?.profileName || user?.name || user?.username || "",
+      ).toLowerCase();
+
+      const assignedIds = new Set<string>(
+        groups
+          .filter((group) =>
+            group.employees?.some(
+              (employee) => String(employee.employee_id) === String(userId),
+            ),
+          )
+          .map((group) => group.project_uuid)
+          .filter(Boolean) as string[],
+      );
+
+      const assigned = allProjects.filter(
+        (project) =>
+          assignedIds.has(project.uuid) ||
+          (project.project_manager || "").toLowerCase() === userName,
+      );
+      const unassigned = allProjects.filter(
+        (project) =>
+          !assignedIds.has(project.uuid) &&
+          (project.project_manager || "").toLowerCase() !== userName,
+      );
+
+      setAssignedProjects(assigned);
+      setUnassignedProjects(unassigned);
     } catch (requestError: any) {
       setError(requestError?.message || "Unable to load assigned projects.");
     } finally {
@@ -95,17 +124,39 @@ export default function EmployeeProjectsScreen() {
 
   useEffect(() => { fetchProjects(); }, [fetchProjects]);
 
-  const filteredProjects = useMemo(() => projects.filter((project) => {
-    const query = search.toLowerCase();
-    const matchesSearch = !query || [project.project_name, project.client_name, project.project_manager, project.project_code].some((value) => (value || "").toLowerCase().includes(query));
-    return matchesSearch && (status === "All" || project.current_status === status);
-  }), [projects, search, status]);
+  const currentProjects =
+    projectTab === "assigned" ? assignedProjects : unassignedProjects;
+
+  const filteredProjects = useMemo(
+    () =>
+      currentProjects.filter((project) => {
+        const query = search.toLowerCase();
+        const matchesSearch =
+          !query ||
+          [
+            project.project_name,
+            project.client_name,
+            project.project_manager,
+            project.project_code,
+          ].some((value) => (value || "").toLowerCase().includes(query));
+        return matchesSearch && (status === "All" || project.current_status === status);
+      }),
+    [currentProjects, search, status],
+  );
 
   return <View className="flex-1 bg-slate-50">
     <TopHeader title="Projects" subtitle="Your assigned work" />
     <ScrollView className="flex-1" contentContainerStyle={{ padding: 20, paddingBottom: 32 }} refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => fetchProjects(true)} tintColor="#2563eb" />}>
       <View className="flex-row items-center justify-between"><View><Text className="text-3xl font-black text-slate-950">My projects</Text><Text className="mt-1 text-sm text-slate-500">Track the work you are assigned to.</Text></View><View className="h-12 w-12 items-center justify-center rounded-2xl bg-orange-100"><Ionicons name="folder-open-outline" size={24} color="#ea580c" /></View></View>
       <View className="mt-5 flex-row items-center rounded-2xl border border-slate-200 bg-white px-4 py-3"><Ionicons name="search-outline" size={19} color="#94a3b8" /><TextInput value={search} onChangeText={setSearch} placeholder="Search projects..." placeholderTextColor="#94a3b8" className="ml-2 flex-1 text-sm text-slate-800" /></View>
+      <View className="mt-4 flex-row rounded-2xl border border-slate-200 bg-white p-1">
+        <Pressable onPress={() => setProjectTab("assigned")} className={`flex-1 rounded-xl px-3 py-2 ${projectTab === "assigned" ? "bg-orange-500" : "bg-white"}`}>
+          <Text className={`text-center text-xs font-black ${projectTab === "assigned" ? "text-white" : "text-slate-700"}`}>Assigned Projects</Text>
+        </Pressable>
+        <Pressable onPress={() => setProjectTab("unassigned")} className={`flex-1 rounded-xl px-3 py-2 ${projectTab === "unassigned" ? "bg-orange-500" : "bg-white"}`}>
+          <Text className={`text-center text-xs font-black ${projectTab === "unassigned" ? "text-white" : "text-slate-700"}`}>Unassigned Projects</Text>
+        </Pressable>
+      </View>
       <ScrollView horizontal showsHorizontalScrollIndicator={false} className="mt-4" contentContainerStyle={{ paddingRight: 12 }}>{statuses.map((item) => <Pressable key={item} onPress={() => setStatus(item)} className={`mr-2 rounded-full border px-4 py-2 ${status === item ? "border-blue-600 bg-blue-600" : "border-slate-200 bg-white"}`}><Text className={`text-xs font-bold ${status === item ? "text-white" : "text-slate-600"}`}>{item}</Text></Pressable>)}</ScrollView>
       {loading ? <View className="items-center py-24"><ActivityIndicator size="large" color="#2563eb" /><Text className="mt-3 text-sm text-slate-500">Loading your projects...</Text></View> : error ? <View className="mt-6 rounded-2xl border border-rose-200 bg-rose-50 p-5"><Text className="font-semibold text-rose-700">{error}</Text><Pressable onPress={() => fetchProjects()} className="mt-4 self-start rounded-xl bg-rose-600 px-4 py-2"><Text className="font-bold text-white">Try again</Text></Pressable></View> : <View className="mt-5 gap-3">{filteredProjects.map((project) => <Pressable key={project.uuid} onPress={() => router.push(`/employee/projects/${project.uuid}` as any)} className="rounded-2xl border border-slate-200 bg-white p-4 active:bg-blue-50"><View className="flex-row items-start justify-between"><View className="mr-3 flex-1"><Text className="text-base font-black text-slate-900" numberOfLines={1}>{project.project_name || "Untitled project"}</Text><Text className="mt-1 text-xs font-semibold text-slate-400">{project.project_code || "Project"}{project.client_name ? `  ·  ${project.client_name}` : ""}</Text></View><StatusBadge status={project.current_status} /></View><View className="mt-4 flex-row items-center justify-between"><Text className="text-xs text-slate-500">Started {formatDate(project.project_start_date)}</Text><View className="flex-row items-center"><Text className="mr-1 text-xs font-bold text-blue-600">View details</Text><Ionicons name="chevron-forward" size={16} color="#2563eb" /></View></View></Pressable>)}{filteredProjects.length === 0 && <View className="rounded-2xl border border-dashed border-slate-300 bg-white p-6"><Text className="text-center font-semibold text-slate-600">No projects found</Text><Text className="mt-1 text-center text-sm text-slate-400">Try another search or status filter.</Text></View>}</View>}
     </ScrollView>
