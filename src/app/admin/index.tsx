@@ -205,9 +205,155 @@ export default function AdminDashboard() {
         </View>
       </View>
     </View>
-    <View className="mb-5 rounded-3xl border border-gray-200 bg-[#fafafa] p-5 shadow-sm"><SectionHeader title="Trainee & Interns" /><View className="mb-4 flex-row items-center"><View className="h-24 w-24 items-center justify-center rounded-full border-[12px] border-orange-500"><Text className="text-xl font-black text-black">{traineeTotal}</Text></View><View className="ml-5 flex-1"><StatusList items={dashboard?.traineeStats || []} labelKey="type" /></View></View></View>
-    <View className="mb-5 gap-4"><View className="rounded-3xl border border-gray-200 bg-[#fafafa] p-5 shadow-sm"><SectionHeader title="Task Status" action="View all" onPress={() => router.push("/admin/tasks")} /><StatusList items={dashboard?.taskStats || []} labelKey="status" /></View><View className="rounded-3xl border border-gray-200 bg-[#fafafa] p-5 shadow-sm"><SectionHeader title="Project Health" action="View all" onPress={() => router.push("/admin/projects")} /><StatusList items={dashboard?.projectStats || []} labelKey="current_status" /></View><View className="rounded-3xl border border-gray-200 bg-[#fafafa] p-5 shadow-sm"><SectionHeader title="Client Follow-ups" action="View all" onPress={() => router.push("/admin/clients")} /><StatusList items={dashboard?.clientFollowUps || []} labelKey="follow_up_status" /></View></View>
-    <View className="mb-5 rounded-3xl border border-gray-200 bg-[#fafafa] p-5 shadow-sm"><SectionHeader title="Recent Activity" />{(dashboard?.recentActivity || []).length === 0 ? <Text className="text-sm text-gray-400">No recent activity found.</Text> : dashboard?.recentActivity?.slice(0, 5).map((activity, index) => <View key={`${activity.title}-${index}`} className="flex-row items-center border-b border-gray-200 py-3"><View className="h-10 w-10 items-center justify-center rounded-2xl" style={{ backgroundColor: `${palette[index % palette.length]}18` }}><Ionicons name="pulse-outline" size={18} color={palette[index % palette.length]} /></View><View className="ml-3 flex-1"><Text className="text-sm font-bold text-black" numberOfLines={1}>{activity.title || "Activity"}</Text><Text className="mt-1 text-[11px] text-gray-400" numberOfLines={1}>{activity.meta || activity.user || "System"} - {activity.time ? dateLabel(activity.time) : "Recently"}</Text></View></View>)}</View>
-    <View className="mb-4 rounded-3xl border border-gray-200 bg-[#fafafa] p-5 shadow-sm"><SectionHeader title="Upcoming Events" action="Calendar" onPress={() => router.push("/admin/calendar")} />{(dashboard?.upcomingEvents || []).length === 0 ? <Text className="text-sm text-gray-400">No upcoming events.</Text> : dashboard?.upcomingEvents?.map((event, index) => <View key={`${event.title}-${index}`} className="mb-3 flex-row items-center rounded-2xl bg-white border border-gray-100 p-3"><View className="mr-3 h-12 w-12 items-center justify-center rounded-xl bg-orange-100"><Ionicons name="calendar-outline" size={20} color="#f97316" /></View><View className="flex-1"><Text className="font-bold text-black" numberOfLines={1}>{event.title || "Event"}</Text><Text className="mt-1 text-xs text-gray-500">{dateLabel(event.startDate)}{event.startTime ? ` - ${event.startTime}` : " - All day"}</Text></View><Ionicons name="chevron-forward" size={16} color="#94a3b8" /></View>)}</View>
+    <View className="mb-5 overflow-hidden rounded-3xl bg-[#fff7ed] shadow-md">
+      {/* Orange top accent */}
+      <LinearGradient
+        colors={["#fb923c", "#f97316"]}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 0 }}
+        className="h-1.5 w-full"
+      />
+
+      <View className="p-5">
+        <SectionHeader title="Trainee & Interns" />
+
+        <View className="flex-row items-center">
+          {/* Total */}
+          <View className="h-24 w-24 items-center justify-center rounded-full border-[10px] border-orange-500 bg-white">
+            <Text className="text-xl font-black text-black">
+              {traineeTotal}
+            </Text>
+          </View>
+
+          {/* Status */}
+          <View className="ml-5 flex-1">
+            <StatusList
+              items={dashboard?.traineeStats || []}
+              labelKey="type"
+            />
+          </View>
+        </View>
+      </View>
+    </View>
+    {/* <View className="overflow-hidden rounded-3xl bg-white shadow-md">
+      <View className="h-1.5 w-full bg-orange-500" />
+
+      <View className="p-5">
+        <SectionHeader
+          title="Task Status"
+          action="View all"
+          onPress={() => router.push("/admin/tasks")}
+        />
+
+        <StatusList
+          items={dashboard?.taskStats || []}
+          labelKey="status"
+        />
+      </View>
+    </View> */}
+
+     <View className="mb-4 overflow-hidden rounded-3xl bg-white shadow-md">
+      <View className="h-1.5 w-full bg-orange-500" />
+
+      <View className="p-5">
+        <SectionHeader
+          title="Upcoming Events"
+          action="Calendar"
+          onPress={() => router.push("/admin/calendar")}
+        />
+
+        {(dashboard?.upcomingEvents || []).length === 0 ? (
+          <Text className="text-sm text-gray-400">
+            No upcoming events.
+          </Text>
+        ) : (
+          dashboard?.upcomingEvents?.map((event, index) => (
+            <View
+              key={`${event.title}-${index}`}
+              className="mb-3 flex-row items-center rounded-2xl bg-gray-50 p-3"
+            >
+              <View className="mr-3 h-12 w-12 items-center justify-center rounded-xl bg-black">
+                <Ionicons
+                  name="calendar-outline"
+                  size={20}
+                  color="#f97316"
+                />
+              </View>
+
+              <View className="flex-1">
+                <Text
+                  className="font-bold text-black"
+                  numberOfLines={1}
+                >
+                  {event.title || "Event"}
+                </Text>
+
+                <Text className="mt-1 text-xs text-gray-500">
+                  {dateLabel(event.startDate)}
+                  {event.startTime
+                    ? ` - ${event.startTime}`
+                    : " - All day"}
+                </Text>
+              </View>
+
+              <Ionicons
+                name="chevron-forward"
+                size={16}
+                color="#f97316"
+              />
+            </View>
+          ))
+        )}
+      </View>
+    </View>
+    
+    <View className="mb-5 overflow-hidden rounded-3xl bg-[#fff7ed] shadow-md">
+      <View className="h-1.5 w-full bg-orange-500" />
+
+      <View className="p-5">
+        <SectionHeader title="Recent Activity" />
+
+        {(dashboard?.recentActivity || []).length === 0 ? (
+          <Text className="text-sm text-gray-400">
+            No recent activity found.
+          </Text>
+        ) : (
+          dashboard?.recentActivity?.slice(0, 5).map((activity, index) => (
+            <View
+              key={`${activity.title}-${index}`}
+              className="flex-row items-center border-b border-orange-100 py-3"
+            >
+              <View className="h-10 w-10 items-center justify-center rounded-2xl bg-black">
+                <Ionicons
+                  name="pulse-outline"
+                  size={18}
+                  color="#f97316"
+                />
+              </View>
+
+              <View className="ml-3 flex-1">
+                <Text
+                  className="text-sm font-bold text-black"
+                  numberOfLines={1}
+                >
+                  {activity.title || "Activity"}
+                </Text>
+
+                <Text
+                  className="mt-1 text-[11px] text-gray-400"
+                  numberOfLines={1}
+                >
+                  {activity.meta || activity.user || "System"} -{" "}
+                  {activity.time
+                    ? dateLabel(activity.time)
+                    : "Recently"}
+                </Text>
+              </View>
+            </View>
+          ))
+        )}
+      </View>
+    </View>
+   
   </ScrollView><AdminBottomBar /></View>;
 }
