@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { View, Text, ScrollView, TouchableOpacity, TextInput, Modal, ActivityIndicator, Alert } from "react-native";
-import { FolderKanban, DollarSign, Plus, X, Search, History, Edit, Trash2 } from "lucide-react-native";
+import { FolderKanban, DollarSign, Plus, X, Search, History, Edit, Trash2, Eye } from "lucide-react-native";
 import api from "../../api";
 
 export default function ProjectPaymentTab() {
@@ -8,7 +8,10 @@ export default function ProjectPaymentTab() {
   const [history, setHistory] = useState([]);
   const [loading, setLoading] = useState(false);
   const [historyLoading, setHistoryLoading] = useState(false);
+  
   const [showForm, setShowForm] = useState(false);
+  const [editId, setEditId] = useState(null);
+  const [viewRecord, setViewRecord] = useState(null);
 
   // Form states
   const [selectedProject, setSelectedProject] = useState("");
@@ -72,6 +75,7 @@ export default function ProjectPaymentTab() {
   };
 
   const handleProjectSelect = (projectId) => {
+    if (editId) return; // Disallow changing project in edit mode
     setSelectedProject(projectId);
     fetchProjectSummary(projectId);
   };
@@ -100,26 +104,38 @@ export default function ProjectPaymentTab() {
         time_of_payment: formData.time_of_payment,
       };
 
-      const { data } = await api.post("/project-payments", payload);
-      if (data.success) {
-        Alert.alert("Success", "Project payment recorded successfully");
-        setShowForm(false);
-        setSelectedProject("");
-        setProjectSummary(null);
-        setFormData({
-          amount_paid: "",
-          payment_mode: "Bank Transfer",
-          reason_for_payment: "",
-          date_of_payment: new Date().toISOString().split("T")[0],
-          time_of_payment: new Date().toLocaleTimeString("en-IN", { hour12: false }).substring(0, 5),
-        });
+      let response;
+      if (editId) {
+        response = await api.put(`/project-payments/${editId}`, payload);
+      } else {
+        response = await api.post("/project-payments", payload);
+      }
+      
+      if (response.data.success) {
+        Alert.alert("Success", `Project payment ${editId ? 'updated' : 'recorded'} successfully`);
+        resetForm();
         fetchHistory();
       }
     } catch (error) {
-      Alert.alert("Error", error.response?.data?.message || "Failed to record payment");
+      Alert.alert("Error", error.response?.data?.message || `Failed to ${editId ? 'update' : 'record'} payment`);
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleEdit = (record) => {
+    const id = record.uuid || record.id;
+    setEditId(id);
+    setSelectedProject(record.project_id);
+    setFormData({
+      amount_paid: record.amount_paid?.toString() || "",
+      payment_mode: record.payment_mode || "Bank Transfer",
+      reason_for_payment: record.reason_for_payment || "",
+      date_of_payment: record.date_of_payment ? new Date(record.date_of_payment).toISOString().split("T")[0] : "",
+      time_of_payment: record.time_of_payment || "",
+    });
+    setProjectSummary(null);
+    setShowForm(true);
   };
 
   const handleDelete = async (id) => {
@@ -139,6 +155,20 @@ export default function ProjectPaymentTab() {
     ]);
   };
 
+  const resetForm = () => {
+    setShowForm(false);
+    setEditId(null);
+    setSelectedProject("");
+    setProjectSummary(null);
+    setFormData({
+      amount_paid: "",
+      payment_mode: "Bank Transfer",
+      reason_for_payment: "",
+      date_of_payment: new Date().toISOString().split("T")[0],
+      time_of_payment: new Date().toLocaleTimeString("en-IN", { hour12: false }).substring(0, 5),
+    });
+  };
+
   return (
     <ScrollView className="flex-1 bg-[#F9FAFB] p-4">
       {/* Header */}
@@ -148,7 +178,7 @@ export default function ProjectPaymentTab() {
           <Text className="text-sm text-slate-500">Track client payments for projects</Text>
         </View>
         <TouchableOpacity
-          onPress={() => setShowForm(true)}
+          onPress={() => { resetForm(); setShowForm(true); }}
           className="flex-row items-center gap-2 bg-[#f97316] px-4 py-2.5 rounded-xl shadow-sm"
         >
           <Plus size={18} color="#fff" />
@@ -173,34 +203,45 @@ export default function ProjectPaymentTab() {
           </View>
         ) : (
           <View>
-            {history.map((record, index) => (
-              <View key={record.uuid || record.id || index} className="p-4 border-b border-slate-100 flex-row items-center justify-between">
-                <View className="flex-1 mr-4">
-                  <Text className="font-bold text-slate-900" numberOfLines={1}>{record.project_name || 'Project'}</Text>
-                  <Text className="text-xs text-slate-500 mt-1">{record.client_name || 'N/A'} • {record.payment_mode}</Text>
-                  <Text className="text-[10px] text-slate-400 mt-1">
-                    {new Date(record.date_of_payment).toLocaleDateString()} {record.time_of_payment}
-                  </Text>
+            {history.map((record, index) => {
+              const id = record.uuid || record.id;
+              return (
+                <View key={id || index} className="p-4 border-b border-slate-100 flex-row items-center justify-between">
+                  <View className="flex-1 mr-4">
+                    <Text className="font-bold text-slate-900" numberOfLines={1}>{record.project_name || 'Project'}</Text>
+                    <Text className="text-xs text-slate-500 mt-1">{record.client_name || 'N/A'} • {record.payment_mode}</Text>
+                    <Text className="text-[10px] text-slate-400 mt-1">
+                      {new Date(record.date_of_payment).toLocaleDateString()} {record.time_of_payment}
+                    </Text>
+                  </View>
+                  <View className="items-end gap-2">
+                    <Text className="font-bold text-emerald-600 text-base">₹{parseFloat(record.amount_paid).toFixed(2)}</Text>
+                    <View className="flex-row gap-2 mt-1">
+                      <TouchableOpacity onPress={() => setViewRecord(record)} className="bg-slate-100 p-1.5 rounded-lg">
+                        <Eye size={14} color="#64748b" />
+                      </TouchableOpacity>
+                      <TouchableOpacity onPress={() => handleEdit(record)} className="bg-blue-50 p-1.5 rounded-lg">
+                        <Edit size={14} color="#3b82f6" />
+                      </TouchableOpacity>
+                      <TouchableOpacity onPress={() => handleDelete(id)} className="bg-rose-50 p-1.5 rounded-lg">
+                        <Trash2 size={14} color="#f43f5e" />
+                      </TouchableOpacity>
+                    </View>
+                  </View>
                 </View>
-                <View className="items-end gap-2">
-                  <Text className="font-bold text-emerald-600 text-base">₹{parseFloat(record.amount_paid).toFixed(2)}</Text>
-                  <TouchableOpacity onPress={() => handleDelete(record.uuid || record.id)} className="bg-rose-100 p-1.5 rounded-lg mt-1">
-                    <Trash2 size={14} color="#f43f5e" />
-                  </TouchableOpacity>
-                </View>
-              </View>
-            ))}
+              );
+            })}
           </View>
         )}
       </View>
 
-      {/* Record Payment Modal */}
+      {/* Record/Edit Payment Modal */}
       <Modal visible={showForm} animationType="slide" transparent={true}>
         <View className="flex-1 bg-black/50 justify-end">
           <View className="bg-white rounded-t-3xl p-6 h-[85%] shadow-2xl">
             <View className="flex-row justify-between items-center mb-6">
-              <Text className="text-slate-900 text-lg font-bold">Record Payment</Text>
-              <TouchableOpacity onPress={() => setShowForm(false)}>
+              <Text className="text-slate-900 text-lg font-bold">{editId ? 'Edit Payment' : 'Record Payment'}</Text>
+              <TouchableOpacity onPress={resetForm}>
                 <X size={24} color="#64748b" />
               </TouchableOpacity>
             </View>
@@ -216,7 +257,8 @@ export default function ProjectPaymentTab() {
                       <TouchableOpacity
                         key={pid}
                         onPress={() => handleProjectSelect(pid)}
-                        className={`mr-2 px-4 py-3 rounded-xl border max-w-[200px] ${selectedProject === pid ? 'bg-orange-50 border-orange-500' : 'bg-white border-slate-200'}`}
+                        disabled={editId !== null}
+                        className={`mr-2 px-4 py-3 rounded-xl border max-w-[200px] ${selectedProject === pid ? 'bg-orange-50 border-orange-500' : 'bg-white border-slate-200'} ${editId && selectedProject !== pid ? 'opacity-50' : ''}`}
                       >
                         <Text className={selectedProject === pid ? 'text-orange-700 font-semibold' : 'text-slate-700'} numberOfLines={1}>
                           {proj.project_name || proj.project_code}
@@ -308,12 +350,62 @@ export default function ProjectPaymentTab() {
                 disabled={loading}
               >
                 {loading ? <ActivityIndicator size="small" color="#fff" /> : <DollarSign size={18} color="#fff" />}
-                <Text className="text-white font-bold text-base">Record Payment</Text>
+                <Text className="text-white font-bold text-base">{editId ? 'Update Payment' : 'Record Payment'}</Text>
               </TouchableOpacity>
             </ScrollView>
           </View>
         </View>
       </Modal>
+
+      {/* View Details Modal */}
+      {viewRecord && (
+        <Modal visible={true} animationType="fade" transparent={true}>
+          <View className="flex-1 bg-black/50 justify-center items-center p-4">
+            <View className="bg-white rounded-2xl w-full p-6 shadow-2xl">
+              <View className="flex-row justify-between items-center mb-6">
+                <Text className="text-slate-900 text-lg font-bold">Payment Details</Text>
+                <TouchableOpacity onPress={() => setViewRecord(null)}>
+                  <X size={24} color="#64748b" />
+                </TouchableOpacity>
+              </View>
+              
+              <View className="gap-4">
+                <View className="flex-row justify-between border-b border-slate-100 pb-2">
+                  <Text className="text-slate-500">Project</Text>
+                  <Text className="font-bold text-slate-900 flex-1 text-right ml-4" numberOfLines={2}>{viewRecord.project_name}</Text>
+                </View>
+                <View className="flex-row justify-between border-b border-slate-100 pb-2">
+                  <Text className="text-slate-500">Client</Text>
+                  <Text className="font-semibold text-slate-900">{viewRecord.client_name || 'N/A'}</Text>
+                </View>
+                <View className="flex-row justify-between border-b border-slate-100 pb-2">
+                  <Text className="text-slate-500">Date & Time</Text>
+                  <Text className="font-semibold text-slate-900">{new Date(viewRecord.date_of_payment).toLocaleDateString()} {viewRecord.time_of_payment}</Text>
+                </View>
+                <View className="flex-row justify-between border-b border-slate-100 pb-2">
+                  <Text className="text-slate-500">Mode</Text>
+                  <Text className="font-semibold text-slate-900">{viewRecord.payment_mode}</Text>
+                </View>
+                <View className="flex-row justify-between border-b border-slate-100 pb-2">
+                  <Text className="text-slate-500">Reason</Text>
+                  <Text className="font-semibold text-slate-900">{viewRecord.reason_for_payment || 'N/A'}</Text>
+                </View>
+                <View className="flex-row justify-between pt-2">
+                  <Text className="text-slate-900 font-bold text-lg">Amount Paid</Text>
+                  <Text className="font-bold text-emerald-600 text-xl">₹{parseFloat(viewRecord.amount_paid || 0).toFixed(2)}</Text>
+                </View>
+              </View>
+
+              <TouchableOpacity
+                onPress={() => setViewRecord(null)}
+                className="bg-slate-100 py-3 rounded-xl items-center mt-6"
+              >
+                <Text className="text-slate-700 font-bold">Close</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </Modal>
+      )}
     </ScrollView>
   );
 }

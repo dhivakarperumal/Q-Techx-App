@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { View, Text, ScrollView, TouchableOpacity, TextInput, Modal, ActivityIndicator, Alert } from "react-native";
-import { DollarSign, Plus, X, Search, History, Edit, Trash2, Briefcase } from "lucide-react-native";
+import { DollarSign, Plus, X, Search, History, Edit, Trash2, Briefcase, Eye } from "lucide-react-native";
 import api from "../../api";
 
 export default function CompanyIncomeTab() {
@@ -8,7 +8,10 @@ export default function CompanyIncomeTab() {
   const [history, setHistory] = useState([]);
   const [loading, setLoading] = useState(false);
   const [historyLoading, setHistoryLoading] = useState(false);
+  
   const [showForm, setShowForm] = useState(false);
+  const [editId, setEditId] = useState(null);
+  const [viewRecord, setViewRecord] = useState(null);
   
   const [nextInvoiceNumber, setNextInvoiceNumber] = useState("");
   
@@ -21,6 +24,7 @@ export default function CompanyIncomeTab() {
     payment_type: "Bank Transfer",
     date_of_payment: new Date().toISOString().split("T")[0],
     paid_to: "Q-Techx Solutions",
+    invoice_number: ""
   });
 
   useEffect(() => {
@@ -69,6 +73,12 @@ export default function CompanyIncomeTab() {
   };
 
   const openForm = () => {
+    resetForm();
+    fetchNextInvoiceNumber();
+    setShowForm(true);
+  };
+
+  const resetForm = () => {
     setFormData({
       income_type: "",
       intern_id: "",
@@ -78,9 +88,10 @@ export default function CompanyIncomeTab() {
       payment_type: "Bank Transfer",
       date_of_payment: new Date().toISOString().split("T")[0],
       paid_to: "Q-Techx Solutions",
+      invoice_number: ""
     });
-    fetchNextInvoiceNumber();
-    setShowForm(true);
+    setEditId(null);
+    setShowForm(false);
   };
 
   const handleSave = async () => {
@@ -96,17 +107,39 @@ export default function CompanyIncomeTab() {
         amount: parseFloat(formData.amount),
       };
 
-      const { data } = await api.post("/incomes", payload);
-      if (data.success) {
-        Alert.alert("Success", "Income recorded successfully");
-        setShowForm(false);
+      let response;
+      if (editId) {
+        response = await api.put(`/incomes/${editId}`, payload);
+      } else {
+        response = await api.post("/incomes", payload);
+      }
+
+      if (response.data.success) {
+        Alert.alert("Success", `Income ${editId ? 'updated' : 'recorded'} successfully`);
+        resetForm();
         fetchHistory();
       }
     } catch (error) {
-      Alert.alert("Error", error.response?.data?.message || "Failed to record income");
+      Alert.alert("Error", error.response?.data?.message || `Failed to ${editId ? 'update' : 'record'} income`);
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleEdit = (record) => {
+    setEditId(record.income_id);
+    setFormData({
+      income_type: record.income_type,
+      intern_id: record.intern_id || "",
+      intern_name: record.intern_name || "",
+      income_reason: record.income_reason || "",
+      amount: record.amount?.toString() || "",
+      payment_type: record.payment_type || "Bank Transfer",
+      date_of_payment: record.date_of_payment ? new Date(record.date_of_payment).toISOString().split("T")[0] : "",
+      paid_to: record.paid_to || "Q-Techx Solutions",
+      invoice_number: record.invoice_number || ""
+    });
+    setShowForm(true);
   };
 
   const handleDelete = async (id) => {
@@ -176,9 +209,17 @@ export default function CompanyIncomeTab() {
                 </View>
                 <View className="items-end gap-2">
                   <Text className="font-bold text-emerald-600 text-base">₹{parseFloat(record.amount).toFixed(2)}</Text>
-                  <TouchableOpacity onPress={() => handleDelete(record.income_id)} className="bg-rose-100 p-1.5 rounded-lg mt-1">
-                    <Trash2 size={14} color="#f43f5e" />
-                  </TouchableOpacity>
+                  <View className="flex-row gap-2 mt-1">
+                    <TouchableOpacity onPress={() => setViewRecord(record)} className="bg-slate-100 p-1.5 rounded-lg">
+                      <Eye size={14} color="#64748b" />
+                    </TouchableOpacity>
+                    <TouchableOpacity onPress={() => handleEdit(record)} className="bg-blue-50 p-1.5 rounded-lg">
+                      <Edit size={14} color="#3b82f6" />
+                    </TouchableOpacity>
+                    <TouchableOpacity onPress={() => handleDelete(record.income_id)} className="bg-rose-50 p-1.5 rounded-lg">
+                      <Trash2 size={14} color="#f43f5e" />
+                    </TouchableOpacity>
+                  </View>
                 </View>
               </View>
             ))}
@@ -186,13 +227,13 @@ export default function CompanyIncomeTab() {
         )}
       </View>
 
-      {/* Record Income Modal */}
+      {/* Record/Edit Income Modal */}
       <Modal visible={showForm} animationType="slide" transparent={true}>
         <View className="flex-1 bg-black/50 justify-end">
           <View className="bg-white rounded-t-3xl p-6 h-[85%] shadow-2xl">
             <View className="flex-row justify-between items-center mb-6">
-              <Text className="text-slate-900 text-lg font-bold">Record Income</Text>
-              <TouchableOpacity onPress={() => setShowForm(false)}>
+              <Text className="text-slate-900 text-lg font-bold">{editId ? 'Edit Income' : 'Record Income'}</Text>
+              <TouchableOpacity onPress={resetForm}>
                 <X size={24} color="#64748b" />
               </TouchableOpacity>
             </View>
@@ -202,8 +243,8 @@ export default function CompanyIncomeTab() {
               <View>
                 <Text className="text-slate-500 text-xs font-bold uppercase mb-1">Invoice Number</Text>
                 <TextInput
-                  className="bg-slate-100 border border-slate-200 rounded-xl p-3 text-slate-500"
-                  value={nextInvoiceNumber || "Auto-generated"}
+                  className="bg-slate-100 border border-slate-200 rounded-xl p-3 text-slate-500 font-mono"
+                  value={formData.invoice_number || nextInvoiceNumber || "Auto-generated"}
                   editable={false}
                 />
               </View>
@@ -308,12 +349,68 @@ export default function CompanyIncomeTab() {
                 disabled={loading}
               >
                 {loading ? <ActivityIndicator size="small" color="#fff" /> : <Briefcase size={18} color="#fff" />}
-                <Text className="text-white font-bold text-base">Record Income</Text>
+                <Text className="text-white font-bold text-base">{editId ? 'Update Income' : 'Record Income'}</Text>
               </TouchableOpacity>
             </ScrollView>
           </View>
         </View>
       </Modal>
+
+      {/* View Details Modal */}
+      {viewRecord && (
+        <Modal visible={true} animationType="fade" transparent={true}>
+          <View className="flex-1 bg-black/50 justify-center items-center p-4">
+            <View className="bg-white rounded-2xl w-full p-6 shadow-2xl">
+              <View className="flex-row justify-between items-center mb-6">
+                <Text className="text-slate-900 text-lg font-bold">Income Details</Text>
+                <TouchableOpacity onPress={() => setViewRecord(null)}>
+                  <X size={24} color="#64748b" />
+                </TouchableOpacity>
+              </View>
+              
+              <View className="gap-4">
+                <View className="flex-row justify-between border-b border-slate-100 pb-2">
+                  <Text className="text-slate-500">Invoice Number</Text>
+                  <Text className="font-bold text-slate-900 font-mono">{viewRecord.invoice_number || 'N/A'}</Text>
+                </View>
+                <View className="flex-row justify-between border-b border-slate-100 pb-2">
+                  <Text className="text-slate-500">Income Type</Text>
+                  <Text className="font-semibold text-slate-900">{viewRecord.income_type}</Text>
+                </View>
+                <View className="flex-row justify-between border-b border-slate-100 pb-2">
+                  <Text className="text-slate-500">{viewRecord.income_type === 'Other' ? 'Reason' : 'Intern'}</Text>
+                  <Text className="font-semibold text-slate-900 flex-1 text-right ml-4" numberOfLines={2}>
+                    {viewRecord.income_type === 'Other' ? viewRecord.income_reason : viewRecord.intern_name}
+                  </Text>
+                </View>
+                <View className="flex-row justify-between border-b border-slate-100 pb-2">
+                  <Text className="text-slate-500">Date</Text>
+                  <Text className="font-semibold text-slate-900">{new Date(viewRecord.date_of_payment).toLocaleDateString()}</Text>
+                </View>
+                <View className="flex-row justify-between border-b border-slate-100 pb-2">
+                  <Text className="text-slate-500">Payment Mode</Text>
+                  <Text className="font-semibold text-slate-900">{viewRecord.payment_type}</Text>
+                </View>
+                <View className="flex-row justify-between border-b border-slate-100 pb-2">
+                  <Text className="text-slate-500">Received By</Text>
+                  <Text className="font-semibold text-slate-900">{viewRecord.paid_to}</Text>
+                </View>
+                <View className="flex-row justify-between pt-2">
+                  <Text className="text-slate-900 font-bold text-lg">Amount Received</Text>
+                  <Text className="font-bold text-emerald-600 text-xl">₹{parseFloat(viewRecord.amount || 0).toFixed(2)}</Text>
+                </View>
+              </View>
+
+              <TouchableOpacity
+                onPress={() => setViewRecord(null)}
+                className="bg-slate-100 py-3 rounded-xl items-center mt-6"
+              >
+                <Text className="text-slate-700 font-bold">Close</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </Modal>
+      )}
     </ScrollView>
   );
 }
