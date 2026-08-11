@@ -143,8 +143,13 @@ const createEmptyForm = () => ({
   salesNotes: "",
   technicalNotes: "",
   includedModules: [] as string[],
-  technologyStack: [] as string[],
-  modules: [] as { title: string; duration: string; description: string; documentName?: string; document?: unknown }[],
+  modules: [] as {
+    title: string;
+    duration: string;
+    description: string;
+    documentName?: string;
+    document?: unknown;
+  }[],
   activeProjectsUsingPlan: 0,
   completedProjectsUsingPlan: 0,
   createdBy: "Admin",
@@ -236,12 +241,31 @@ function ChoiceField({
   );
 }
 
-function SelectField({ label, value, options, onChange }: { label: string; value: string; options: string[]; onChange: (value: string) => void }) {
+function SelectField({
+  label,
+  value,
+  options,
+  onChange,
+}: {
+  label: string;
+  value: string;
+  options: string[];
+  onChange: (value: string) => void;
+}) {
   return (
     <View className="mb-3">
       <Text className="mb-1.5 text-xs font-bold text-slate-500">{label}</Text>
       <TouchableOpacity
-        onPress={() => Alert.alert(label, "Select an option", options.map((option) => ({ text: option, onPress: () => onChange(option) })))}
+        onPress={() =>
+          Alert.alert(
+            label,
+            "Select an option",
+            options.map((option) => ({
+              text: option,
+              onPress: () => onChange(option),
+            })),
+          )
+        }
         className="flex-row items-center justify-between rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3.5"
       >
         <Text className="text-sm font-semibold text-slate-800">{value}</Text>
@@ -261,7 +285,6 @@ export default function ProjectPlansScreen() {
   const [modalVisible, setModalVisible] = useState(false);
   const [saving, setSaving] = useState(false);
   const [form, setForm] = useState<PlanForm>(createEmptyForm);
-  const [newTechnology, setNewTechnology] = useState("");
   const [newModule, setNewModule] = useState({
     title: "",
     duration: "",
@@ -307,20 +330,19 @@ export default function ProjectPlansScreen() {
     if (saving) return;
     setModalVisible(false);
     setForm(createEmptyForm());
-    setNewTechnology("");
-    setNewModule({ title: "", duration: "", durationType: "Days", description: "", documentName: "", document: null });
+    setNewModule({
+      title: "",
+      duration: "",
+      durationType: "Days",
+      description: "",
+      documentName: "",
+      document: null,
+    });
     setProjectSearch("");
   };
 
   const updateForm = <K extends keyof PlanForm>(field: K, value: PlanForm[K]) =>
     setForm((current) => ({ ...current, [field]: value }));
-
-  const addTechnology = () => {
-    const technology = newTechnology.trim();
-    if (!technology || form.technologyStack.includes(technology)) return;
-    updateForm("technologyStack", [...form.technologyStack, technology]);
-    setNewTechnology("");
-  };
 
   const addModule = () => {
     if (!newModule.title.trim() || !newModule.duration.trim()) return;
@@ -336,7 +358,14 @@ export default function ProjectPlansScreen() {
       ...form.includedModules,
       newModule.title.trim(),
     ]);
-    setNewModule({ title: "", duration: "", durationType: "Days", description: "", documentName: "", document: null });
+    setNewModule({
+      title: "",
+      duration: "",
+      durationType: "Days",
+      description: "",
+      documentName: "",
+      document: null,
+    });
   };
 
   const chooseModuleDocument = async () => {
@@ -417,7 +446,10 @@ export default function ProjectPlansScreen() {
         const multipart = new FormData();
         Object.entries(payload).forEach(([key, value]) => {
           if (value === undefined || value === null) return;
-          multipart.append(key, typeof value === "object" ? JSON.stringify(value) : String(value));
+          multipart.append(
+            key,
+            typeof value === "object" ? JSON.stringify(value) : String(value),
+          );
         });
         if (form.coverImageAsset) {
           multipart.append("cover_image", form.coverImageAsset as any);
@@ -436,7 +468,9 @@ export default function ProjectPlansScreen() {
       const response = await api.post(
         "/project-plans",
         requestBody,
-        hasFile ? { headers: { "Content-Type": "multipart/form-data" } } : undefined,
+        hasFile
+          ? { headers: { "Content-Type": "multipart/form-data" } }
+          : undefined,
       );
       const created = response.data?.data || response.data;
       setPlans((current) => [mapPlan(created, Date.now()), ...current]);
@@ -741,9 +775,30 @@ export default function ProjectPlansScreen() {
                 </View>
                 <Ionicons name="chevron-forward" size={18} color="#94a3b8" />
               </TouchableOpacity>
-              <Text className="mb-1.5 text-xs font-bold text-slate-500">Cover image</Text>
-              <TouchableOpacity onPress={chooseCoverImage} className="mb-3 overflow-hidden rounded-2xl border border-dashed border-slate-300 bg-slate-50">
-                {form.coverImage ? <Image source={{ uri: form.coverImage }} className="h-36 w-full" resizeMode="cover" /> : <View className="items-center justify-center px-4 py-8"><Ionicons name="image-outline" size={28} color="#f97316" /><Text className="mt-2 font-bold text-slate-700">Choose cover image</Text><Text className="mt-1 text-xs text-slate-500">JPG, PNG or WEBP</Text></View>}
+              <Text className="mb-1.5 text-xs font-bold text-slate-500">
+                Cover image
+              </Text>
+              <TouchableOpacity
+                onPress={chooseCoverImage}
+                className="mb-3 overflow-hidden rounded-2xl border border-dashed border-slate-300 bg-slate-50"
+              >
+                {form.coverImage ? (
+                  <Image
+                    source={{ uri: form.coverImage }}
+                    className="h-36 w-full"
+                    resizeMode="cover"
+                  />
+                ) : (
+                  <View className="items-center justify-center px-4 py-8">
+                    <Ionicons name="image-outline" size={28} color="#f97316" />
+                    <Text className="mt-2 font-bold text-slate-700">
+                      Choose cover image
+                    </Text>
+                    <Text className="mt-1 text-xs text-slate-500">
+                      JPG, PNG or WEBP
+                    </Text>
+                  </View>
+                )}
               </TouchableOpacity>
 
               <Text className="mb-3 mt-3 text-sm font-black text-slate-900">
@@ -806,50 +861,8 @@ export default function ProjectPlansScreen() {
               </View>
 
               <Text className="mb-3 mt-3 text-sm font-black text-slate-900">
-                Modules and technology
+                Modules
               </Text>
-              <View className="mb-3 rounded-2xl bg-slate-50 p-3">
-                <Text className="mb-2 text-xs font-bold text-slate-500">
-                  Technology stack
-                </Text>
-                <View className="mb-2 flex-row flex-wrap gap-2">
-                  {form.technologyStack.map((technology) => (
-                    <TouchableOpacity
-                      key={technology}
-                      onPress={() =>
-                        updateForm(
-                          "technologyStack",
-                          form.technologyStack.filter(
-                            (item) => item !== technology,
-                          ),
-                        )
-                      }
-                      className="flex-row items-center rounded-full bg-blue-100 px-3 py-2"
-                    >
-                      <Text className="text-xs font-bold text-blue-700">
-                        {technology}
-                      </Text>
-                      <Ionicons name="close" size={13} color="#1d4ed8" />
-                    </TouchableOpacity>
-                  ))}
-                </View>
-                <View className="flex-row gap-2">
-                  <TextInput
-                    value={newTechnology}
-                    onChangeText={setNewTechnology}
-                    onSubmitEditing={addTechnology}
-                    placeholder="React Native, Node.js..."
-                    placeholderTextColor="#94a3b8"
-                    className="flex-1 rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-slate-900"
-                  />
-                  <TouchableOpacity
-                    onPress={addTechnology}
-                    className="items-center justify-center rounded-xl bg-blue-600 px-4"
-                  >
-                    <Ionicons name="add" size={20} color="#fff" />
-                  </TouchableOpacity>
-                </View>
-              </View>
               {form.modules.map((module, index) => (
                 <View
                   key={`${module.title}-${index}`}
@@ -886,9 +899,7 @@ export default function ProjectPlansScreen() {
                 </View>
               ))}
               <View className="rounded-2xl border border-dashed border-slate-300 p-3">
-                <Text className="mb-2 text-xs font-bold text-slate-500">
-                  Add module
-                </Text>
+              
                 <FormField
                   label="Module title"
                   value={newModule.title}
@@ -902,7 +913,10 @@ export default function ProjectPlansScreen() {
                       label="Duration"
                       value={newModule.duration}
                       onChange={(value) =>
-                        setNewModule((current) => ({ ...current, duration: value }))
+                        setNewModule((current) => ({
+                          ...current,
+                          duration: value,
+                        }))
                       }
                       keyboardType="numeric"
                     />
@@ -912,14 +926,24 @@ export default function ProjectPlansScreen() {
                       label="Duration unit"
                       value={newModule.durationType}
                       options={["Hours", "Days", "Weeks", "Months", "Years"]}
-                      onChange={(value) => setNewModule((current) => ({ ...current, durationType: value }))}
+                      onChange={(value) =>
+                        setNewModule((current) => ({
+                          ...current,
+                          durationType: value,
+                        }))
+                      }
                     />
                   </View>
                 </View>
                 <FormField
                   label="Description"
                   value={newModule.description}
-                  onChange={(value) => setNewModule((current) => ({ ...current, description: value }))}
+                  onChange={(value) =>
+                    setNewModule((current) => ({
+                      ...current,
+                      description: value,
+                    }))
+                  }
                   multiline
                 />
                 <TouchableOpacity
@@ -927,12 +951,24 @@ export default function ProjectPlansScreen() {
                   className="mb-3 flex-row items-center rounded-2xl border border-dashed border-slate-300 bg-slate-50 p-3"
                 >
                   <View className="mr-3 h-9 w-9 items-center justify-center rounded-xl bg-orange-100">
-                    <Ionicons name="cloud-upload-outline" size={19} color="#f97316" />
+                    <Ionicons
+                      name="cloud-upload-outline"
+                      size={19}
+                      color="#f97316"
+                    />
                   </View>
                   <View className="flex-1">
-                    <Text className="font-bold text-slate-800">Upload module document</Text>
-                    <Text className="mt-0.5 text-xs text-slate-500">PDF, DOC, XLS, TXT</Text>
-                    {newModule.documentName ? <Text className="mt-0.5 text-xs font-bold text-emerald-600">{newModule.documentName}</Text> : null}
+                    <Text className="font-bold text-slate-800">
+                      Upload module document
+                    </Text>
+                    <Text className="mt-0.5 text-xs text-slate-500">
+                      PDF, DOC, XLS, TXT
+                    </Text>
+                    {newModule.documentName ? (
+                      <Text className="mt-0.5 text-xs font-bold text-emerald-600">
+                        {newModule.documentName}
+                      </Text>
+                    ) : null}
                   </View>
                   <Ionicons name="chevron-forward" size={17} color="#94a3b8" />
                 </TouchableOpacity>
