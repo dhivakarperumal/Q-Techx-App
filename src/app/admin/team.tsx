@@ -196,13 +196,13 @@ export default function TeamScreen() {
               className="flex-1 ml-2 text-sm font-medium text-slate-800"
             />
           </View>
-          <TouchableOpacity className="bg-white border border-slate-200 rounded-2xl flex-row items-center px-4 py-2 shadow-sm">
+          {/* <TouchableOpacity className="bg-white border border-slate-200 rounded-2xl flex-row items-center px-4 py-2 shadow-sm">
             <Ionicons name="filter" size={16} color="#64748b" />
             <Text className="text-slate-700 font-bold text-sm ml-2 mr-1">
               Filter
             </Text>
             <Ionicons name="chevron-down" size={14} color="#64748b" />
-          </TouchableOpacity>
+          </TouchableOpacity> */}
         </View>
 
         {/* ── FILTER PILLS ── */}
