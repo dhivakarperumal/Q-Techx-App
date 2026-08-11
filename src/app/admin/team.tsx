@@ -1,4 +1,5 @@
 import { Ionicons } from "@expo/vector-icons";
+import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 import React, { useEffect, useState } from "react";
 import {
@@ -60,19 +61,19 @@ export default function TeamScreen() {
               `${emp.first_name || ""} ${emp.last_name || ""}`.trim() ||
               "Unknown",
             role: emp.role || "Employee",
-            roleColor: "text-blue-500",
-            roleBg: "bg-blue-50",
+            roleColor: "text-orange-500",
+            roleBg: "bg-orange-50",
             team: emp.department || emp.team || emp.employee_code || "General",
             email: emp.email || "N/A",
             phone: emp.phone || emp.mobile || "N/A",
             status: emp.status || "Active",
             statusColor:
-              emp.status === "Inactive" ? "text-slate-600" : "text-green-600",
+              emp.status === "Inactive" ? "text-red-600" : "text-green-600",
             statusBg:
-              emp.status === "Inactive" ? "bg-slate-100" : "bg-green-100",
+              emp.status === "Inactive" ? "bg-red-100" : "bg-green-100",
             avatar: avatarUrl,
             onlineDot:
-              emp.status === "Inactive" ? "bg-slate-300" : "bg-green-500",
+              emp.status === "Inactive" ? "bg-slate-300" : "bg-orange-500",
           };
         });
         setTeam(mappedTeam);
@@ -101,36 +102,37 @@ export default function TeamScreen() {
       label: "Total Members",
       value: String(total),
       sub: "All Members",
-      icon: "people-outline",
+      icon: "people",
       color: "#f97316",
-      bg: "bg-orange-50",
+      bg: "#fff7ed",
+      subColor: "text-orange-500",
     },
     {
       label: "Active",
       value: String(activeCount),
       sub: getPercent(activeCount),
-      subColor: "text-blue-500",
-      icon: "person-add-outline",
-      color: "#3b82f6",
-      bg: "bg-blue-50",
+      icon: "person-add",
+      color: "#f97316",
+      bg: "#fff7ed",
+      subColor: "text-green-500",
     },
     {
       label: "On Leave",
       value: String(leaveCount),
       sub: getPercent(leaveCount),
-      subColor: "text-green-500",
-      icon: "person-outline",
-      color: "#10b981",
-      bg: "bg-green-50",
+      icon: "person",
+      color: "#f97316",
+      bg: "#fff7ed",
+      subColor: "text-yellow-500",
     },
     {
       label: "Inactive",
       value: String(inactiveCount),
       sub: getPercent(inactiveCount),
-      subColor: "text-purple-500",
-      icon: "person-remove-outline",
-      color: "#a855f7",
-      bg: "bg-purple-50",
+      icon: "person-remove",
+      color: "#f97316",
+      bg: "#fff7ed",
+      subColor: "text-red-500",
     },
   ];
 
@@ -149,41 +151,38 @@ export default function TeamScreen() {
       <TopHeader />
 
       <ScrollView className="flex-1" contentContainerClassName="pb-32 pt-2">
-        {/* ── STATS SCROLLVIEW ── */}
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerClassName="px-5 mb-6"
-          className="overflow-visible"
-        >
+        {/* ── STATS SECTION ── */}
+        <View className="px-5 mb-6 flex-row flex-wrap justify-between">
           {dynamicStats.map((stat, idx) => (
-            <View
-              key={idx}
-              className="bg-white rounded-[24px] p-4 mr-4 border border-slate-100 shadow-sm w-[130px]"
-            >
-              <View
-                className={`w-10 h-10 rounded-[14px] ${stat.bg} items-center justify-center mb-3`}
+            <View key={idx} className="mb-3 w-[48%] overflow-hidden rounded-2xl bg-white shadow-sm border-t-4 border-orange-500">
+              <LinearGradient
+                colors={["#ffffff", "#fff7ed"]}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+                className="px-4 py-4"
               >
-                <Ionicons
-                  name={stat.icon as any}
-                  size={22}
-                  color={stat.color}
-                />
-              </View>
-              <Text className="text-slate-500 font-bold text-[10px] mb-1">
-                {stat.label}
-              </Text>
-              <Text className="text-slate-900 font-black text-2xl tracking-tight mb-1">
-                {stat.value}
-              </Text>
-              <Text
-                className={`text-[10px] font-medium ${stat.subColor || "text-slate-400"}`}
-              >
-                {stat.sub}
-              </Text>
+                <View className="flex-row items-center mb-3">
+                  <View className="h-10 w-10 items-center justify-center rounded-xl bg-black">
+                    <Ionicons name={stat.icon as any} size={20} color="#f97316" />
+                  </View>
+                  <View className="ml-2 flex-1">
+                    <Text className="text-[10px] font-bold uppercase tracking-[0.5px] text-gray-500" numberOfLines={2}>
+                      {stat.label}
+                    </Text>
+                  </View>
+                </View>
+                <View className="flex-row items-baseline justify-between">
+                  <Text className="text-[22px] font-black text-black">
+                    {stat.value}
+                  </Text>
+                  <Text className={`text-[10px] font-bold ${stat.subColor || "text-gray-400"}`}>
+                    {stat.sub}
+                  </Text>
+                </View>
+              </LinearGradient>
             </View>
           ))}
-        </ScrollView>
+        </View>
 
         {/* ── SEARCH & FILTER ── */}
         <View className="px-5 mb-4 flex-row items-center gap-3">
@@ -228,7 +227,7 @@ export default function TeamScreen() {
                   <Ionicons
                     name={filter.icon as any}
                     size={14}
-                    color={isActive ? "#f97316" : "#3b82f6"}
+                    color={isActive ? "#f97316" : "#94a3b8"}
                     className="mr-2"
                   />
                   <Text
@@ -289,9 +288,6 @@ export default function TeamScreen() {
                     <Image
                       source={{ uri: member.avatar }}
                       className="w-14 h-14 rounded-full bg-slate-200"
-                    />
-                    <View
-                      className={`absolute bottom-0 right-0 w-4 h-4 rounded-full border-2 border-white ${member.onlineDot}`}
                     />
                   </View>
 
