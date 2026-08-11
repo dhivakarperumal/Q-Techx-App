@@ -1,12 +1,12 @@
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import {
-    Alert,
-    Pressable,
-    ScrollView,
-    Text,
-    TouchableOpacity,
-    View,
+  Alert,
+  Pressable,
+  ScrollView,
+  Text,
+  TouchableOpacity,
+  View,
 } from "react-native";
 import { useAuth } from "../../auth/AuthContext";
 import { AdminBottomBar } from "../../components/admin-bottom-bar";
@@ -359,15 +359,59 @@ export default function MoreScreen() {
                 elevation: 5,
               }}
             >
-              <View style={{ width: 52, height: 52, borderRadius: 16, backgroundColor: "rgba(255,255,255,0.22)", alignItems: "center", justifyContent: "center" }}>
-                <Ionicons name="checkmark-done-outline" size={26} color="#fff" />
+              <View
+                style={{
+                  width: 52,
+                  height: 52,
+                  borderRadius: 16,
+                  backgroundColor: "rgba(255,255,255,0.22)",
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
+              >
+                <Ionicons
+                  name="checkmark-done-outline"
+                  size={26}
+                  color="#fff"
+                />
               </View>
               <View style={{ flex: 1, marginLeft: 16 }}>
-                <Text style={{ color: "rgba(255,255,255,0.65)", fontSize: 10, fontWeight: "700", letterSpacing: 1, textTransform: "uppercase" }}>People</Text>
-                <Text style={{ color: "#fff", fontSize: 17, fontWeight: "800", marginTop: 2 }}>Attendance</Text>
-                <Text style={{ color: "rgba(255,255,255,0.7)", fontSize: 12, marginTop: 2 }}>Track presence, timesheets & leave</Text>
+                <Text
+                  style={{
+                    color: "rgba(255,255,255,0.65)",
+                    fontSize: 10,
+                    fontWeight: "700",
+                    letterSpacing: 1,
+                    textTransform: "uppercase",
+                  }}
+                >
+                  People
+                </Text>
+                <Text
+                  style={{
+                    color: "#fff",
+                    fontSize: 17,
+                    fontWeight: "800",
+                    marginTop: 2,
+                  }}
+                >
+                  Attendance
+                </Text>
+                <Text
+                  style={{
+                    color: "rgba(255,255,255,0.7)",
+                    fontSize: 12,
+                    marginTop: 2,
+                  }}
+                >
+                  Track presence, timesheets & leave
+                </Text>
               </View>
-              <Ionicons name="chevron-forward" size={20} color="rgba(255,255,255,0.6)" />
+              <Ionicons
+                name="chevron-forward"
+                size={20}
+                color="rgba(255,255,255,0.6)"
+              />
             </TouchableOpacity>
 
             {/* Project Plans */}
@@ -387,15 +431,55 @@ export default function MoreScreen() {
                 elevation: 5,
               }}
             >
-              <View style={{ width: 52, height: 52, borderRadius: 16, backgroundColor: "rgba(255,255,255,0.22)", alignItems: "center", justifyContent: "center" }}>
+              <View
+                style={{
+                  width: 52,
+                  height: 52,
+                  borderRadius: 16,
+                  backgroundColor: "rgba(255,255,255,0.22)",
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
+              >
                 <Ionicons name="layers-outline" size={26} color="#fff" />
               </View>
               <View style={{ flex: 1, marginLeft: 16 }}>
-                <Text style={{ color: "rgba(255,255,255,0.65)", fontSize: 10, fontWeight: "700", letterSpacing: 1, textTransform: "uppercase" }}>Projects</Text>
-                <Text style={{ color: "#fff", fontSize: 17, fontWeight: "800", marginTop: 2 }}>Project Plans</Text>
-                <Text style={{ color: "rgba(255,255,255,0.7)", fontSize: 12, marginTop: 2 }}>View and create project plans</Text>
+                <Text
+                  style={{
+                    color: "rgba(255,255,255,0.65)",
+                    fontSize: 10,
+                    fontWeight: "700",
+                    letterSpacing: 1,
+                    textTransform: "uppercase",
+                  }}
+                >
+                  Projects
+                </Text>
+                <Text
+                  style={{
+                    color: "#fff",
+                    fontSize: 17,
+                    fontWeight: "800",
+                    marginTop: 2,
+                  }}
+                >
+                  Project Plans
+                </Text>
+                <Text
+                  style={{
+                    color: "rgba(255,255,255,0.7)",
+                    fontSize: 12,
+                    marginTop: 2,
+                  }}
+                >
+                  View and create project plans
+                </Text>
               </View>
-              <Ionicons name="chevron-forward" size={20} color="rgba(255,255,255,0.6)" />
+              <Ionicons
+                name="chevron-forward"
+                size={20}
+                color="rgba(255,255,255,0.6)"
+              />
             </TouchableOpacity>
           </View>
         </View>
