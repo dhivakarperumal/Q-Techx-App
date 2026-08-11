@@ -15,41 +15,6 @@ import { AdminBottomBar } from "../../components/admin-bottom-bar";
 import { FAB } from "../../components/FAB";
 import { TopHeader } from "../../components/TopHeader";
 
-const stats = [
-  {
-    label: "Total Projects",
-    value: "86",
-    sub: "All Projects",
-    icon: "folder",
-    color: "#f97316",
-    bg: "bg-orange-50",
-  },
-  {
-    label: "In Progress",
-    value: "42",
-    sub: "48.8%",
-    icon: "briefcase",
-    color: "#3b82f6",
-    bg: "bg-blue-50",
-  },
-  {
-    label: "Completed",
-    value: "28",
-    sub: "32.6%",
-    icon: "checkmark-circle",
-    color: "#10b981",
-    bg: "bg-green-50",
-  },
-  {
-    label: "On Hold",
-    value: "16",
-    sub: "18.6%",
-    icon: "pause-circle",
-    color: "#a855f7",
-    bg: "bg-purple-50",
-  },
-];
-
 const filters = [
   { label: "All Projects", active: true, dot: "#f97316" },
   { label: "In Progress", active: false, dot: "#3b82f6" },
@@ -326,6 +291,65 @@ export default function ProjectsScreen() {
     }
   }, []);
 
+  const statCards = useMemo(() => {
+    const total = projects.length;
+    const inProgress = projects.filter(
+      (project) =>
+        String(project.status || "")
+          .toLowerCase()
+          .trim() === "in progress",
+    ).length;
+    const completed = projects.filter(
+      (project) =>
+        String(project.status || "")
+          .toLowerCase()
+          .trim() === "completed",
+    ).length;
+    const onHold = projects.filter(
+      (project) =>
+        String(project.status || "")
+          .toLowerCase()
+          .trim() === "on hold",
+    ).length;
+
+    const baseCards = [
+      {
+        label: "Total Projects",
+        value: String(total),
+        sub: "All Projects",
+        icon: "folder",
+        color: "#f97316",
+        bg: "bg-orange-50",
+      },
+      {
+        label: "In Progress",
+        value: String(inProgress),
+        sub: `${total ? Math.round((inProgress / total) * 100) : 0}%`,
+        icon: "briefcase",
+        color: "#3b82f6",
+        bg: "bg-blue-50",
+      },
+      {
+        label: "Completed",
+        value: String(completed),
+        sub: `${total ? Math.round((completed / total) * 100) : 0}%`,
+        icon: "checkmark-circle",
+        color: "#10b981",
+        bg: "bg-green-50",
+      },
+      {
+        label: "On Hold",
+        value: String(onHold),
+        sub: `${total ? Math.round((onHold / total) * 100) : 0}%`,
+        icon: "pause-circle",
+        color: "#a855f7",
+        bg: "bg-purple-50",
+      },
+    ];
+
+    return baseCards;
+  }, [projects]);
+
   useEffect(() => {
     fetchProjects();
     fetchEmployees();
@@ -428,7 +452,7 @@ export default function ProjectsScreen() {
           contentContainerClassName="px-5 mb-6"
           className="overflow-visible"
         >
-          {stats.map((stat, idx) => (
+          {statCards.map((stat, idx) => (
             <View
               key={idx}
               className="bg-white rounded-[24px] p-4 mr-4 border border-slate-100 shadow-sm w-[130px]"
