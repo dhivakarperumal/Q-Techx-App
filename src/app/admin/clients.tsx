@@ -364,6 +364,10 @@ export default function ClientsScreen() {
     (client) => client.client_status === "Active",
   ).length;
 
+  const inactiveCount = clients.filter(
+    (client) => client.client_status === "Inactive",
+  ).length;
+
   const pendingCount = clients.filter(
     (c) =>
       c.follow_up_status !== "Completed" && c.follow_up_status !== "Cancelled",
@@ -408,6 +412,21 @@ export default function ClientsScreen() {
             <Text className="text-xs font-bold text-slate-400">ACTIVE</Text>
             <Text className="mt-1 text-2xl font-black text-emerald-600">
               {activeCount}
+            </Text>
+          </View>
+        </View>
+
+        <View className="mt-3 flex-row gap-3">
+          <View className="flex-1 rounded-2xl bg-white p-4 shadow-sm">
+            <Text className="text-xs font-bold text-slate-400">INACTIVE</Text>
+            <Text className="mt-1 text-2xl font-black text-rose-600">
+              {inactiveCount}
+            </Text>
+          </View>
+          <View className="flex-1 rounded-2xl bg-white p-4 shadow-sm">
+            <Text className="text-xs font-bold text-slate-400">PENDING</Text>
+            <Text className="mt-1 text-2xl font-black text-amber-500">
+              {pendingCount}
             </Text>
           </View>
         </View>
