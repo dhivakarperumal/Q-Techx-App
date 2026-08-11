@@ -1,4 +1,5 @@
 import { Ionicons } from "@expo/vector-icons";
+import DateTimePicker from "@react-native-community/datetimepicker";
 import * as DocumentPicker from "expo-document-picker";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import {
@@ -190,6 +191,8 @@ export default function TasksScreen() {
   const [taskAttachment, setTaskAttachment] = useState<any>(null);
   const [sheetVisible, setSheetVisible] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [datePickerField, setDatePickerField] = useState<"startDate" | "dueDate" | null>(null);
+  const [showDatePicker, setShowDatePicker] = useState(false);
   const [taskForm, setTaskForm] = useState({
     projectId: "",
     assignedTo: "",
@@ -333,6 +336,33 @@ export default function TasksScreen() {
     if (saving) return;
     setSheetVisible(false);
     resetTaskForm();
+  };
+
+  const openDatePicker = (field: "startDate" | "dueDate") => {
+    setDatePickerField(field);
+    setShowDatePicker(true);
+  };
+
+  const handleDatePickerChange = (event: any, selectedDate?: Date) => {
+    if (event?.type === "dismissed") {
+      setShowDatePicker(false);
+      setDatePickerField(null);
+      return;
+    }
+
+    const chosenDate = selectedDate ?? new Date();
+    const isoDate = chosenDate.toISOString().slice(0, 10);
+
+    if (datePickerField === "startDate") {
+      setTaskForm((current) => ({ ...current, startDate: isoDate }));
+    }
+
+    if (datePickerField === "dueDate") {
+      setTaskForm((current) => ({ ...current, dueDate: isoDate }));
+    }
+
+    setShowDatePicker(false);
+    setDatePickerField(null);
   };
 
   const createTask = async () => {
@@ -805,35 +835,27 @@ export default function TasksScreen() {
                   <Text className="mb-2 text-xs font-bold text-slate-500">
                     Start Date
                   </Text>
-                  <TextInput
-                    value={taskForm.startDate}
-                    onChangeText={(value) =>
-                      setTaskForm((current) => ({
-                        ...current,
-                        startDate: value,
-                      }))
-                    }
-                    placeholder="YYYY-MM-DD"
-                    placeholderTextColor="#94a3b8"
-                    className="rounded-2xl border border-slate-200 bg-slate-50 px-3 py-3.5 text-slate-900"
-                  />
+                  <TouchableOpacity
+                    onPress={() => openDatePicker("startDate")}
+                    className="rounded-2xl border border-slate-200 bg-slate-50 px-3 py-3.5"
+                  >
+                    <Text className="text-slate-900">
+                      {taskForm.startDate || "Select start date"}
+                    </Text>
+                  </TouchableOpacity>
                 </View>
                 <View className="flex-1">
                   <Text className="mb-2 text-xs font-bold text-slate-500">
                     End Date
                   </Text>
-                  <TextInput
-                    value={taskForm.dueDate}
-                    onChangeText={(value) =>
-                      setTaskForm((current) => ({
-                        ...current,
-                        dueDate: value,
-                      }))
-                    }
-                    placeholder="YYYY-MM-DD"
-                    placeholderTextColor="#94a3b8"
-                    className="rounded-2xl border border-slate-200 bg-slate-50 px-3 py-3.5 text-slate-900"
-                  />
+                  <TouchableOpacity
+                    onPress={() => openDatePicker("dueDate")}
+                    className="rounded-2xl border border-slate-200 bg-slate-50 px-3 py-3.5"
+                  >
+                    <Text className="text-slate-900">
+                      {taskForm.dueDate || "Select end date"}
+                    </Text>
+                  </TouchableOpacity>
                 </View>
               </View>
               <View className="flex-row gap-3">
@@ -915,6 +937,23 @@ export default function TasksScreen() {
                 )}
               </TouchableOpacity>
             </ScrollView>
+
+            {showDatePicker && datePickerField ? (
+              <DateTimePicker
+                value={
+                  datePickerField === "startDate"
+                    ? taskForm.startDate
+                      ? new Date(taskForm.startDate)
+                      : new Date()
+                    : taskForm.dueDate
+                      ? new Date(taskForm.dueDate)
+                      : new Date()
+                }
+                mode="date"
+                display={Platform.OS === "ios" ? "inline" : "default"}
+                onChange={handleDatePickerChange}
+              />
+            ) : null}
           </View>
         </KeyboardAvoidingView>
       </Modal>
