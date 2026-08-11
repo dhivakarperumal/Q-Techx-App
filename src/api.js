@@ -12,14 +12,9 @@ const api = axios.create({
 
 const MAX_RETRIES = 1;
 let cachedToken = null;
-let unauthorizedHandler = null;
 
 export function clearTokenCache() {
   cachedToken = null;
-}
-
-export function setUnauthorizedHandler(handler) {
-  unauthorizedHandler = handler;
 }
 
 api.interceptors.request.use(async (config) => {
@@ -48,12 +43,6 @@ api.interceptors.response.use(
     }
 
     if (error.response) {
-      if (error.response.status === 401 || error.response.status === 403) {
-        cachedToken = null;
-        await AsyncStorage.removeItem("userToken");
-        unauthorizedHandler?.();
-      }
-
       return Promise.reject({
         status: error.response.status,
         message: error.response.data?.message || "Server error",

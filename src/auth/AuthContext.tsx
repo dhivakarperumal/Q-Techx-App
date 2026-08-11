@@ -1,5 +1,4 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { router } from "expo-router";
 import {
     createContext,
     PropsWithChildren,
@@ -7,7 +6,7 @@ import {
     useEffect,
     useState,
 } from "react";
-import { clearTokenCache, setUnauthorizedHandler } from "../api";
+import { clearTokenCache } from "../api";
 
 export type AuthUser = {
   id?: string | number;
@@ -18,6 +17,7 @@ export type AuthUser = {
 type AuthContextValue = {
   user: AuthUser | null;
   token: string | null;
+  isLoading: boolean;
   login: (user: AuthUser, token: string) => Promise<void>;
   logout: () => Promise<void>;
 };
@@ -27,32 +27,47 @@ const AuthContext = createContext<AuthContextValue | undefined>(undefined);
 export function AuthProvider({ children }: PropsWithChildren) {
   const [user, setUser] = useState<AuthUser | null>(null);
   const [token, setToken] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
 
   useEffect(() => {
-    setUnauthorizedHandler(() => {
-      setUser(null);
-      setToken(null);
-      router.replace("/login");
-    });
+    AsyncStorage.multiGet(["userToken", "authUser"]).then(
+      ([storedToken, storedUser]) => {
+        if (storedToken[1]) {
+          setToken(storedToken[1]);
+        }
 
-    return () => setUnauthorizedHandler(null);
+        if (storedUser[1]) {
+          try {
+            setUser(JSON.parse(storedUser[1]));
+          } catch {
+            AsyncStorage.removeItem("authUser");
+          }
+        }
+        setIsLoading(false);
+      },
+    ).catch(() => {
+      setIsLoading(false);
+    });
   }, []);
 
   const login = async (nextUser: AuthUser, nextToken: string) => {
     setUser(nextUser);
     setToken(nextToken);
-    await AsyncStorage.setItem("userToken", nextToken);
+    await AsyncStorage.multiSet([
+      ["userToken", nextToken],
+      ["authUser", JSON.stringify(nextUser)],
+    ]);
   };
 
   const logout = async () => {
     setUser(null);
     setToken(null);
     clearTokenCache();
-    await AsyncStorage.removeItem("userToken");
+    await AsyncStorage.multiRemove(["userToken", "authUser"]);
   };
 
   return (
-    <AuthContext.Provider value={{ user, token, login, logout }}>
+    <AuthContext.Provider value={{ user, token, isLoading, login, logout }}>
       {children}
     </AuthContext.Provider>
   );
