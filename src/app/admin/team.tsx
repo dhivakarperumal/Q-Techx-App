@@ -6,26 +6,22 @@ import { Ionicons } from '@expo/vector-icons';
 import { AdminBottomBar } from "../../components/admin-bottom-bar";
 import api, { API_BASE_URL } from "../../api";
 import { TopHeader } from "../../components/TopHeader";
-import { FAB } from "../../components/FAB";
 
-const stats = [
-  { label: 'Total Members', value: '24', sub: 'All Members', icon: 'people-outline', color: '#f97316', bg: 'bg-orange-50' },
-  { label: 'Active Members', value: '20', sub: '83.3%', subColor: 'text-blue-500', icon: 'person-add-outline', color: '#3b82f6', bg: 'bg-blue-50' },
-  { label: 'On Leave', value: '2', sub: '8.3%', subColor: 'text-green-500', icon: 'person-outline', color: '#10b981', bg: 'bg-green-50' },
-  { label: 'Inactive', value: '2', sub: '8.3%', subColor: 'text-purple-500', icon: 'person-remove-outline', color: '#a855f7', bg: 'bg-purple-50' },
-];
 
-const filters = [
-  { label: 'All Members', active: true, icon: 'people' },
-  { label: 'Development', active: false, icon: 'code-slash' },
-  { label: 'Design', active: false, icon: 'color-palette' },
-  { label: 'Marketing', active: false, icon: 'megaphone' },
+
+const FILTER_OPTIONS = [
+  { label: 'All Members', icon: 'people' },
+  { label: 'Development', icon: 'code-slash' },
+  { label: 'Design', icon: 'color-palette' },
+  { label: 'Marketing', icon: 'megaphone' },
 ];
 
 export default function TeamScreen() {
   const router = useRouter();
   const [team, setTeam] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [activeFilter, setActiveFilter] = useState("All Members");
 
   useEffect(() => {
     const fetchTeam = async () => {
@@ -43,6 +39,7 @@ export default function TeamScreen() {
             : 'https://i.pravatar.cc/100';
 
           return {
+            id: emp.employee_id || emp.employeeId || emp.id || emp.uuid || emp._id || emp.employee_code || emp.employeeCode,
             name: `${emp.first_name || ''} ${emp.last_name || ''}`.trim() || 'Unknown',
             role: emp.role || 'Employee',
             roleColor: 'text-blue-500',
@@ -67,6 +64,28 @@ export default function TeamScreen() {
     fetchTeam();
   }, []);
 
+  // Calculate stats dynamically based on the fetched team data
+  const total = team.length;
+  const activeCount = team.filter((m) => m.status === 'Active').length;
+  const leaveCount = team.filter((m) => m.status === 'On Leave' || m.status === 'Leave').length;
+  const inactiveCount = team.filter((m) => m.status === 'Inactive').length;
+
+  const getPercent = (count: number) => total > 0 ? ((count / total) * 100).toFixed(1) + '%' : '0%';
+
+  const dynamicStats = [
+    { label: 'Total Members', value: String(total), sub: 'All Members', icon: 'people-outline', color: '#f97316', bg: 'bg-orange-50' },
+    { label: 'Active', value: String(activeCount), sub: getPercent(activeCount), subColor: 'text-blue-500', icon: 'person-add-outline', color: '#3b82f6', bg: 'bg-blue-50' },
+    { label: 'On Leave', value: String(leaveCount), sub: getPercent(leaveCount), subColor: 'text-green-500', icon: 'person-outline', color: '#10b981', bg: 'bg-green-50' },
+    { label: 'Inactive', value: String(inactiveCount), sub: getPercent(inactiveCount), subColor: 'text-purple-500', icon: 'person-remove-outline', color: '#a855f7', bg: 'bg-purple-50' },
+  ];
+
+  const filteredTeam = team.filter(member => {
+    const matchesSearch = member.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
+                          member.email.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesFilter = activeFilter === 'All Members' || member.team.toLowerCase().includes(activeFilter.toLowerCase());
+    return matchesSearch && matchesFilter;
+  });
+
   return (
     <View className="flex-1 bg-[#F9FAFB]">
       <TopHeader />
@@ -77,7 +96,7 @@ export default function TeamScreen() {
 
         {/* ── STATS SCROLLVIEW ── */}
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerClassName="px-5 mb-6" className="overflow-visible">
-          {stats.map((stat, idx) => (
+          {dynamicStats.map((stat, idx) => (
             <View key={idx} className="bg-white rounded-[24px] p-4 mr-4 border border-slate-100 shadow-sm w-[130px]">
               <View className={`w-10 h-10 rounded-[14px] ${stat.bg} items-center justify-center mb-3`}>
                 <Ionicons name={stat.icon as any} size={22} color={stat.color} />
@@ -96,6 +115,8 @@ export default function TeamScreen() {
             <TextInput
               placeholder="Search team members..."
               placeholderTextColor="#94a3b8"
+              value={searchQuery}
+              onChangeText={setSearchQuery}
               className="flex-1 ml-2 text-sm font-medium text-slate-800"
             />
           </View>
@@ -109,19 +130,23 @@ export default function TeamScreen() {
         {/* ── FILTER PILLS ── */}
         <View className="mb-6">
           <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerClassName="px-5 flex-row items-center">
-            {filters.map((filter, idx) => (
-              <TouchableOpacity
-                key={idx}
-                className={`flex-row items-center px-4 py-2 rounded-full mr-3 border ${
-                  filter.active ? 'border-orange-500 bg-orange-50' : 'border-slate-200 bg-white'
-                }`}
-              >
-                <Ionicons name={filter.icon as any} size={14} color={filter.active ? "#f97316" : "#3b82f6"} className="mr-2" />
-                <Text className={`text-xs font-bold ${filter.active ? 'text-orange-600 ml-1.5' : 'text-slate-600 ml-1.5'}`}>
-                  {filter.label}
-                </Text>
-              </TouchableOpacity>
-            ))}
+            {FILTER_OPTIONS.map((filter, idx) => {
+              const isActive = activeFilter === filter.label;
+              return (
+                <TouchableOpacity
+                  key={idx}
+                  onPress={() => setActiveFilter(filter.label)}
+                  className={`flex-row items-center px-4 py-2 rounded-full mr-3 border ${
+                    isActive ? 'border-orange-500 bg-orange-50' : 'border-slate-200 bg-white'
+                  }`}
+                >
+                  <Ionicons name={filter.icon as any} size={14} color={isActive ? "#f97316" : "#3b82f6"} className="mr-2" />
+                  <Text className={`text-xs font-bold ${isActive ? 'text-orange-600 ml-1.5' : 'text-slate-600 ml-1.5'}`}>
+                    {filter.label}
+                  </Text>
+                </TouchableOpacity>
+              );
+            })}
             
             {/* More Dropdown Pill */}
             <TouchableOpacity className="flex-row items-center px-4 py-2 rounded-full border border-slate-200 bg-white ml-2">
@@ -133,7 +158,7 @@ export default function TeamScreen() {
 
         {/* ── LIST HEADER ── */}
         <View className="px-5 mb-4 flex-row items-center justify-between">
-          <Text className="text-slate-800 font-bold text-sm">Team Members ({team.length})</Text>
+          <Text className="text-slate-800 font-bold text-sm">Team Members ({filteredTeam.length})</Text>
           <TouchableOpacity className="flex-row items-center">
             <Text className="text-slate-500 text-xs font-medium mr-1">Sort by: Recent</Text>
             <Ionicons name="chevron-down" size={14} color="#94a3b8" />
@@ -144,8 +169,14 @@ export default function TeamScreen() {
         <View className="px-5">
           {loading ? (
             <Text className="text-center text-slate-500 mt-4">Loading team...</Text>
-          ) : team.map((member, idx) => (
-            <View key={idx} className="bg-white rounded-[24px] p-4 mb-4 border border-slate-100 shadow-sm flex-row items-start justify-between">
+          ) : filteredTeam.length === 0 ? (
+            <Text className="text-center text-slate-500 mt-4">No team members found.</Text>
+          ) : filteredTeam.map((member, idx) => (
+            <TouchableOpacity 
+              key={idx} 
+              onPress={() => router.push(`/admin/team-detail/${member.id}` as any)}
+              className="bg-white rounded-[24px] p-4 mb-4 border border-slate-100 shadow-sm flex-row items-start justify-between"
+            >
               
               {/* Left Side: Avatar and Info */}
               <View className="flex-row flex-1">
@@ -191,7 +222,7 @@ export default function TeamScreen() {
                   <Ionicons name="ellipsis-vertical" size={18} color="#94a3b8" />
                 </TouchableOpacity>
               </View>
-            </View>
+            </TouchableOpacity>
           ))}
           
         </View>
@@ -200,9 +231,6 @@ export default function TeamScreen() {
 
       {/* Bottom Bar */}
       <AdminBottomBar />
-
-      {/* Floating Action Button */}
-      <FAB onPress={() => {}} />
     </View>
   );
 }
