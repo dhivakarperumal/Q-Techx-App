@@ -122,7 +122,7 @@ export default function AdminDashboard() {
         colors={["#fb923c", "#f97316"]}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 0 }}
-        className="h-1.5 w-full"
+        className="h-0.5 w-full"
       />
 
       {/* Header */}
@@ -217,7 +217,7 @@ export default function AdminDashboard() {
         colors={["#fb923c", "#f97316"]}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 0 }}
-        className="h-1.5 w-full"
+        className="h-0.5 w-full"
       />
 
       <View className="p-5">
@@ -260,7 +260,7 @@ export default function AdminDashboard() {
     </View> */}
 
     <View className="mb-4 overflow-hidden rounded-3xl bg-white shadow-md">
-      <View className="h-1.5 w-full bg-orange-500" />
+      <View className="h-0.5 w-full bg-orange-500" />
 
       <View className="p-5">
         <SectionHeader
@@ -321,7 +321,7 @@ export default function AdminDashboard() {
       className="mb-5 overflow-hidden rounded-3xl shadow-md"
     >
       {/* Orange top accent */}
-      <View className="h-1.5 w-full bg-orange-500" />
+      <View className="h-0.5 w-full bg-orange-500" />
 
       <View className="p-5">
         <SectionHeader title="Recent Activity" />
