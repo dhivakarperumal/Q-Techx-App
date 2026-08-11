@@ -240,10 +240,13 @@ export default function ClientFormModal({
 
   return (
     <Modal visible={visible} animationType="slide" onRequestClose={onClose}>
-      <View className="flex-1 justify-end bg-black/20">
-        <View className="rounded-t-[28px] border border-slate-200 bg-[#f8fafc]">
-          <View className="flex-row items-center justify-between border-b border-slate-200 bg-white px-5 pb-4 pt-5 rounded-t-[28px]">
-            <View>
+      <View className="flex-1 justify-end bg-black/25">
+        <View className="max-h-[92%] rounded-t-[32px] border border-slate-200 bg-[#f8fafc] shadow-2xl">
+          <View className="items-center pt-3">
+            <View className="h-1.5 w-14 rounded-full bg-slate-300" />
+          </View>
+          <View className="flex-row items-center justify-between border-b border-slate-200 bg-white px-5 pb-4 pt-4 rounded-t-[32px]">
+            <View className="flex-1 pr-3">
               <Text className="text-xl font-black text-slate-900">
                 {client ? "Edit Client" : "Add Client"}
               </Text>
@@ -259,9 +262,14 @@ export default function ClientFormModal({
             </Pressable>
           </View>
           <ScrollView
-            contentContainerStyle={{ padding: 20, paddingBottom: 40 }}
+            contentContainerStyle={{
+              paddingHorizontal: 20,
+              paddingTop: 16,
+              paddingBottom: 36,
+            }}
+            showsVerticalScrollIndicator={false}
           >
-            <View className="rounded-3xl border border-slate-100 bg-white p-4 shadow-sm">
+            <View className="rounded-[24px] border border-slate-100 bg-white p-4 shadow-sm">
               <Text className="mb-4 text-base font-black text-slate-900">
                 Client Details
               </Text>
@@ -333,7 +341,7 @@ export default function ClientFormModal({
                 multiline
               />
             </View>
-            <View className="mt-4 rounded-3xl border border-slate-100 bg-white p-4 shadow-sm">
+            <View className="mt-4 rounded-[24px] border border-slate-100 bg-white p-4 shadow-sm">
               <Text className="mb-4 text-base font-black text-slate-900">
                 Follow-up Scheduling
               </Text>
@@ -386,7 +394,7 @@ export default function ClientFormModal({
                 multiline
               />
             </View>
-            <View className="mt-4 rounded-3xl border border-slate-100 bg-white p-4 shadow-sm">
+            <View className="mt-4 rounded-[24px] border border-slate-100 bg-white p-4 shadow-sm">
               <Text className="mb-1 text-base font-black text-slate-900">
                 Attach Documents
               </Text>
@@ -430,7 +438,7 @@ export default function ClientFormModal({
             <Pressable
               disabled={saving}
               onPress={submit}
-              className="mt-5 items-center rounded-2xl bg-orange-500 py-4 shadow-lg"
+              className="mt-6 items-center rounded-2xl bg-orange-500 py-4 shadow-lg"
             >
               <Text className="font-black text-white">
                 {saving
