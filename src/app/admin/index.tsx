@@ -116,7 +116,95 @@ export default function AdminDashboard() {
     <LinearGradient colors={["#ea580c", "#171717"]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} className="mb-5 overflow-hidden rounded-[28px] p-5 shadow-lg shadow-black/30 border border-white/10"><View className="flex-row items-start justify-between"><View className="flex-1 pr-4"><Text className="text-xs font-bold uppercase tracking-[2px] text-orange-200">Financial Overview</Text><Text className="mt-2 text-2xl font-black text-white">Revenue Insights</Text><Text className="mt-1 text-sm text-gray-300">Live income and payroll snapshot.</Text></View><View className="h-10 w-10 items-center justify-center rounded-2xl bg-white/10"><Ionicons name="trending-up" size={22} color="#ffffff" /></View></View><View className="mt-5 flex-row gap-3"><View className="flex-1 rounded-2xl bg-white/10 p-3 border border-white/5"><Text className="text-[10px] font-bold uppercase text-orange-200/80">Income</Text><Text className="mt-1 text-xl font-black text-white">{money(income)}</Text></View><View className="flex-1 rounded-2xl bg-white/10 p-3 border border-white/5"><Text className="text-[10px] font-bold uppercase text-orange-200/80">Payroll</Text><Text className="mt-1 text-xl font-black text-white">{money(dashboard?.monthlyPayroll)}</Text></View></View><View className="mt-4"><View className="mb-1 flex-row justify-between"><Text className="text-[10px] font-bold text-gray-400">Monthly target: Rs 5.0L</Text><Text className="text-[10px] font-black text-orange-400">{targetPercentage}%</Text></View><View className="h-2 overflow-hidden rounded-full bg-black/40"><View className="h-full rounded-full bg-orange-500" style={{ width: `${targetPercentage}%` }} /></View></View></LinearGradient>
     {loading ? <View className="items-center py-12"><ActivityIndicator size="large" color="#f97316" /><Text className="mt-3 text-sm text-gray-500">Loading dashboard...</Text></View> : error ? <View className="mb-5 rounded-2xl border border-rose-200 bg-rose-50 p-4"><Text className="font-semibold text-rose-700">{error}</Text><Pressable onPress={() => fetchDashboard()} className="mt-3 self-start rounded-xl bg-rose-600 px-4 py-2"><Text className="font-bold text-white">Try again</Text></Pressable></View> : null}
     <View className="mb-3 flex-row flex-wrap justify-between">{stats.map(([icon, label, value, color, background]) => <MetricCard key={label} icon={icon} label={label} value={loading ? "-" : value} color={color} background={background} />)}</View>
-    <View className="mb-5 rounded-3xl border border-gray-200 bg-[#fafafa] p-5 shadow-sm"><SectionHeader title="Company Overview" action="Refresh" onPress={() => fetchDashboard(true)} /><View className="h-32 flex-row items-end gap-2 border-b border-gray-200 pb-2">{overview.length === 0 ? <Text className="self-center text-sm text-gray-400">No overview data available.</Text> : overview.map((entry, index) => <View key={`${entry.name}-${index}`} className="flex-1 items-center"><View className="w-full rounded-t-xl bg-orange-500" style={{ height: Math.max(8, (valueOf(entry.income) / maxIncome) * 105) }} /><Text className="mt-2 text-[9px] text-gray-400" numberOfLines={1}>{entry.name?.split(" ")[0]}</Text></View>)}</View><View className="mt-3 flex-row gap-4"><Text className="text-xs text-gray-500">Income <Text className="font-black text-orange-500">{money(income)}</Text></Text><Text className="text-xs text-gray-500">Projects <Text className="font-black text-black">{valueOf(dashboard?.activeProjects)}</Text></Text></View></View>
+    <View className="mb-5 overflow-hidden rounded-3xl bg-white shadow-md">
+      {/* Orange top accent */}
+      <LinearGradient
+        colors={["#fb923c", "#f97316"]}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 0 }}
+        className="h-1.5 w-full"
+      />
+
+      {/* Header */}
+      <View className="bg-white px-5 pt-5 pb-4">
+        <View className="flex-row items-center justify-between">
+          <View className="flex-row items-center">
+            <View className="h-10 w-10 items-center justify-center rounded-xl bg-black">
+              <Ionicons name="stats-chart" size={19} color="#f97316" />
+            </View>
+
+            <View className="ml-3">
+              <Text className="text-base font-black text-black">
+                Company Overview
+              </Text>
+              <Text className="mt-0.5 text-[10px] text-gray-400">
+                Performance snapshot
+              </Text>
+            </View>
+          </View>
+
+        </View>
+      </View>
+
+      {/* Chart */}
+      <View className="px-5 pb-5">
+        <View className="h-32 flex-row items-end gap-2 border-b border-gray-100 pb-2">
+          {overview.length === 0 ? (
+            <Text className="self-center text-sm text-gray-400">
+              No overview data available.
+            </Text>
+          ) : (
+            overview.map((entry, index) => (
+              <View
+                key={`${entry.name}-${index}`}
+                className="flex-1 items-center"
+              >
+                <LinearGradient
+                  colors={["#fb923c", "#f97316"]}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 0, y: 1 }}
+                  className="w-full rounded-t-xl"
+                  style={{
+                    height: Math.max(
+                      8,
+                      (valueOf(entry.income) / maxIncome) * 105
+                    ),
+                  }}
+                />
+
+                <Text
+                  className="mt-2 text-[9px] font-medium text-gray-400"
+                  numberOfLines={1}
+                >
+                  {entry.name?.split(" ")[0]}
+                </Text>
+              </View>
+            ))
+          )}
+        </View>
+
+        {/* Bottom stats */}
+        <View className="mt-4 flex-row gap-3">
+          <View className="flex-1 rounded-2xl bg-orange-50 p-3">
+            <Text className="text-[9px] font-bold uppercase tracking-wide text-gray-400">
+              Income
+            </Text>
+            <Text className="mt-1 text-sm font-black text-orange-500">
+              {money(income)}
+            </Text>
+          </View>
+
+          <View className="flex-1 rounded-2xl bg-gray-50 p-3">
+            <Text className="text-[9px] font-bold uppercase tracking-wide text-gray-400">
+              Projects
+            </Text>
+            <Text className="mt-1 text-sm font-black text-black">
+              {valueOf(dashboard?.activeProjects)}
+            </Text>
+          </View>
+        </View>
+      </View>
+    </View>
     <View className="mb-5 rounded-3xl border border-gray-200 bg-[#fafafa] p-5 shadow-sm"><SectionHeader title="Trainee & Interns" /><View className="mb-4 flex-row items-center"><View className="h-24 w-24 items-center justify-center rounded-full border-[12px] border-orange-500"><Text className="text-xl font-black text-black">{traineeTotal}</Text></View><View className="ml-5 flex-1"><StatusList items={dashboard?.traineeStats || []} labelKey="type" /></View></View></View>
     <View className="mb-5 gap-4"><View className="rounded-3xl border border-gray-200 bg-[#fafafa] p-5 shadow-sm"><SectionHeader title="Task Status" action="View all" onPress={() => router.push("/admin/tasks")} /><StatusList items={dashboard?.taskStats || []} labelKey="status" /></View><View className="rounded-3xl border border-gray-200 bg-[#fafafa] p-5 shadow-sm"><SectionHeader title="Project Health" action="View all" onPress={() => router.push("/admin/projects")} /><StatusList items={dashboard?.projectStats || []} labelKey="current_status" /></View><View className="rounded-3xl border border-gray-200 bg-[#fafafa] p-5 shadow-sm"><SectionHeader title="Client Follow-ups" action="View all" onPress={() => router.push("/admin/clients")} /><StatusList items={dashboard?.clientFollowUps || []} labelKey="follow_up_status" /></View></View>
     <View className="mb-5 rounded-3xl border border-gray-200 bg-[#fafafa] p-5 shadow-sm"><SectionHeader title="Recent Activity" />{(dashboard?.recentActivity || []).length === 0 ? <Text className="text-sm text-gray-400">No recent activity found.</Text> : dashboard?.recentActivity?.slice(0, 5).map((activity, index) => <View key={`${activity.title}-${index}`} className="flex-row items-center border-b border-gray-200 py-3"><View className="h-10 w-10 items-center justify-center rounded-2xl" style={{ backgroundColor: `${palette[index % palette.length]}18` }}><Ionicons name="pulse-outline" size={18} color={palette[index % palette.length]} /></View><View className="ml-3 flex-1"><Text className="text-sm font-bold text-black" numberOfLines={1}>{activity.title || "Activity"}</Text><Text className="mt-1 text-[11px] text-gray-400" numberOfLines={1}>{activity.meta || activity.user || "System"} - {activity.time ? dateLabel(activity.time) : "Recently"}</Text></View></View>)}</View>
