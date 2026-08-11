@@ -1,75 +1,448 @@
 import { Ionicons } from "@expo/vector-icons";
 import * as DocumentPicker from "expo-document-picker";
 import React, { useEffect, useState } from "react";
-import { Alert, Modal, Pressable, ScrollView, Text, TextInput, View } from "react-native";
+import {
+  Alert,
+  Modal,
+  Pressable,
+  ScrollView,
+  Text,
+  TextInput,
+  View,
+} from "react-native";
 import api from "../api";
 
 type Client = Record<string, any>;
-type Props = { visible: boolean; client?: Client | null; onClose: () => void; onSaved: () => void };
-const CLIENT_STATUSES = ["Lead", "Prospect", "Active", "Inactive", "Converted", "Closed"];
+type Props = {
+  visible: boolean;
+  client?: Client | null;
+  onClose: () => void;
+  onSaved: () => void;
+};
+const CLIENT_STATUSES = [
+  "Lead",
+  "Prospect",
+  "Active",
+  "Inactive",
+  "Converted",
+  "Closed",
+];
 const SERVICE_TYPES = ["Website", "Mobile App", "Web App", "Software", "Other"];
-const FOLLOW_UP_STATUSES = ["Pending", "Follow Up", "Completed", "Rescheduled", "Cancelled"];
-const emptyForm = { company_name: "", client_name: "", email: "", phone_number: "", contact_person: "", client_status: "Lead", service_type: "", custom_service_type: "", business_name: "", business_type: "", requirement: "", notes_summary: "", follow_up_date: "", follow_up_time: "", next_follow_up_date: "", next_follow_up_time: "", discussion_summary: "", follow_up_status: "Pending", reminder: false };
-const inputClass = "rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm text-slate-900";
+const FOLLOW_UP_STATUSES = [
+  "Pending",
+  "Follow Up",
+  "Completed",
+  "Rescheduled",
+  "Cancelled",
+];
+const emptyForm = {
+  company_name: "",
+  client_name: "",
+  email: "",
+  phone_number: "",
+  contact_person: "",
+  client_status: "Lead",
+  service_type: "",
+  custom_service_type: "",
+  business_name: "",
+  business_type: "",
+  requirement: "",
+  notes_summary: "",
+  follow_up_date: "",
+  follow_up_time: "",
+  next_follow_up_date: "",
+  next_follow_up_time: "",
+  discussion_summary: "",
+  follow_up_status: "Pending",
+  reminder: false,
+};
+const inputClass =
+  "rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm text-slate-900";
 
-function Field({ label, value, onChange, multiline = false, placeholder = "" }: { label: string; value: string; onChange: (value: string) => void; multiline?: boolean; placeholder?: string }) {
-  return <View className="mb-3"><Text className="mb-1.5 text-xs font-bold text-slate-500">{label}</Text><TextInput className={inputClass} value={value} onChangeText={onChange} placeholder={placeholder} placeholderTextColor="#94a3b8" multiline={multiline} textAlignVertical={multiline ? "top" : "center"} numberOfLines={multiline ? 3 : 1} /></View>;
+function Field({
+  label,
+  value,
+  onChange,
+  multiline = false,
+  placeholder = "",
+}: {
+  label: string;
+  value: string;
+  onChange: (value: string) => void;
+  multiline?: boolean;
+  placeholder?: string;
+}) {
+  return (
+    <View className="mb-3">
+      <Text className="mb-1.5 text-xs font-bold text-slate-500">{label}</Text>
+      <TextInput
+        className={inputClass}
+        value={value}
+        onChangeText={onChange}
+        placeholder={placeholder}
+        placeholderTextColor="#94a3b8"
+        multiline={multiline}
+        textAlignVertical={multiline ? "top" : "center"}
+        numberOfLines={multiline ? 3 : 1}
+      />
+    </View>
+  );
 }
 
-function ChoiceRow({ label, values, value, onChange }: { label: string; values: string[]; value: string; onChange: (value: string) => void }) {
-  return <View className="mb-3"><Text className="mb-1.5 text-xs font-bold text-slate-500">{label}</Text><View className="flex-row flex-wrap gap-2">{values.map((item) => <Pressable key={item} onPress={() => onChange(item)} className={`rounded-full border px-3 py-2 ${value === item ? "border-orange-500 bg-orange-50" : "border-slate-200 bg-white"}`}><Text className={`text-xs font-bold ${value === item ? "text-orange-600" : "text-slate-500"}`}>{item}</Text></Pressable>)}</View></View>;
+function ChoiceRow({
+  label,
+  values,
+  value,
+  onChange,
+}: {
+  label: string;
+  values: string[];
+  value: string;
+  onChange: (value: string) => void;
+}) {
+  return (
+    <View className="mb-3">
+      <Text className="mb-1.5 text-xs font-bold text-slate-500">{label}</Text>
+      <View className="flex-row flex-wrap gap-2">
+        {values.map((item) => (
+          <Pressable
+            key={item}
+            onPress={() => onChange(item)}
+            className={`rounded-full border px-3 py-2 ${value === item ? "border-orange-500 bg-orange-50" : "border-slate-200 bg-white"}`}
+          >
+            <Text
+              className={`text-xs font-bold ${value === item ? "text-orange-600" : "text-slate-500"}`}
+            >
+              {item}
+            </Text>
+          </Pressable>
+        ))}
+      </View>
+    </View>
+  );
 }
 
-export default function ClientFormModal({ visible, client, onClose, onSaved }: Props) {
+export default function ClientFormModal({
+  visible,
+  client,
+  onClose,
+  onSaved,
+}: Props) {
   const [form, setForm] = useState<any>(emptyForm);
-  const [files, setFiles] = useState<{ uri: string; name: string; type: string; documentType: string }[]>([]);
+  const [files, setFiles] = useState<
+    { uri: string; name: string; type: string; documentType: string }[]
+  >([]);
   const [saving, setSaving] = useState(false);
-  const set = (key: string, value: unknown) => setForm((current: any) => ({ ...current, [key]: value }));
+  const set = (key: string, value: unknown) =>
+    setForm((current: any) => ({ ...current, [key]: value }));
 
   useEffect(() => {
     if (!visible) return;
     setFiles([]);
-    setForm(client ? { ...emptyForm, ...client, custom_service_type: SERVICE_TYPES.includes(client.service_type) ? "" : client.service_type || "", follow_up_date: client.follow_up_date?.slice(0, 10) || "", next_follow_up_date: client.next_follow_up_date?.slice(0, 10) || "", reminder: !!client.reminder } : emptyForm);
+    setForm(
+      client
+        ? {
+            ...emptyForm,
+            ...client,
+            custom_service_type: SERVICE_TYPES.includes(client.service_type)
+              ? ""
+              : client.service_type || "",
+            follow_up_date: client.follow_up_date?.slice(0, 10) || "",
+            next_follow_up_date: client.next_follow_up_date?.slice(0, 10) || "",
+            reminder: !!client.reminder,
+          }
+        : emptyForm,
+    );
   }, [visible, client]);
 
   const chooseFile = async (documentType: string) => {
-    const result = await DocumentPicker.getDocumentAsync({ type: ["application/pdf", "application/msword", "application/vnd.openxmlformats-officedocument.wordprocessingml.document", "application/vnd.ms-excel", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"], copyToCacheDirectory: true });
+    const result = await DocumentPicker.getDocumentAsync({
+      type: [
+        "application/pdf",
+        "application/msword",
+        "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+        "application/vnd.ms-excel",
+        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+      ],
+      copyToCacheDirectory: true,
+    });
     if (!result.canceled && result.assets?.[0]) {
       const file = result.assets[0];
-      setFiles((current) => [...current.filter((item) => item.documentType !== documentType), { uri: file.uri, name: file.name, type: file.mimeType || "application/octet-stream", documentType }]);
+      setFiles((current) => [
+        ...current.filter((item) => item.documentType !== documentType),
+        {
+          uri: file.uri,
+          name: file.name,
+          type: file.mimeType || "application/octet-stream",
+          documentType,
+        },
+      ]);
     }
   };
 
   const submit = async () => {
-    if (!form.client_name.trim()) return Alert.alert("Required field", "Client name is required.");
-    if (!form.service_type.trim()) return Alert.alert("Required field", "Service type is required.");
-    if (form.service_type === "Other" && !form.custom_service_type.trim()) return Alert.alert("Required field", "Please enter a custom service type.");
+    if (!form.client_name.trim())
+      return Alert.alert("Required field", "Client name is required.");
+    if (!form.service_type.trim())
+      return Alert.alert("Required field", "Service type is required.");
+    if (form.service_type === "Other" && !form.custom_service_type.trim())
+      return Alert.alert(
+        "Required field",
+        "Please enter a custom service type.",
+      );
     setSaving(true);
     try {
-      const payload = { ...form, service_type: form.service_type === "Other" ? form.custom_service_type.trim() : form.service_type };
+      const payload = {
+        ...form,
+        service_type:
+          form.service_type === "Other"
+            ? form.custom_service_type.trim()
+            : form.service_type,
+      };
       delete payload.custom_service_type;
-      Object.keys(payload).forEach((key) => { if (payload[key] === "") payload[key] = null; });
-      const response = client ? await api.put(`/clients/${client.uuid}`, payload) : await api.post("/clients", payload);
+      Object.keys(payload).forEach((key) => {
+        if (payload[key] === "") payload[key] = null;
+      });
+      const response = client
+        ? await api.put(`/clients/${client.uuid}`, payload)
+        : await api.post("/clients", payload);
       const clientUuid = client?.uuid || response.data?.data?.uuid;
       for (const file of files) {
         const body = new FormData();
-        body.append("document", { uri: file.uri, name: file.name, type: file.type } as unknown as Blob);
+        body.append("document", {
+          uri: file.uri,
+          name: file.name,
+          type: file.type,
+        } as unknown as Blob);
         body.append("document_type", file.documentType);
         body.append("document_name", file.name.replace(/\.[^.]+$/, ""));
-        await api.post(`/clients/${clientUuid}/documents`, body, { headers: { "Content-Type": "multipart/form-data" } });
+        await api.post(`/clients/${clientUuid}/documents`, body, {
+          headers: { "Content-Type": "multipart/form-data" },
+        });
       }
-      Alert.alert("Success", client ? "Client updated successfully." : "Client created successfully.");
+      Alert.alert(
+        "Success",
+        client
+          ? "Client updated successfully."
+          : "Client created successfully.",
+      );
       onSaved();
       onClose();
     } catch (error: any) {
-      Alert.alert("Unable to save client", error?.message || "Please try again.");
-    } finally { setSaving(false); }
+      Alert.alert(
+        "Unable to save client",
+        error?.message || "Please try again.",
+      );
+    } finally {
+      setSaving(false);
+    }
   };
 
-  return <Modal visible={visible} animationType="slide" onRequestClose={onClose}><View className="flex-1 bg-[#f8fafc]"><View className="flex-row items-center justify-between border-b border-slate-200 bg-white px-5 pb-4 pt-5"><View><Text className="text-xl font-black text-slate-900">{client ? "Edit Client" : "Add Client"}</Text><Text className="mt-1 text-xs text-slate-500">Complete the client profile and follow-up details.</Text></View><Pressable onPress={onClose} className="h-9 w-9 items-center justify-center rounded-full bg-slate-100"><Ionicons name="close" size={20} color="#475569" /></Pressable></View><ScrollView contentContainerStyle={{ padding: 20, paddingBottom: 40 }}>
-    <View className="rounded-3xl border border-slate-100 bg-white p-4 shadow-sm"><Text className="mb-4 text-base font-black text-slate-900">Client Details</Text><Field label="Client Name *" value={form.client_name} onChange={(value) => set("client_name", value)} placeholder="e.g. Arjun Mehta" /><Field label="Company Name" value={form.company_name} onChange={(value) => set("company_name", value)} /><Field label="Email" value={form.email} onChange={(value) => set("email", value)} /><Field label="Phone Number" value={form.phone_number} onChange={(value) => set("phone_number", value)} /><Field label="Contact Person" value={form.contact_person} onChange={(value) => set("contact_person", value)} /><ChoiceRow label="Client Status" values={CLIENT_STATUSES} value={form.client_status} onChange={(value) => set("client_status", value)} /><ChoiceRow label="Service Type *" values={SERVICE_TYPES} value={form.service_type} onChange={(value) => set("service_type", value)} />{form.service_type === "Other" && <Field label="Custom Service Type *" value={form.custom_service_type} onChange={(value) => set("custom_service_type", value)} />}<Field label="Business Name" value={form.business_name} onChange={(value) => set("business_name", value)} /><Field label="Business Type" value={form.business_type} onChange={(value) => set("business_type", value)} /><Field label="Requirement" value={form.requirement} onChange={(value) => set("requirement", value)} multiline /><Field label="Notes / Summary" value={form.notes_summary} onChange={(value) => set("notes_summary", value)} multiline /></View>
-    <View className="mt-4 rounded-3xl border border-slate-100 bg-white p-4 shadow-sm"><Text className="mb-4 text-base font-black text-slate-900">Follow-up Scheduling</Text><Field label="Follow-up Date (YYYY-MM-DD)" value={form.follow_up_date} onChange={(value) => set("follow_up_date", value)} /><Field label="Follow-up Time (HH:MM)" value={form.follow_up_time} onChange={(value) => set("follow_up_time", value)} /><Field label="Next Follow-up Date (YYYY-MM-DD)" value={form.next_follow_up_date} onChange={(value) => set("next_follow_up_date", value)} /><Field label="Next Follow-up Time (HH:MM)" value={form.next_follow_up_time} onChange={(value) => set("next_follow_up_time", value)} /><ChoiceRow label="Follow-up Status" values={FOLLOW_UP_STATUSES} value={form.follow_up_status} onChange={(value) => set("follow_up_status", value)} /><Pressable onPress={() => set("reminder", !form.reminder)} className="mb-3 flex-row items-center justify-between rounded-xl border border-slate-200 bg-slate-50 p-3"><View><Text className="font-bold text-slate-700">Reminder</Text><Text className="mt-1 text-xs text-slate-400">Get notified for this follow-up</Text></View><Ionicons name={form.reminder ? "toggle" : "toggle-outline"} size={32} color={form.reminder ? "#f97316" : "#94a3b8"} /></Pressable><Field label="Discussion Summary" value={form.discussion_summary} onChange={(value) => set("discussion_summary", value)} multiline /></View>
-    <View className="mt-4 rounded-3xl border border-slate-100 bg-white p-4 shadow-sm"><Text className="mb-1 text-base font-black text-slate-900">Attach Documents</Text><Text className="mb-4 text-xs text-slate-500">PDF, DOC, DOCX, XLS, XLSX up to 10 MB.</Text>{["Requirement Document", "Project Quotation"].map((documentType) => { const file = files.find((item) => item.documentType === documentType); return <Pressable key={documentType} onPress={() => chooseFile(documentType)} className="mb-3 flex-row items-center rounded-2xl border border-dashed border-slate-300 p-4"><Ionicons name="cloud-upload-outline" size={23} color="#f97316" /><View className="ml-3 flex-1"><Text className="text-sm font-bold text-slate-700">{documentType}</Text><Text className="mt-1 text-xs text-slate-400">{file?.name || "Tap to select a file"}</Text></View><Ionicons name="chevron-forward" size={18} color="#94a3b8" /></Pressable>; })}</View>
-    <Pressable disabled={saving} onPress={submit} className="mt-5 items-center rounded-2xl bg-orange-500 py-4 shadow-lg"><Text className="font-black text-white">{saving ? "Saving..." : client ? "Update Client" : "Save Client"}</Text></Pressable>
-  </ScrollView></View></Modal>;
+  return (
+    <Modal visible={visible} animationType="slide" onRequestClose={onClose}>
+      <View className="flex-1 justify-end bg-black/20">
+        <View className="rounded-t-[28px] border border-slate-200 bg-[#f8fafc]">
+          <View className="flex-row items-center justify-between border-b border-slate-200 bg-white px-5 pb-4 pt-5 rounded-t-[28px]">
+            <View>
+              <Text className="text-xl font-black text-slate-900">
+                {client ? "Edit Client" : "Add Client"}
+              </Text>
+              <Text className="mt-1 text-xs text-slate-500">
+                Complete the client profile and follow-up details.
+              </Text>
+            </View>
+            <Pressable
+              onPress={onClose}
+              className="h-9 w-9 items-center justify-center rounded-full bg-slate-100"
+            >
+              <Ionicons name="close" size={20} color="#475569" />
+            </Pressable>
+          </View>
+          <ScrollView
+            contentContainerStyle={{ padding: 20, paddingBottom: 40 }}
+          >
+            <View className="rounded-3xl border border-slate-100 bg-white p-4 shadow-sm">
+              <Text className="mb-4 text-base font-black text-slate-900">
+                Client Details
+              </Text>
+              <Field
+                label="Client Name *"
+                value={form.client_name}
+                onChange={(value) => set("client_name", value)}
+                placeholder="e.g. Arjun Mehta"
+              />
+              <Field
+                label="Company Name"
+                value={form.company_name}
+                onChange={(value) => set("company_name", value)}
+              />
+              <Field
+                label="Email"
+                value={form.email}
+                onChange={(value) => set("email", value)}
+              />
+              <Field
+                label="Phone Number"
+                value={form.phone_number}
+                onChange={(value) => set("phone_number", value)}
+              />
+              <Field
+                label="Contact Person"
+                value={form.contact_person}
+                onChange={(value) => set("contact_person", value)}
+              />
+              <ChoiceRow
+                label="Client Status"
+                values={CLIENT_STATUSES}
+                value={form.client_status}
+                onChange={(value) => set("client_status", value)}
+              />
+              <ChoiceRow
+                label="Service Type *"
+                values={SERVICE_TYPES}
+                value={form.service_type}
+                onChange={(value) => set("service_type", value)}
+              />
+              {form.service_type === "Other" && (
+                <Field
+                  label="Custom Service Type *"
+                  value={form.custom_service_type}
+                  onChange={(value) => set("custom_service_type", value)}
+                />
+              )}
+              <Field
+                label="Business Name"
+                value={form.business_name}
+                onChange={(value) => set("business_name", value)}
+              />
+              <Field
+                label="Business Type"
+                value={form.business_type}
+                onChange={(value) => set("business_type", value)}
+              />
+              <Field
+                label="Requirement"
+                value={form.requirement}
+                onChange={(value) => set("requirement", value)}
+                multiline
+              />
+              <Field
+                label="Notes / Summary"
+                value={form.notes_summary}
+                onChange={(value) => set("notes_summary", value)}
+                multiline
+              />
+            </View>
+            <View className="mt-4 rounded-3xl border border-slate-100 bg-white p-4 shadow-sm">
+              <Text className="mb-4 text-base font-black text-slate-900">
+                Follow-up Scheduling
+              </Text>
+              <Field
+                label="Follow-up Date (YYYY-MM-DD)"
+                value={form.follow_up_date}
+                onChange={(value) => set("follow_up_date", value)}
+              />
+              <Field
+                label="Follow-up Time (HH:MM)"
+                value={form.follow_up_time}
+                onChange={(value) => set("follow_up_time", value)}
+              />
+              <Field
+                label="Next Follow-up Date (YYYY-MM-DD)"
+                value={form.next_follow_up_date}
+                onChange={(value) => set("next_follow_up_date", value)}
+              />
+              <Field
+                label="Next Follow-up Time (HH:MM)"
+                value={form.next_follow_up_time}
+                onChange={(value) => set("next_follow_up_time", value)}
+              />
+              <ChoiceRow
+                label="Follow-up Status"
+                values={FOLLOW_UP_STATUSES}
+                value={form.follow_up_status}
+                onChange={(value) => set("follow_up_status", value)}
+              />
+              <Pressable
+                onPress={() => set("reminder", !form.reminder)}
+                className="mb-3 flex-row items-center justify-between rounded-xl border border-slate-200 bg-slate-50 p-3"
+              >
+                <View>
+                  <Text className="font-bold text-slate-700">Reminder</Text>
+                  <Text className="mt-1 text-xs text-slate-400">
+                    Get notified for this follow-up
+                  </Text>
+                </View>
+                <Ionicons
+                  name={form.reminder ? "toggle" : "toggle-outline"}
+                  size={32}
+                  color={form.reminder ? "#f97316" : "#94a3b8"}
+                />
+              </Pressable>
+              <Field
+                label="Discussion Summary"
+                value={form.discussion_summary}
+                onChange={(value) => set("discussion_summary", value)}
+                multiline
+              />
+            </View>
+            <View className="mt-4 rounded-3xl border border-slate-100 bg-white p-4 shadow-sm">
+              <Text className="mb-1 text-base font-black text-slate-900">
+                Attach Documents
+              </Text>
+              <Text className="mb-4 text-xs text-slate-500">
+                PDF, DOC, DOCX, XLS, XLSX up to 10 MB.
+              </Text>
+              {["Requirement Document", "Project Quotation"].map(
+                (documentType) => {
+                  const file = files.find(
+                    (item) => item.documentType === documentType,
+                  );
+                  return (
+                    <Pressable
+                      key={documentType}
+                      onPress={() => chooseFile(documentType)}
+                      className="mb-3 flex-row items-center rounded-2xl border border-dashed border-slate-300 p-4"
+                    >
+                      <Ionicons
+                        name="cloud-upload-outline"
+                        size={23}
+                        color="#f97316"
+                      />
+                      <View className="ml-3 flex-1">
+                        <Text className="text-sm font-bold text-slate-700">
+                          {documentType}
+                        </Text>
+                        <Text className="mt-1 text-xs text-slate-400">
+                          {file?.name || "Tap to select a file"}
+                        </Text>
+                      </View>
+                      <Ionicons
+                        name="chevron-forward"
+                        size={18}
+                        color="#94a3b8"
+                      />
+                    </Pressable>
+                  );
+                },
+              )}
+            </View>
+            <Pressable
+              disabled={saving}
+              onPress={submit}
+              className="mt-5 items-center rounded-2xl bg-orange-500 py-4 shadow-lg"
+            >
+              <Text className="font-black text-white">
+                {saving
+                  ? "Saving..."
+                  : client
+                    ? "Update Client"
+                    : "Save Client"}
+              </Text>
+            </Pressable>
+          </ScrollView>
+        </View>
+      </View>
+    </Modal>
+  );
 }
