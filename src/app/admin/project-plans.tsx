@@ -660,8 +660,10 @@ export default function ProjectPlansScreen() {
           plans.map((plan) => {
             const colors = statusColor(plan.status || "Draft");
             return (
-              <View
+              <TouchableOpacity
                 key={String(plan.id)}
+                activeOpacity={0.88}
+                onPress={() => router.push(`/admin/plan-detail/${plan.id}` as any)}
                 className="mb-4 rounded-3xl border border-slate-100 bg-white p-5 shadow-sm"
               >
                 <View className="flex-row items-start">
@@ -715,19 +717,31 @@ export default function ProjectPlansScreen() {
                         {plan.activeProjectsUsingPlan} active projects
                       </Text>
                     </View>
-                    <TouchableOpacity
-                      accessibilityLabel={`Duplicate ${plan.planName}`}
-                      onPress={() => duplicatePlan(plan)}
-                      className="mt-3 flex-row items-center self-start rounded-xl border border-orange-200 bg-orange-50 px-3 py-2"
-                    >
-                      <Ionicons name="copy-outline" size={15} color="#ea580c" />
-                      <Text className="ml-1.5 text-xs font-bold text-orange-700">
-                        Duplicate plan
-                      </Text>
-                    </TouchableOpacity>
+                    <View className="mt-3 flex-row items-center gap-2">
+                      <TouchableOpacity
+                        accessibilityLabel={`View ${plan.planName}`}
+                        onPress={() => router.push(`/admin/plan-detail/${plan.id}` as any)}
+                        className="flex-row items-center rounded-xl border border-blue-200 bg-blue-50 px-3 py-2"
+                      >
+                        <Ionicons name="eye-outline" size={15} color="#2563eb" />
+                        <Text className="ml-1.5 text-xs font-bold text-blue-700">
+                          View Details
+                        </Text>
+                      </TouchableOpacity>
+                      <TouchableOpacity
+                        accessibilityLabel={`Duplicate ${plan.planName}`}
+                        onPress={(e) => { e.stopPropagation?.(); duplicatePlan(plan); }}
+                        className="flex-row items-center rounded-xl border border-orange-200 bg-orange-50 px-3 py-2"
+                      >
+                        <Ionicons name="copy-outline" size={15} color="#ea580c" />
+                        <Text className="ml-1.5 text-xs font-bold text-orange-700">
+                          Duplicate
+                        </Text>
+                      </TouchableOpacity>
+                    </View>
                   </View>
                 </View>
-              </View>
+              </TouchableOpacity>
             );
           })
         )}

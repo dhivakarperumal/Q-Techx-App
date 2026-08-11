@@ -52,7 +52,6 @@ const emptyForm = {
   follow_up_date: "",
   follow_up_time: "",
   next_follow_up_date: "",
-  next_follow_up_time: "",
   discussion_summary: "",
   follow_up_status: "Pending",
   reminder: false,
@@ -95,11 +94,13 @@ function DateField({
   value,
   onPress,
   placeholder = "YYYY-MM-DD",
+  icon = "calendar-outline",
 }: {
   label: string;
   value: string;
   onPress: () => void;
   placeholder?: string;
+  icon?: keyof typeof Ionicons.glyphMap;
 }) {
   return (
     <View className="mb-3">
@@ -113,7 +114,7 @@ function DateField({
         >
           {value || placeholder}
         </Text>
-        <Ionicons name="calendar-outline" size={18} color="#f97316" />
+        <Ionicons name={icon} size={18} color="#f97316" />
       </Pressable>
     </View>
   );
@@ -166,13 +167,22 @@ export default function ClientFormModal({
   const [datePickerField, setDatePickerField] = useState<
     "follow_up_date" | "next_follow_up_date" | null
   >(null);
+  const [timePickerField, setTimePickerField] = useState<
+    "follow_up_time" | null
+  >(null);
   const [showDatePicker, setShowDatePicker] = useState(false);
+  const [showTimePicker, setShowTimePicker] = useState(false);
   const set = (key: string, value: unknown) =>
     setForm((current: any) => ({ ...current, [key]: value }));
 
   const openDatePicker = (field: "follow_up_date" | "next_follow_up_date") => {
     setDatePickerField(field);
     setShowDatePicker(true);
+  };
+
+  const openTimePicker = () => {
+    setTimePickerField("follow_up_time");
+    setShowTimePicker(true);
   };
 
   const handleDatePickerChange = (event: any, selectedDate?: Date) => {
@@ -197,6 +207,27 @@ export default function ClientFormModal({
     setDatePickerField(null);
   };
 
+  const handleTimePickerChange = (event: any, selectedTime?: Date) => {
+    const shouldClose = event?.type === "set" || event?.type === "dismissed";
+
+    if (event?.type === "dismissed") {
+      setShowTimePicker(false);
+      setTimePickerField(null);
+      return;
+    }
+
+    if (event?.type === "set" && selectedTime) {
+      const chosenTime = selectedTime ?? new Date();
+      const timeValue = `${String(chosenTime.getHours()).padStart(2, "0")}:${String(chosenTime.getMinutes()).padStart(2, "0")}`;
+      set("follow_up_time", timeValue);
+    }
+
+    if (shouldClose) {
+      setShowTimePicker(false);
+      setTimePickerField(null);
+    }
+  };
+
   const parseDateValue = (value: string) => {
     if (!value) return new Date();
 
@@ -207,6 +238,15 @@ export default function ClientFormModal({
 
     const parsed = new Date(value);
     return Number.isNaN(parsed.getTime()) ? new Date() : parsed;
+  };
+
+  const parseTimeValue = (value: string) => {
+    if (!value) return new Date();
+
+    const [hours = "0", minutes = "0"] = value.split(":");
+    const parsed = new Date();
+    parsed.setHours(Number(hours), Number(minutes), 0, 0);
+    return parsed;
   };
 
   useEffect(() => {
@@ -432,11 +472,12 @@ export default function ClientFormModal({
                 onPress={() => openDatePicker("follow_up_date")}
                 placeholder="YYYY-MM-DD"
               />
-              <Field
-                label="Follow-up Time (HH:MM)"
+              <DateField
+                label="Follow-up Time"
                 value={form.follow_up_time}
-                onChange={(value) => set("follow_up_time", value)}
+                onPress={openTimePicker}
                 placeholder="HH:MM"
+                icon="time-outline"
               />
               <DateField
                 label="Next Follow-up Date"
@@ -463,6 +504,17 @@ export default function ClientFormModal({
                     mode="date"
                     display="default"
                     onChange={handleDatePickerChange}
+                  />
+                </View>
+              ) : null}
+              {showTimePicker && timePickerField ? (
+                <View className="mb-3">
+                  <DateTimePicker
+                    value={parseTimeValue(form[timePickerField] || "")}
+                    mode="time"
+                    display="default"
+                    is24Hour={true}
+                    onChange={handleTimePickerChange}
                   />
                 </View>
               ) : null}

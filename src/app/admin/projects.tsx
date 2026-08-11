@@ -606,127 +606,130 @@ export default function ProjectsScreen() {
             visibleProjects.map((project, idx) => (
               <TouchableOpacity
                 key={`${project.uuid || project.projectId || idx}`}
-                className="bg-white rounded-3xl p-4 mb-4 border border-slate-100 shadow-sm"
-                activeOpacity={0.88}
+                className="mb-4 overflow-hidden rounded-[28px] border border-slate-200 bg-white shadow-sm"
+                activeOpacity={0.9}
                 onPress={() => router.push(`/admin/project-detail/${project.uuid || project.projectId}`)}
               >
-                <View className="flex-row items-start justify-between mb-4">
-                  <View className="flex-row items-center flex-1">
-                    <View
-                      className={`w-14 h-14 rounded-[18px] ${project.iconBg} items-center justify-center mr-4`}
-                    >
-                      <Ionicons
-                        name={project.icon as any}
-                        size={28}
-                        color={project.iconColor}
-                      />
-                    </View>
-                    <View className="flex-1">
-                      <Text className="text-slate-900 font-bold text-base mb-1">
-                        {project.title}
-                      </Text>
-                      <View className="flex-row items-center mb-1">
-                        <Ionicons
-                          name="business-outline"
-                          size={12}
-                          color="#94a3b8"
-                        />
-                        <Text className="text-slate-500 text-xs ml-1">
-                          {project.company}
-                        </Text>
-                      </View>
-                      <View className="flex-row items-center">
-                        <Ionicons
-                          name="calendar-outline"
-                          size={12}
-                          color="#94a3b8"
-                        />
-                        <Text className="text-slate-500 text-xs ml-1">
-                          {project.date}
-                        </Text>
-                      </View>
-                      <View className="mt-2 flex-row items-center flex-wrap">
-                        <Ionicons
-                          name="people-outline"
-                          size={12}
-                          color="#64748b"
-                        />
-                        <Text className="text-slate-500 text-[11px] ml-1">
-                          {project.isAssigned
-                            ? `Assigned to: ${project.assignments.join(", ")}`
-                            : "Unassigned — no employee or team linked"}
-                        </Text>
-                      </View>
-                    </View>
-                  </View>
-
-                  <View className="items-end justify-between min-h-[52px] py-1">
-                    <TouchableOpacity>
-                      <Ionicons
-                        name="ellipsis-vertical"
-                        size={20}
-                        color="#94a3b8"
-                      />
-                    </TouchableOpacity>
-                    <View
-                      className={`px-2 py-1 rounded-md ${project.statusBg}`}
-                    >
-                      <Text
-                        className={`text-[10px] font-bold ${project.statusColor}`}
+                <View className="border-b border-slate-100 bg-slate-50/80 px-4 py-4">
+                  <View className="flex-row items-start justify-between">
+                    <View className="mr-3 flex-1 flex-row items-start">
+                      <View
+                        className={`mr-3 h-12 w-12 rounded-2xl ${project.iconBg} items-center justify-center`}
                       >
+                        <Ionicons
+                          name={project.icon as any}
+                          size={24}
+                          color={project.iconColor}
+                        />
+                      </View>
+                      <View className="flex-1">
+                        <Text className="mb-1 text-base font-black text-slate-900">
+                          {project.title}
+                        </Text>
+                        <View className="mb-1 flex-row items-center">
+                          <Ionicons
+                            name="business-outline"
+                            size={12}
+                            color="#94a3b8"
+                          />
+                          <Text className="ml-1 text-xs font-semibold text-slate-500">
+                            {project.company}
+                          </Text>
+                        </View>
+                        <View className="flex-row items-center">
+                          <Ionicons
+                            name="calendar-outline"
+                            size={12}
+                            color="#94a3b8"
+                          />
+                          <Text className="ml-1 text-xs font-medium text-slate-500">
+                            {project.date}
+                          </Text>
+                        </View>
+                      </View>
+                    </View>
+
+                    <View className={`rounded-full px-2.5 py-1 ${project.statusBg}`}>
+                      <Text className={`text-[10px] font-black ${project.statusColor}`}>
                         {project.status}
                       </Text>
                     </View>
                   </View>
                 </View>
 
-                <View className="flex-row items-center mt-2">
-                  <View className="flex-1 h-2 bg-slate-100 rounded-full overflow-hidden mr-3">
+                <View className="px-4 py-4">
+                  <View className="mb-3 flex-row items-center justify-between">
+                    <View className="flex-row items-center">
+                      <Ionicons name="pulse-outline" size={13} color="#64748b" />
+                      <Text className="ml-1 text-xs font-semibold text-slate-500">
+                        Progress
+                      </Text>
+                    </View>
+                    <Text
+                      className="text-xs font-black"
+                      style={{ color: project.progressColor }}
+                    >
+                      {project.progress}%
+                    </Text>
+                  </View>
+
+                  <View className="mb-3 h-2.5 overflow-hidden rounded-full bg-slate-100">
                     <View
                       className="h-full rounded-full"
                       style={{
-                        width: `${project.progress}%`,
+                        width: `${Math.max(project.progress, 8)}%`,
                         backgroundColor: project.progressColor,
                       }}
                     />
                   </View>
-                  <Text
-                    className="text-slate-600 font-bold text-xs"
-                    style={{ color: project.progressColor }}
-                  >
-                    {project.progress}%
-                  </Text>
-                </View>
 
-                {activeTab === "unassigned" && (
-                  <View className="mt-4 flex-row items-center justify-between">
-                    <TouchableOpacity
-                      onPress={() => router.push(`/admin/project-detail/${project.uuid || project.projectId}`)}
-                      className="bg-orange-50 border border-orange-200 rounded-xl px-4 py-2">
-                      <Text className="text-orange-700 font-black text-xs">
-                        View Details
-                      </Text>
-                    </TouchableOpacity>
-                    <TouchableOpacity
-                      onPress={() => {
-                        setShowAssignmentModal(true);
-                        setSelectedProjectId(
-                          project.projectId ?? project.uuid ?? "",
-                        );
-                        setSelectedEmployeeIds([]);
-                        setSelectedRole(ROLES[0] || "");
-                        setAssignmentSearch("");
-                        setAssignmentError("");
-                        setAssignmentSuccess("");
-                      }}
-                      className="bg-[#2563eb] rounded-xl px-4 py-2"
-                    >
-                      <Text className="text-white font-black text-xs">
-                        Assign Employee / Assign Team
-                      </Text>
-                    </TouchableOpacity>
+                  <View className="mb-3 flex-row items-start rounded-2xl bg-slate-50 p-3">
+                    <Ionicons name="people-outline" size={14} color="#64748b" />
+                    <Text className="ml-2 flex-1 text-[11px] font-medium text-slate-600">
+                      {project.isAssigned
+                        ? `Assigned to: ${project.assignments.join(", ")}`
+                        : "Unassigned — no employee or team linked yet"}
+                    </Text>
                   </View>
-                )}
+
+                  {activeTab === "unassigned" ? (
+                    <View className="flex-row items-center justify-between gap-2">
+                      <TouchableOpacity
+                        onPress={() => router.push(`/admin/project-detail/${project.uuid || project.projectId}`)}
+                        className="flex-1 rounded-2xl border border-orange-200 bg-orange-50 px-4 py-2.5"
+                      >
+                        <Text className="text-center text-xs font-black text-orange-700">
+                          View Details
+                        </Text>
+                      </TouchableOpacity>
+                      <TouchableOpacity
+                        onPress={() => {
+                          setShowAssignmentModal(true);
+                          setSelectedProjectId(
+                            project.projectId ?? project.uuid ?? "",
+                          );
+                          setSelectedEmployeeIds([]);
+                          setSelectedRole(ROLES[0] || "");
+                          setAssignmentSearch("");
+                          setAssignmentError("");
+                          setAssignmentSuccess("");
+                        }}
+                        className="flex-1 rounded-2xl bg-[#2563eb] px-4 py-2.5"
+                      >
+                        <Text className="text-center text-xs font-black text-white">
+                          Assign Team
+                        </Text>
+                      </TouchableOpacity>
+                    </View>
+                  ) : (
+                    <View className="flex-row items-center justify-between">
+                      <Text className="text-xs font-semibold text-slate-400">
+                        Open project to review details
+                      </Text>
+                      <Ionicons name="chevron-forward" size={16} color="#94a3b8" />
+                    </View>
+                  )}
+                </View>
               </TouchableOpacity>
             ))
           )}
