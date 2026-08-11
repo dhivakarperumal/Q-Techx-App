@@ -4,8 +4,11 @@ import React, { useState } from "react";
 import { ScrollView, Text, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import ExpensesTab from "../../components/payroll/ExpensesTab";
+import EmployeeSalaryTab from "../../components/payroll/EmployeeSalaryTab";
+import ProjectPaymentTab from "../../components/payroll/ProjectPaymentTab";
+import CompanyIncomeTab from "../../components/payroll/CompanyIncomeTab";
 
-const tabs = ["Expenses", "Tab 2", "Tab 3", "Tab 4"];
+const tabs = ["Expenses", "Employee Salary", "Project Payment", "Company Income"];
 
 
 
@@ -25,12 +28,12 @@ export default function AdminPayrollScreen() {
     switch (activeTab) {
       case "Expenses":
         return <ExpensesTab />;
-      case "Tab 2":
-        return <PlaceholderTab title="Tab 2" />;
-      case "Tab 3":
-        return <PlaceholderTab title="Tab 3" />;
-      case "Tab 4":
-        return <PlaceholderTab title="Tab 4" />;
+      case "Employee Salary":
+        return <EmployeeSalaryTab />;
+      case "Project Payment":
+        return <ProjectPaymentTab />;
+      case "Company Income":
+        return <CompanyIncomeTab />;
       default:
         return <ExpensesTab />;
     }
