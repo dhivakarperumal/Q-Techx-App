@@ -298,6 +298,7 @@ export default function ProjectPlansScreen() {
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState("");
   const [modalVisible, setModalVisible] = useState(false);
+  const [editPlanId, setEditPlanId] = useState<string | number | null>(null);
   const [saving, setSaving] = useState(false);
   const [form, setForm] = useState<PlanForm>(createEmptyForm);
   const [newModule, setNewModule] = useState({
@@ -344,6 +345,7 @@ export default function ProjectPlansScreen() {
   const closeModal = () => {
     if (saving) return;
     setModalVisible(false);
+    setEditPlanId(null);
     setForm(createEmptyForm());
     setNewModule({
       title: "",
@@ -357,7 +359,80 @@ export default function ProjectPlansScreen() {
   };
 
   const openCreateModal = () => {
+    setEditPlanId(null);
     setForm({ ...createEmptyForm(), planCode: generatePlanCode(plans) });
+    setModalVisible(true);
+  };
+
+  const openEditModal = (plan: ProjectPlan) => {
+    const raw = plan.raw || {};
+    const gv = (camel: string, snake: string) => raw?.[camel] ?? raw?.[snake];
+    const pForm: PlanForm = {
+      ...createEmptyForm(),
+      planName: gv("planName", "plan_name") ?? "",
+      planCode: gv("planCode", "plan_code") ?? "",
+      category: raw?.category ?? "Website",
+      status: raw?.status ?? "Draft",
+      shortDescription: gv("shortDescription", "short_description") ?? "",
+      fullDescription:
+        gv("fullDescription", "full_description") ?? raw?.description ?? "",
+      hostingIncluded: gv("hostingIncluded", "hosting_included") ?? "Yes",
+      hostingType: gv("hostingType", "hosting_type") ?? "Cloud Hosting",
+      storageLimit: gv("storageLimit", "storage_limit") ?? "50 GB",
+      bandwidthLimit: gv("bandwidthLimit", "bandwidth_limit") ?? "200 GB",
+      freeSsl: gv("freeSsl", "free_ssl") ?? "Yes",
+      freeEmailAccounts: gv("freeEmailAccounts", "free_email_accounts") ?? "5",
+      dailyBackup: gv("dailyBackup", "daily_backup") ?? "Yes",
+      hostingDuration: gv("hostingDuration", "hosting_duration") ?? "12 Months",
+      domainIncluded: gv("domainIncluded", "domain_included") ?? "Yes",
+      domainExtension: gv("domainExtension", "domain_extension") ?? ".com",
+      domainValidity: gv("domainValidity", "domain_validity") ?? "1 Year",
+      freeRenewal: gv("freeRenewal", "free_renewal") ?? "Yes",
+      whoisPrivacy: gv("whoisPrivacy", "whois_privacy") ?? "Yes",
+      freeMaintenance: gv("freeMaintenance", "free_maintenance") ?? "Yes",
+      maintenanceDuration:
+        gv("maintenanceDuration", "maintenance_duration") ?? "6 Months",
+      bugFixesIncluded: gv("bugFixesIncluded", "bug_fixes_included") ?? "Yes",
+      securityUpdates: gv("securityUpdates", "security_updates") ?? "Yes",
+      performanceOptimization:
+        gv("performanceOptimization", "performance_optimization") ?? "Yes",
+      backupSupport: gv("backupSupport", "backup_support") ?? "Yes",
+      emailSupport: gv("emailSupport", "email_support") ?? "Yes",
+      phoneSupport: gv("phoneSupport", "phone_support") ?? "Yes",
+      whatsappSupport: gv("whatsappSupport", "whatsapp_support") ?? "No",
+      liveChat: gv("liveChat", "live_chat") ?? "Yes",
+      prioritySupport: gv("prioritySupport", "priority_support") ?? "No",
+      dedicatedProjectManager:
+        gv("dedicatedProjectManager", "dedicated_project_manager") ?? "No",
+      supportDuration: gv("supportDuration", "support_duration") ?? "6 Months",
+      responseSla: gv("responseSla", "response_sla") ?? "24 Hours",
+      sourceCode: gv("sourceCode", "source_code") ?? "Yes",
+      documentation: raw?.documentation ?? "Yes",
+      installationGuide: gv("installationGuide", "installation_guide") ?? "Yes",
+      apiDocumentation: gv("apiDocumentation", "api_documentation") ?? "No",
+      userManual: gv("userManual", "user_manual") ?? "Yes",
+      adminManual: gv("adminManual", "admin_manual") ?? "Yes",
+      trainingSession: gv("trainingSession", "training_session") ?? "No",
+      deployment: raw?.deployment ?? "Yes",
+      testingReport: gv("testingReport", "testing_report") ?? "Yes",
+      featuredBadge: gv("featuredBadge", "featured_badge") ?? "Recommended",
+      salesNotes: gv("salesNotes", "sales_notes") ?? "",
+      technicalNotes: gv("technicalNotes", "technical_notes") ?? "",
+      coverImage: gv("coverImage", "cover_image") ?? "",
+      planDocumentName: gv("planDocumentName", "plan_document_name") ?? "",
+      projectId: gv("projectId", "project_id") ?? "",
+      projectCode: gv("projectCode", "project_code") ?? "",
+      modules: (raw?.modules ?? []) as any[],
+      includedModules: ((raw?.modules ?? []) as any[]).map((m: any) =>
+        typeof m === "string" ? m : (m.title ?? ""),
+      ),
+    };
+
+    setEditPlanId(plan.id);
+    setForm(pForm);
+    setProjectSearch(
+      pForm.projectId ? `${pForm.projectCode} - ${pForm.planName}` : "",
+    );
     setModalVisible(true);
   };
 
@@ -440,7 +515,7 @@ export default function ProjectPlansScreen() {
       .includes(projectSearch.trim().toLowerCase()),
   );
 
-  const createPlan = async () => {
+  const savePlan = async () => {
     if (!form.planName.trim()) {
       Alert.alert("Plan name required", "Enter a name for this project plan.");
       return;
@@ -503,32 +578,34 @@ export default function ProjectPlansScreen() {
         requestBody = multipart;
       }
 
-      const response = await api.post(
-        "/project-plans",
-        requestBody,
-        hasFile
-          ? { headers: { "Content-Type": "multipart/form-data" } }
-          : undefined,
-      );
-      const created = response.data?.data || response.data;
-      setPlans((current) => [
-        mapPlan(
-          {
-            ...created,
-            createdAt:
-              created.createdAt ||
-              created.created_at ||
-              new Date().toISOString(),
-          },
-          Date.now(),
-        ),
-        ...current,
-      ]);
+      if (editPlanId) {
+        await api.put(
+          `/project-plans/${editPlanId}`,
+          requestBody,
+          hasFile
+            ? { headers: { "Content-Type": "multipart/form-data" } }
+            : undefined,
+        );
+        Alert.alert("Plan updated", "The project plan was saved successfully.");
+      } else {
+        await api.post(
+          "/project-plans",
+          requestBody,
+          hasFile
+            ? { headers: { "Content-Type": "multipart/form-data" } }
+            : undefined,
+        );
+        Alert.alert(
+          "Plan created",
+          "The new project plan was saved successfully.",
+        );
+      }
+
       closeModal();
-      Alert.alert("Plan created", "The new project plan was saved as a draft.");
+      fetchPlans(true);
     } catch (requestError: any) {
       Alert.alert(
-        "Could not create plan",
+        `Could not ${editPlanId ? "update" : "create"} plan`,
         requestError?.data?.message ||
           requestError?.data?.data?.message ||
           requestError?.message ||
@@ -587,6 +664,28 @@ export default function ProjectPlansScreen() {
     }
   };
 
+  const deletePlan = (plan: ProjectPlan) => {
+    Alert.alert(
+      "Delete Plan",
+      `Are you sure you want to delete "${plan.planName}"?`,
+      [
+        { text: "Cancel", style: "cancel" },
+        {
+          text: "Delete",
+          style: "destructive",
+          onPress: async () => {
+            try {
+              await api.delete(`/project-plans/${plan.id}`);
+              setPlans((curr) => curr.filter((p) => p.id !== plan.id));
+            } catch (err: any) {
+              Alert.alert("Delete failed", err?.message || "Please try again");
+            }
+          },
+        },
+      ],
+    );
+  };
+
   return (
     <View className="flex-1 bg-[#F9FAFB]">
       <View className="flex-row items-center justify-between border-b border-slate-100 bg-white px-5 pb-4 pt-12">
@@ -607,18 +706,11 @@ export default function ProjectPlansScreen() {
             </Text>
           </View>
         </View>
-        <TouchableOpacity
-          accessibilityLabel="Add project plan"
-          onPress={openCreateModal}
-          className="h-11 w-11 items-center justify-center rounded-full bg-orange-500 shadow-sm"
-        >
-          <Ionicons name="add" size={25} color="#fff" />
-        </TouchableOpacity>
       </View>
 
       <ScrollView
         className="flex-1"
-        contentContainerClassName="px-5 pb-8 pt-5"
+        contentContainerClassName="px-5 pb-[140px] pt-5"
         refreshControl={
           <RefreshControl
             refreshing={refreshing}
@@ -663,7 +755,9 @@ export default function ProjectPlansScreen() {
               <TouchableOpacity
                 key={String(plan.id)}
                 activeOpacity={0.88}
-                onPress={() => router.push(`/admin/plan-detail/${plan.id}` as any)}
+                onPress={() =>
+                  router.push(`/admin/plan-detail/${plan.id}` as any)
+                }
                 className="mb-4 rounded-3xl border border-slate-100 bg-white p-5 shadow-sm"
               >
                 <View className="flex-row items-start">
@@ -717,25 +811,72 @@ export default function ProjectPlansScreen() {
                         {plan.activeProjectsUsingPlan} active projects
                       </Text>
                     </View>
-                    <View className="mt-3 flex-row items-center gap-2">
+                    <View className="mt-3 flex-row flex-wrap items-center gap-2">
                       <TouchableOpacity
                         accessibilityLabel={`View ${plan.planName}`}
-                        onPress={() => router.push(`/admin/plan-detail/${plan.id}` as any)}
+                        onPress={() =>
+                          router.push(`/admin/plan-detail/${plan.id}` as any)
+                        }
                         className="flex-row items-center rounded-xl border border-blue-200 bg-blue-50 px-3 py-2"
                       >
-                        <Ionicons name="eye-outline" size={15} color="#2563eb" />
+                        <Ionicons
+                          name="eye-outline"
+                          size={15}
+                          color="#2563eb"
+                        />
                         <Text className="ml-1.5 text-xs font-bold text-blue-700">
                           View Details
                         </Text>
                       </TouchableOpacity>
                       <TouchableOpacity
+                        accessibilityLabel={`Edit ${plan.planName}`}
+                        onPress={(e) => {
+                          e.stopPropagation?.();
+                          openEditModal(plan);
+                        }}
+                        className="flex-row items-center rounded-xl border border-slate-200 bg-slate-50 px-3 py-2"
+                      >
+                        <Ionicons
+                          name="create-outline"
+                          size={15}
+                          color="#475569"
+                        />
+                        <Text className="ml-1.5 text-xs font-bold text-slate-700">
+                          Edit
+                        </Text>
+                      </TouchableOpacity>
+                      <TouchableOpacity
                         accessibilityLabel={`Duplicate ${plan.planName}`}
-                        onPress={(e) => { e.stopPropagation?.(); duplicatePlan(plan); }}
+                        onPress={(e) => {
+                          e.stopPropagation?.();
+                          duplicatePlan(plan);
+                        }}
                         className="flex-row items-center rounded-xl border border-orange-200 bg-orange-50 px-3 py-2"
                       >
-                        <Ionicons name="copy-outline" size={15} color="#ea580c" />
+                        <Ionicons
+                          name="copy-outline"
+                          size={15}
+                          color="#ea580c"
+                        />
                         <Text className="ml-1.5 text-xs font-bold text-orange-700">
                           Duplicate
+                        </Text>
+                      </TouchableOpacity>
+                      <TouchableOpacity
+                        accessibilityLabel={`Delete ${plan.planName}`}
+                        onPress={(e) => {
+                          e.stopPropagation?.();
+                          deletePlan(plan);
+                        }}
+                        className="flex-row items-center rounded-xl border border-red-200 bg-red-50 px-3 py-2"
+                      >
+                        <Ionicons
+                          name="trash-outline"
+                          size={15}
+                          color="#dc2626"
+                        />
+                        <Text className="ml-1.5 text-xs font-bold text-red-700">
+                          Delete
                         </Text>
                       </TouchableOpacity>
                     </View>
@@ -746,6 +887,16 @@ export default function ProjectPlansScreen() {
           })
         )}
       </ScrollView>
+
+      <View className="absolute bottom-20 right-5 z-10">
+        <TouchableOpacity
+          accessibilityLabel="Add project plan"
+          onPress={openCreateModal}
+          className="h-20 w-20 items-center justify-center rounded-full bg-orange-500 shadow-xl"
+        >
+          <Ionicons name="add" size={30} color="#fff" />
+        </TouchableOpacity>
+      </View>
 
       <Modal
         visible={modalVisible}
@@ -758,10 +909,12 @@ export default function ProjectPlansScreen() {
             <View className="mb-4 flex-row items-center justify-between">
               <View>
                 <Text className="text-xl font-black text-slate-900">
-                  Add Project Plan
+                  {editPlanId ? "Edit Project Plan" : "Add Project Plan"}
                 </Text>
                 <Text className="mt-1 text-xs text-slate-500">
-                  Configure project delivery details
+                  {editPlanId
+                    ? "Update project delivery details"
+                    : "Configure project delivery details"}
                 </Text>
               </View>
               <Pressable
@@ -1123,14 +1276,14 @@ export default function ProjectPlansScreen() {
               />
               <TouchableOpacity
                 disabled={saving}
-                onPress={createPlan}
+                onPress={savePlan}
                 className="mb-3 mt-3 items-center rounded-2xl bg-orange-500 py-4 disabled:opacity-60"
               >
                 {saving ? (
                   <ActivityIndicator color="#fff" />
                 ) : (
                   <Text className="font-black text-white">
-                    Save Project Plan
+                    {editPlanId ? "Save Changes" : "Save Project Plan"}
                   </Text>
                 )}
               </TouchableOpacity>
