@@ -1,14 +1,19 @@
 import { Ionicons } from "@expo/vector-icons";
+import * as DocumentPicker from "expo-document-picker";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import {
-  ActivityIndicator,
-  Image,
-  RefreshControl,
-  ScrollView,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  View,
+    ActivityIndicator,
+    Image,
+    KeyboardAvoidingView,
+    Modal,
+    Platform,
+    Pressable,
+    RefreshControl,
+    ScrollView,
+    Text,
+    TextInput,
+    TouchableOpacity,
+    View,
 } from "react-native";
 
 import api, { API_BASE_URL } from "../../api";
@@ -27,6 +32,10 @@ type Task = {
   assignee: string;
   avatar?: string;
 };
+
+type ProjectOption = { id: string; name: string; code: string };
+type EmployeeOption = { id: string; name: string; role?: string };
+type PlanModule = { title: string; duration?: string; description?: string; documentName?: string };
 
 const statusFilters = ["All", "In Progress", "Completed", "Pending"];
 const statusColors: Record<
@@ -82,6 +91,26 @@ const extractTasks = (responseData: any): any[] => {
   if (Array.isArray(payload)) return payload;
   return payload?.tasks || payload?.rows || payload?.results || [];
 };
+
+const extractProjects = (responseData: any): any[] => {
+  const payload = responseData?.data ?? responseData;
+  if (Array.isArray(payload)) return payload;
+  return payload?.projects || payload?.rows || payload?.results || [];
+};
+
+const mapProject = (project: any, index: number): ProjectOption => ({
+  id: String(project.uuid ?? project.id ?? index),
+  name: String(
+    project.project_name ??
+      project.projectName ??
+      project.name ??
+      project.title ??
+      "Untitled project",
+  ),
+  code: String(
+    project.project_code ?? project.projectCode ?? project.code ?? "PRJ",
+  ),
+});
 
 const mapTask = (raw: any, index: number): Task => {
   const status = displayStatus(
@@ -154,6 +183,25 @@ export default function TasksScreen() {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState("");
+  const [projects, setProjects] = useState<ProjectOption[]>([]);
+  const [employees, setEmployees] = useState<EmployeeOption[]>([]);
+  const [modules, setModules] = useState<PlanModule[]>([]);
+  const [projectDataLoading, setProjectDataLoading] = useState(false);
+  const [taskAttachment, setTaskAttachment] = useState<any>(null);
+  const [sheetVisible, setSheetVisible] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [taskForm, setTaskForm] = useState({
+    projectId: "",
+    assignedTo: "",
+    team: "",
+    selectedModules: [] as string[],
+    priority: "Medium",
+    status: "Pending",
+    startDate: "",
+    dueDate: "",
+    title: "",
+    description: "",
+  });
 
   const fetchTasks = useCallback(async (refresh = false) => {
     if (refresh) setRefreshing(true);
@@ -173,7 +221,171 @@ export default function TasksScreen() {
 
   useEffect(() => {
     fetchTasks();
+    api
+      .get("/projects?limit=1000&page=1")
+      .then((response) => {
+        setProjects(extractProjects(response.data).map(mapProject));
+      })
+      .catch(() => setProjects([]));
   }, [fetchTasks]);
+
+  useEffect(() => {
+    if (!taskForm.projectId) {
+      setEmployees([]);
+      setModules([]);
+      return;
+    }
+
+    setProjectDataLoading(true);
+    Promise.all([
+      api.get(`/projects/${taskForm.projectId}/assignments`),
+      api.get("/project-plans"),
+    ])
+      .then(([employeeResponse, planResponse]) => {
+        const employeePayload = employeeResponse.data;
+        const employeeRows =
+          employeePayload?.assignedEmployees ||
+          employeePayload?.project?.assignedEmployees ||
+          employeePayload?.project?.employees ||
+          employeePayload?.data ||
+          [];
+        setEmployees(
+          employeeRows.map((employee: any) => ({
+            id: String(
+              employee.employee_id ??
+                employee.id ??
+                employee.employeeCode ??
+                employee.employee_code,
+            ),
+            name: String(
+              employee.full_name ||
+                employee.employee_name ||
+                `${employee.first_name || ""} ${employee.last_name || ""}`.trim() ||
+                "Employee",
+            ),
+            role: employee.designation || employee.role,
+          })),
+        );
+
+        const plans =
+          planResponse.data?.data ||
+          planResponse.data?.plans ||
+          planResponse.data ||
+          [];
+        const matchedPlan = plans.find(
+          (plan: any) =>
+            String(plan.project_id ?? plan.projectId) ===
+            String(taskForm.projectId),
+        );
+        const rawModules = matchedPlan?.modules ?? matchedPlan?.taskmodule ?? [];
+        const parsedModules =
+          typeof rawModules === "string" ? JSON.parse(rawModules) : rawModules;
+        setModules(
+          Array.isArray(parsedModules)
+            ? parsedModules.map((module: any) => ({
+                title:
+                  module.title ||
+                  module.name ||
+                  module.module_name ||
+                  "Untitled module",
+                duration: module.duration,
+                description: module.description,
+                documentName:
+                  module.documentName || module.document,
+              }))
+            : [],
+        );
+      })
+      .catch(() => {
+        setEmployees([]);
+        setModules([]);
+      })
+      .finally(() => setProjectDataLoading(false));
+  }, [taskForm.projectId]);
+
+  const openTaskSheet = () => setSheetVisible(true);
+
+  const resetTaskForm = () => {
+    setTaskForm({
+      projectId: "",
+      assignedTo: "",
+      team: "",
+      selectedModules: [],
+      priority: "Medium",
+      status: "Pending",
+      startDate: "",
+      dueDate: "",
+      title: "",
+      description: "",
+    });
+    setTaskAttachment(null);
+  };
+
+  const chooseTaskAttachment = async () => {
+    const result = await DocumentPicker.getDocumentAsync({
+      type: "*/*",
+      copyToCacheDirectory: true,
+    });
+    if (!result.canceled && result.assets?.[0]) setTaskAttachment(result.assets[0]);
+  };
+
+  const closeTaskSheet = () => {
+    if (saving) return;
+    setSheetVisible(false);
+    resetTaskForm();
+  };
+
+  const createTask = async () => {
+    if (!taskForm.projectId || !taskForm.assignedTo || taskForm.selectedModules.length === 0) return;
+    setSaving(true);
+    try {
+      for (const moduleTitle of taskForm.selectedModules) {
+        const module = modules.find((item) => item.title === moduleTitle);
+        const taskFields = {
+          project_id: taskForm.projectId,
+          task_name: moduleTitle,
+          module_name: moduleTitle,
+          title: moduleTitle,
+          description: module?.description || "",
+          priority: taskForm.priority,
+          status: taskForm.status,
+          assignment_date: new Date().toISOString().slice(0, 10),
+          start_date: taskForm.startDate || "",
+          due_date: taskForm.dueDate || null,
+          duration: module?.duration || null,
+          team: taskForm.team,
+        };
+        let taskBody: FormData | typeof taskFields = taskFields;
+        if (taskAttachment) {
+          const multipart = new FormData();
+          Object.entries(taskFields).forEach(([key, value]) => multipart.append(key, value == null ? "" : String(value)));
+          multipart.append("attachment", { uri: taskAttachment.uri, name: taskAttachment.name || "attachment", type: taskAttachment.mimeType || "application/octet-stream" } as any);
+          taskBody = multipart;
+        }
+        const taskResponse = await api.post("/tasks", taskBody, taskAttachment ? { headers: { "Content-Type": "multipart/form-data" } } : undefined);
+        const taskId = taskResponse.data?.data?.uuid || taskResponse.data?.data?.id || taskResponse.data?.uuid;
+        if (!taskId) throw new Error(`Could not create task: ${moduleTitle}`);
+        await api.post("/tasks/assign", {
+          project_id: taskForm.projectId,
+          employee_id: taskForm.assignedTo,
+          task_id: taskId,
+          assigned_date: new Date().toISOString().slice(0, 10),
+          start_date: taskForm.startDate || null,
+          due_date: taskForm.dueDate || null,
+          status: taskForm.status,
+          duration: module?.duration || null,
+          team: taskForm.team || null,
+        });
+      }
+      setSheetVisible(false);
+      resetTaskForm();
+      await fetchTasks(true);
+    } catch (requestError: any) {
+      setError(requestError?.message || "Unable to create task.");
+    } finally {
+      setSaving(false);
+    }
+  };
 
   const filteredTasks = useMemo(() => {
     const query = search.trim().toLowerCase();
@@ -248,21 +460,6 @@ export default function TasksScreen() {
           />
         }
       >
-        <View className="mb-6 flex-row items-center justify-between px-5">
-          <View className="flex-1">
-            <Text className="text-3xl font-black tracking-tight text-slate-900">
-              Tasks
-            </Text>
-            <Text className="mt-1 text-xs text-slate-500">
-              Organize, track and complete tasks efficiently
-            </Text>
-          </View>
-          <TouchableOpacity className="flex-row items-center rounded-xl bg-orange-500 px-4 py-2.5 shadow-sm">
-            <Ionicons name="add" size={18} color="#fff" />
-            <Text className="ml-1 text-sm font-bold text-white">New Task</Text>
-          </TouchableOpacity>
-        </View>
-
         <ScrollView
           horizontal
           showsHorizontalScrollIndicator={false}
@@ -445,7 +642,282 @@ export default function TasksScreen() {
         </View>
       </ScrollView>
       <AdminBottomBar />
-      <FAB onPress={() => {}} />
+      <FAB onPress={openTaskSheet} />
+
+      <Modal
+        visible={sheetVisible}
+        transparent
+        animationType="slide"
+        onRequestClose={closeTaskSheet}
+      >
+        <KeyboardAvoidingView
+          className="flex-1 justify-end"
+          behavior={Platform.OS === "ios" ? "padding" : "height"}
+        >
+          <Pressable
+            className="absolute inset-0 bg-black/40"
+            onPress={closeTaskSheet}
+          />
+          <View className="max-h-[88%] rounded-t-[28px] bg-white px-5 pb-8 pt-5">
+            <View className="mb-5 flex-row items-center justify-between">
+              <View>
+                <Text className="text-xl font-black text-slate-900">
+                  New Task
+                </Text>
+                <Text className="mt-1 text-xs text-slate-500">
+                  Add a task to a project
+                </Text>
+              </View>
+              <Pressable
+                accessibilityLabel="Close"
+                onPress={closeTaskSheet}
+                className="h-9 w-9 items-center justify-center rounded-full bg-slate-100"
+              >
+                <Ionicons name="close" size={20} color="#64748b" />
+              </Pressable>
+            </View>
+            <ScrollView
+              keyboardShouldPersistTaps="handled"
+              showsVerticalScrollIndicator={false}
+            >
+              <Text className="mb-2 text-xs font-bold text-slate-500">
+                Project *
+              </Text>
+              <ScrollView
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                className="mb-4"
+              >
+                <View className="flex-row gap-2">
+                  {projects.map((project) => (
+                    <TouchableOpacity
+                      key={project.id}
+                      onPress={() =>
+                        setTaskForm((current) => ({
+                          ...current,
+                          projectId: project.id,
+                        }))
+                      }
+                      className={`rounded-full border px-3 py-2.5 ${taskForm.projectId === project.id ? "border-orange-500 bg-orange-50" : "border-slate-200 bg-white"}`}
+                    >
+                      <Text
+                        className={`text-xs font-bold ${taskForm.projectId === project.id ? "text-orange-600" : "text-slate-600"}`}
+                      >
+                        {project.code} - {project.name}
+                      </Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+              </ScrollView>
+              <Text className="mb-2 text-xs font-bold text-slate-500">
+                Assign To Employee *
+              </Text>
+              <ScrollView
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                className="mb-4"
+              >
+                <View className="flex-row gap-2">
+                  {projectDataLoading ? (
+                    <ActivityIndicator color="#f97316" />
+                  ) : (
+                    employees.map((employee) => (
+                      <TouchableOpacity
+                        key={employee.id}
+                        onPress={() =>
+                          setTaskForm((current) => ({
+                            ...current,
+                            assignedTo: employee.id,
+                            team: employee.role || current.team,
+                          }))
+                        }
+                        className={`rounded-full border px-3 py-2.5 ${taskForm.assignedTo === employee.id ? "border-orange-500 bg-orange-50" : "border-slate-200 bg-white"}`}
+                      >
+                        <Text
+                          className={`text-xs font-bold ${taskForm.assignedTo === employee.id ? "text-orange-600" : "text-slate-600"}`}
+                        >
+                          {employee.name}
+                          {employee.role ? ` · ${employee.role}` : ""}
+                        </Text>
+                      </TouchableOpacity>
+                    ))
+                  )}
+                </View>
+              </ScrollView>
+              <Text className="mb-2 text-xs font-bold text-slate-500">
+                Task Modules *
+              </Text>
+              {modules.length === 0 ? (
+                <Text className="mb-4 rounded-2xl bg-slate-50 p-4 text-sm text-slate-500">
+                  No task modules found for this project plan.
+                </Text>
+              ) : (
+                <View className="mb-4 gap-2">
+                  {modules.map((module) => {
+                    const selected = taskForm.selectedModules.includes(module.title);
+                    return (
+                      <TouchableOpacity
+                        key={module.title}
+                        onPress={() =>
+                          setTaskForm((current) => ({
+                            ...current,
+                            selectedModules: selected
+                              ? current.selectedModules.filter(
+                                  (title) => title !== module.title,
+                                )
+                              : [...current.selectedModules, module.title],
+                          }))
+                        }
+                        className={`flex-row items-center rounded-2xl border p-3 ${selected ? "border-orange-500 bg-orange-50" : "border-slate-200 bg-white"}`}
+                      >
+                        <Ionicons
+                          name={selected ? "checkbox" : "square-outline"}
+                          size={20}
+                          color={selected ? "#f97316" : "#94a3b8"}
+                        />
+                        <View className="ml-3 flex-1">
+                          <Text className="font-bold text-slate-800">
+                            {module.title}
+                          </Text>
+                          <Text className="mt-1 text-xs text-slate-500">
+                            {module.duration || "No duration"}
+                          </Text>
+                        </View>
+                      </TouchableOpacity>
+                    );
+                  })}
+                </View>
+              )}
+              <Text className="mb-2 text-xs font-bold text-slate-500">
+                Team / Department
+              </Text>
+              <TextInput
+                value={taskForm.team}
+                onChangeText={(value) =>
+                  setTaskForm((current) => ({ ...current, team: value }))
+                }
+                placeholder="e.g. Frontend, Backend"
+                placeholderTextColor="#94a3b8"
+                className="mb-4 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3.5 text-slate-900"
+              />
+              <View className="flex-row gap-3">
+                <View className="flex-1">
+                  <Text className="mb-2 text-xs font-bold text-slate-500">
+                    Start Date
+                  </Text>
+                  <TextInput
+                    value={taskForm.startDate}
+                    onChangeText={(value) =>
+                      setTaskForm((current) => ({
+                        ...current,
+                        startDate: value,
+                      }))
+                    }
+                    placeholder="YYYY-MM-DD"
+                    placeholderTextColor="#94a3b8"
+                    className="rounded-2xl border border-slate-200 bg-slate-50 px-3 py-3.5 text-slate-900"
+                  />
+                </View>
+                <View className="flex-1">
+                  <Text className="mb-2 text-xs font-bold text-slate-500">
+                    End Date
+                  </Text>
+                  <TextInput
+                    value={taskForm.dueDate}
+                    onChangeText={(value) =>
+                      setTaskForm((current) => ({
+                        ...current,
+                        dueDate: value,
+                      }))
+                    }
+                    placeholder="YYYY-MM-DD"
+                    placeholderTextColor="#94a3b8"
+                    className="rounded-2xl border border-slate-200 bg-slate-50 px-3 py-3.5 text-slate-900"
+                  />
+                </View>
+              </View>
+              <View className="flex-row gap-3">
+                <View className="flex-1">
+                  <Text className="mb-2 text-xs font-bold text-slate-500">
+                    Priority
+                  </Text>
+                  <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+                    <View className="flex-row gap-2">
+                      {['Low', 'Medium', 'High'].map((value) => (
+                        <TouchableOpacity
+                          key={value}
+                          onPress={() =>
+                            setTaskForm((current) => ({
+                              ...current,
+                              priority: value,
+                            }))
+                          }
+                          className={`rounded-full border px-3 py-2 ${taskForm.priority === value ? "border-orange-500 bg-orange-50" : "border-slate-200 bg-white"}`}
+                        >
+                          <Text className="text-xs font-bold text-slate-700">
+                            {value}
+                          </Text>
+                        </TouchableOpacity>
+                      ))}
+                    </View>
+                  </ScrollView>
+                </View>
+              </View>
+              <Text className="mb-2 mt-4 text-xs font-bold text-slate-500">
+                Attachment
+              </Text>
+              <TouchableOpacity
+                onPress={chooseTaskAttachment}
+                className="mb-4 flex-row items-center rounded-2xl border border-dashed border-slate-300 bg-slate-50 p-4"
+              >
+                <Ionicons name="attach-outline" size={22} color="#f97316" />
+                <Text className="ml-3 flex-1 text-sm font-semibold text-slate-700">
+                  {taskAttachment?.name || "Choose a document"}
+                </Text>
+                <Ionicons name="cloud-upload-outline" size={20} color="#94a3b8" />
+              </TouchableOpacity>
+              <Text className="mb-2 mt-4 text-xs font-bold text-slate-500">
+                Status
+              </Text>
+              <ScrollView
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                className="mb-5"
+              >
+                <View className="flex-row gap-2">
+                  {['Pending', 'In Progress', 'Review', 'Testing', 'Completed'].map((value) => (
+                    <TouchableOpacity
+                      key={value}
+                      onPress={() =>
+                        setTaskForm((current) => ({
+                          ...current,
+                          status: value,
+                        }))
+                      }
+                      className={`rounded-full border px-3 py-2 ${taskForm.status === value ? "border-orange-500 bg-orange-50" : "border-slate-200 bg-white"}`}
+                    >
+                      <Text className="text-xs font-bold text-slate-700">
+                        {value}
+                      </Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+              </ScrollView>
+              <TouchableOpacity
+                disabled={saving || !taskForm.projectId || !taskForm.assignedTo || taskForm.selectedModules.length === 0}
+                onPress={createTask}
+                className="items-center rounded-2xl bg-orange-500 py-4 disabled:opacity-50"
+              >
+                {saving ? (
+                  <ActivityIndicator color="#fff" />
+                ) : (
+                  <Text className="font-black text-white">Assign Task</Text>
+                )}
+              </TouchableOpacity>
+            </ScrollView>
+          </View>
+        </KeyboardAvoidingView>
+      </Modal>
     </View>
   );
 }

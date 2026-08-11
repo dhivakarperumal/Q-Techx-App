@@ -3,17 +3,17 @@ import * as DocumentPicker from "expo-document-picker";
 import { useRouter } from "expo-router";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
-    ActivityIndicator,
-    Alert,
-    Image,
-    Modal,
-    Pressable,
-    RefreshControl,
-    ScrollView,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View,
+  ActivityIndicator,
+  Alert,
+  Image,
+  Modal,
+  Pressable,
+  RefreshControl,
+  ScrollView,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
 } from "react-native";
 
 import api from "../../api";
@@ -28,6 +28,8 @@ type ProjectPlan = {
   activeProjectsUsingPlan?: number;
   projectId?: string | number;
   projectName?: string;
+  createdAt?: string | number;
+  raw?: Record<string, any>;
 };
 
 type ProjectOption = { id: string; code: string; name: string };
@@ -58,7 +60,17 @@ const mapPlan = (plan: any, index: number): ProjectPlan => ({
     plan.project_name ||
     plan.project?.project_name ||
     plan.project?.name,
+  createdAt:
+    plan.createdAt || plan.created_at || plan.created_on || plan.created,
+  raw: plan,
 });
+
+const formatCreatedAt = (value?: string | number) => {
+  if (!value) return "Created just now";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return `Created ${String(value)}`;
+  return `Created ${date.toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" })} at ${date.toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit" })}`;
+};
 
 const extractProjects = (responseData: any): any[] => {
   const payload = responseData?.data ?? responseData;
@@ -168,14 +180,17 @@ const categories = [
   "E-commerce",
 ];
 const statuses = ["Draft", "Active", "Inactive"];
-const featuredBadges = [
-  "Popular",
-  "Recommended",
-  "Best Seller",
-  "Premium",
-  "Enterprise",
-  "New Launch",
-];
+const generatePlanCode = (plans: ProjectPlan[]) => {
+  const highestNumber = plans.reduce((highest, plan) => {
+    const code = String(plan.planCode || "")
+      .trim()
+      .toUpperCase();
+    const match = code.match(/^PLAN-(\d+)$/);
+    return match ? Math.max(highest, Number(match[1])) : highest;
+  }, 0);
+
+  return `PLAN-${String(highestNumber + 1).padStart(3, "0")}`;
+};
 
 function FormField({
   label,
@@ -341,6 +356,11 @@ export default function ProjectPlansScreen() {
     setProjectSearch("");
   };
 
+  const openCreateModal = () => {
+    setForm({ ...createEmptyForm(), planCode: generatePlanCode(plans) });
+    setModalVisible(true);
+  };
+
   const updateForm = <K extends keyof PlanForm>(field: K, value: PlanForm[K]) =>
     setForm((current) => ({ ...current, [field]: value }));
 
@@ -431,16 +451,25 @@ export default function ProjectPlansScreen() {
       const payload = {
         ...form,
         planName: form.planName.trim(),
-        planCode:
-          form.planCode.trim() ||
-          `PLAN-${String(plans.length + 1).padStart(3, "0")}`,
+        planCode: form.planCode.trim() || generatePlanCode(plans),
         modules: form.modules.map(({ document, ...module }) => module),
         includedModules: form.modules.map((module) => module.title),
         status: form.status || "Draft",
       };
       delete (payload as any).coverImageAsset;
+      delete (payload as any).planDocument;
 
-      const hasFile = Boolean(form.coverImageAsset || form.planDocument);
+      const toUploadFile = (asset: any) => ({
+        uri: asset.uri,
+        name: asset.name || `upload-${Date.now()}`,
+        type: asset.mimeType || asset.type || "application/octet-stream",
+      });
+
+      const hasFile = Boolean(
+        form.coverImageAsset ||
+        form.planDocument ||
+        form.modules.some((module) => Boolean(module.document)),
+      );
       let requestBody: FormData | typeof payload = payload;
       if (hasFile) {
         const multipart = new FormData();
@@ -452,14 +481,23 @@ export default function ProjectPlansScreen() {
           );
         });
         if (form.coverImageAsset) {
-          multipart.append("cover_image", form.coverImageAsset as any);
+          multipart.append(
+            "cover_image",
+            toUploadFile(form.coverImageAsset) as any,
+          );
         }
         if (form.planDocument) {
-          multipart.append("plan_document", form.planDocument as any);
+          multipart.append(
+            "plan_document",
+            toUploadFile(form.planDocument) as any,
+          );
         }
         form.modules.forEach((module) => {
           if (module.document) {
-            multipart.append("module_documents", module.document as any);
+            multipart.append(
+              "module_documents",
+              toUploadFile(module.document) as any,
+            );
           }
         });
         requestBody = multipart;
@@ -473,16 +511,79 @@ export default function ProjectPlansScreen() {
           : undefined,
       );
       const created = response.data?.data || response.data;
-      setPlans((current) => [mapPlan(created, Date.now()), ...current]);
+      setPlans((current) => [
+        mapPlan(
+          {
+            ...created,
+            createdAt:
+              created.createdAt ||
+              created.created_at ||
+              new Date().toISOString(),
+          },
+          Date.now(),
+        ),
+        ...current,
+      ]);
       closeModal();
       Alert.alert("Plan created", "The new project plan was saved as a draft.");
     } catch (requestError: any) {
       Alert.alert(
         "Could not create plan",
-        requestError?.message || "Please try again.",
+        requestError?.data?.message ||
+          requestError?.data?.data?.message ||
+          requestError?.message ||
+          "Please try again.",
       );
     } finally {
       setSaving(false);
+    }
+  };
+
+  const duplicatePlan = async (plan: ProjectPlan) => {
+    const source = { ...(plan.raw || {}) };
+    delete source.id;
+    delete source.uuid;
+    delete source.createdAt;
+    delete source.created_at;
+    delete source.updatedAt;
+    delete source.updated_at;
+    delete source.coverImageAsset;
+    delete source.planDocument;
+
+    const duplicatePayload = {
+      ...source,
+      planName: `${plan.planName} Copy`,
+      planCode: generatePlanCode(plans),
+      status: "Draft",
+      activeProjectsUsingPlan: 0,
+      completedProjectsUsingPlan: 0,
+    };
+
+    try {
+      const response = await api.post("/project-plans", duplicatePayload);
+      const created = response.data?.data || response.data;
+      setPlans((current) => [
+        mapPlan(
+          {
+            ...created,
+            createdAt:
+              created.createdAt ||
+              created.created_at ||
+              new Date().toISOString(),
+          },
+          Date.now(),
+        ),
+        ...current,
+      ]);
+      Alert.alert(
+        "Plan duplicated",
+        `${duplicatePayload.planName} was created as a draft.`,
+      );
+    } catch (requestError: any) {
+      Alert.alert(
+        "Could not duplicate plan",
+        requestError?.message || "Please try again.",
+      );
     }
   };
 
@@ -508,7 +609,7 @@ export default function ProjectPlansScreen() {
         </View>
         <TouchableOpacity
           accessibilityLabel="Add project plan"
-          onPress={() => setModalVisible(true)}
+          onPress={openCreateModal}
           className="h-11 w-11 items-center justify-center rounded-full bg-orange-500 shadow-sm"
         >
           <Ionicons name="add" size={25} color="#fff" />
@@ -590,6 +691,12 @@ export default function ProjectPlansScreen() {
                         Project: {plan.projectName}
                       </Text>
                     ) : null}
+                    <View className="mt-2 flex-row items-center">
+                      <Ionicons name="time-outline" size={13} color="#94a3b8" />
+                      <Text className="ml-1 text-xs text-slate-400">
+                        {formatCreatedAt(plan.createdAt)}
+                      </Text>
+                    </View>
                     {plan.shortDescription ? (
                       <Text
                         className="mt-2 text-sm leading-5 text-slate-500"
@@ -608,6 +715,16 @@ export default function ProjectPlansScreen() {
                         {plan.activeProjectsUsingPlan} active projects
                       </Text>
                     </View>
+                    <TouchableOpacity
+                      accessibilityLabel={`Duplicate ${plan.planName}`}
+                      onPress={() => duplicatePlan(plan)}
+                      className="mt-3 flex-row items-center self-start rounded-xl border border-orange-200 bg-orange-50 px-3 py-2"
+                    >
+                      <Ionicons name="copy-outline" size={15} color="#ea580c" />
+                      <Text className="ml-1.5 text-xs font-bold text-orange-700">
+                        Duplicate plan
+                      </Text>
+                    </TouchableOpacity>
                   </View>
                 </View>
               </View>
@@ -899,7 +1016,6 @@ export default function ProjectPlansScreen() {
                 </View>
               ))}
               <View className="rounded-2xl border border-dashed border-slate-300 p-3">
-              
                 <FormField
                   label="Module title"
                   value={newModule.title}
