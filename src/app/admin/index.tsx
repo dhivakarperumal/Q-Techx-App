@@ -205,7 +205,13 @@ export default function AdminDashboard() {
         </View>
       </View>
     </View>
-    <View className="mb-5 overflow-hidden rounded-3xl bg-[#fff7ed] shadow-md">
+
+    <LinearGradient
+      colors={["#ffffff", "#fff7ed"]}
+      start={{ x: 0, y: 0 }}
+      end={{ x: 1, y: 1 }}
+      className="mb-5 overflow-hidden rounded-3xl shadow-md"
+    >
       {/* Orange top accent */}
       <LinearGradient
         colors={["#fb923c", "#f97316"]}
@@ -234,7 +240,8 @@ export default function AdminDashboard() {
           </View>
         </View>
       </View>
-    </View>
+    </LinearGradient>
+
     {/* <View className="overflow-hidden rounded-3xl bg-white shadow-md">
       <View className="h-1.5 w-full bg-orange-500" />
 
