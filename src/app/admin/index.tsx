@@ -252,7 +252,7 @@ export default function AdminDashboard() {
       </View>
     </View> */}
 
-     <View className="mb-4 overflow-hidden rounded-3xl bg-white shadow-md">
+    <View className="mb-4 overflow-hidden rounded-3xl bg-white shadow-md">
       <View className="h-1.5 w-full bg-orange-500" />
 
       <View className="p-5">
@@ -306,8 +306,14 @@ export default function AdminDashboard() {
         )}
       </View>
     </View>
-    
-    <View className="mb-5 overflow-hidden rounded-3xl bg-[#fff7ed] shadow-md">
+
+    <LinearGradient
+      colors={["#ffffff", "#fff7ed"]}
+      start={{ x: 0, y: 0 }}
+      end={{ x: 1, y: 1 }}
+      className="mb-5 overflow-hidden rounded-3xl shadow-md"
+    >
+      {/* Orange top accent */}
       <View className="h-1.5 w-full bg-orange-500" />
 
       <View className="p-5">
@@ -353,7 +359,7 @@ export default function AdminDashboard() {
           ))
         )}
       </View>
-    </View>
-   
+    </LinearGradient>
+
   </ScrollView><AdminBottomBar /></View>;
 }
