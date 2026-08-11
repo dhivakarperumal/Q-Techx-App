@@ -7,18 +7,7 @@ import ExpensesTab from "../../components/payroll/ExpensesTab";
 
 const tabs = ["Expenses", "Tab 2", "Tab 3", "Tab 4"];
 
-const payslips = [
-  { month: "July 2025", gross: "₹1,20,000", net: "₹98,500", status: "Paid", statusColor: "#16a34a", statusBg: "#f0fdf4" },
-  { month: "June 2025", gross: "₹1,20,000", net: "₹98,500", status: "Paid", statusColor: "#16a34a", statusBg: "#f0fdf4" },
-  { month: "May 2025", gross: "₹1,15,000", net: "₹94,200", status: "Paid", statusColor: "#16a34a", statusBg: "#f0fdf4" },
-];
 
-const summary = [
-  { label: "Basic Salary", value: "₹70,000", icon: "wallet-outline" as const },
-  { label: "HRA",          value: "₹20,000", icon: "home-outline" as const },
-  { label: "Allowances",   value: "₹30,000", icon: "gift-outline" as const },
-  { label: "Deductions",   value: "₹21,500", icon: "remove-circle-outline" as const },
-];
 
 function PlaceholderTab({ title }: { title: string }) {
   return (
