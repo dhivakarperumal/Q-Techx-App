@@ -30,8 +30,60 @@ function SectionHeader({ title, action, onPress }: { title: string; action?: str
   return <View className="mb-3 flex-row items-center justify-between"><Text className="text-lg font-black text-black">{title}</Text>{action && <Pressable onPress={onPress}><Text className="text-xs font-bold text-orange-500">{action}</Text></Pressable>}</View>;
 }
 
-function MetricCard({ icon, label, value, color, background }: { icon: keyof typeof Ionicons.glyphMap; label: string; value: string; color: string; background: string }) {
-  return <View className="mb-3 w-[48%] rounded-3xl border border-gray-200 bg-white p-4 shadow-sm"><View className="mb-3 h-11 w-11 items-center justify-center rounded-2xl" style={{ backgroundColor: background }}><Ionicons name={icon} size={22} color={color} /></View><Text className="text-[11px] font-bold uppercase tracking-wide text-gray-400">{label}</Text><Text className="mt-1 text-2xl font-black text-black">{value}</Text></View>;
+function MetricCard({
+  icon,
+  label,
+  value,
+}: {
+  icon: keyof typeof Ionicons.glyphMap;
+  label: string;
+  value: string;
+}) {
+  return (
+    <View className="mb-3 w-[48%] overflow-hidden rounded-2xl bg-white shadow-md">
+      {/* Orange top accent */}
+      <LinearGradient
+        colors={["#fb923c", "#f97316"]}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 0 }}
+        className="h-1 w-full"
+      />
+
+      {/* Overall card content - very light orange */}
+      <LinearGradient
+        colors={["#ffffff", "#fff7ed"]}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+        className="p-3"
+      >
+        {/* Icon + Label */}
+        <View className="flex-row items-center">
+          {/* Black icon background */}
+          <View className="h-10 w-10 items-center justify-center rounded-xl bg-black">
+            <Ionicons
+              name={icon}
+              size={20}
+              color="#f97316"
+            />
+          </View>
+
+          <View className="ml-2.5 flex-1">
+            <Text
+              className="text-[9px] font-bold uppercase tracking-[0.8px] text-gray-500"
+              numberOfLines={2}
+            >
+              {label}
+            </Text>
+          </View>
+        </View>
+
+        {/* Value */}
+        <Text className="mt-3 text-[23px] font-black text-black">
+          {value}
+        </Text>
+      </LinearGradient>
+    </View>
+  );
 }
 
 function StatusList({ items, labelKey }: { items: CountItem[]; labelKey: "status" | "current_status" | "follow_up_status" | "type" }) {
