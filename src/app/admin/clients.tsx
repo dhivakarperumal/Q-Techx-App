@@ -391,43 +391,54 @@ export default function ClientsScreen() {
           />
         }
       >
-        <View className="flex-row items-end justify-between">
-          <View>
-            <Text className="text-3xl font-black text-slate-900">Clients</Text>
-            <Text className="mt-1 text-sm text-slate-500">
-              Manage client relationships, documents, and follow-ups.
-            </Text>
-          </View>
-        </View>
+      
         <View className="mt-5 flex-row gap-3">
-          <View className="flex-1 rounded-2xl bg-white p-4 shadow-sm">
-            <Text className="text-xs font-bold text-slate-400">
-              TOTAL CLIENTS
-            </Text>
-            <Text className="mt-1 text-2xl font-black text-slate-900">
-              {clients.length}
-            </Text>
+          <View className="flex-1 rounded-3xl bg-white p-5 shadow-sm min-h-[100px] justify-center">
+            <View className="flex-row items-center justify-between">
+              <View>
+                <Text className="text-xs font-bold text-slate-400">TOTAL</Text>
+                <Text className="mt-1 text-3xl font-black text-slate-900">{clients.length}</Text>
+              </View>
+              <View className="h-11 w-11 items-center justify-center rounded-full bg-slate-100">
+                <Ionicons name="people" size={22} color="#64748b" />
+              </View>
+            </View>
           </View>
-          <View className="flex-1 rounded-2xl bg-white p-4 shadow-sm">
-            <Text className="text-xs font-bold text-slate-400">ACTIVE</Text>
-            <Text className="mt-1 text-2xl font-black text-emerald-600">
-              {activeCount}
-            </Text>
+          <View className="flex-1 rounded-3xl bg-white p-5 shadow-sm min-h-[100px] justify-center">
+            <View className="flex-row items-center justify-between">
+              <View>
+                <Text className="text-xs font-bold text-slate-400">ACTIVE</Text>
+                <Text className="mt-1 text-3xl font-black text-emerald-600">{activeCount}</Text>
+              </View>
+              <View className="h-11 w-11 items-center justify-center rounded-full bg-emerald-100">
+                <Ionicons name="checkmark-circle" size={24} color="#10b981" />
+              </View>
+            </View>
           </View>
         </View>
 
         <View className="mt-3 flex-row gap-3">
-          <View className="flex-1 rounded-2xl bg-white p-4 shadow-sm">
-            <Text className="text-xs font-bold text-slate-400">INACTIVE</Text>
-            <Text className="mt-1 text-2xl font-black text-rose-600">
-              {inactiveCount}
-            </Text>
+          <View className="flex-1 rounded-3xl bg-white p-5 shadow-sm min-h-[100px] justify-center">
+            <View className="flex-row items-center justify-between">
+              <View>
+                <Text className="text-xs font-bold text-slate-400">INACTIVE</Text>
+                <Text className="mt-1 text-3xl font-black text-rose-600">{inactiveCount}</Text>
+              </View>
+              <View className="h-11 w-11 items-center justify-center rounded-full bg-rose-100">
+                <Ionicons name="close-circle" size={24} color="#e11d48" />
+              </View>
+            </View>
           </View>
-          <View className="flex-1 rounded-2xl bg-white p-4 shadow-sm">
-            <Text className="text-xs font-bold text-slate-400">PENDING</Text>
-            <Text className="mt-1 text-2xl font-black text-amber-500">
-              {pendingCount}
-            </Text>
+          <View className="flex-1 rounded-3xl bg-white p-5 shadow-sm min-h-[100px] justify-center">
+            <View className="flex-row items-center justify-between">
+              <View>
+                <Text className="text-xs font-bold text-slate-400">PENDING</Text>
+                <Text className="mt-1 text-3xl font-black text-amber-500">{pendingCount}</Text>
+              </View>
+              <View className="h-11 w-11 items-center justify-center rounded-full bg-amber-100">
+                <Ionicons name="time" size={24} color="#f59e0b" />
+              </View>
+            </View>
           </View>
         </View>
 
