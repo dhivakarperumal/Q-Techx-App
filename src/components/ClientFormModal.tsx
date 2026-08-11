@@ -1,14 +1,15 @@
 import { Ionicons } from "@expo/vector-icons";
+import DateTimePicker from "@react-native-community/datetimepicker";
 import * as DocumentPicker from "expo-document-picker";
 import React, { useEffect, useState } from "react";
 import {
-  Alert,
-  Modal,
-  Pressable,
-  ScrollView,
-  Text,
-  TextInput,
-  View,
+    Alert,
+    Modal,
+    Pressable,
+    ScrollView,
+    Text,
+    TextInput,
+    View,
 } from "react-native";
 import api from "../api";
 
@@ -89,6 +90,35 @@ function Field({
   );
 }
 
+function DateField({
+  label,
+  value,
+  onPress,
+  placeholder = "YYYY-MM-DD",
+}: {
+  label: string;
+  value: string;
+  onPress: () => void;
+  placeholder?: string;
+}) {
+  return (
+    <View className="mb-3">
+      <Text className="mb-1.5 text-xs font-bold text-slate-500">{label}</Text>
+      <Pressable
+        onPress={onPress}
+        className="flex-row items-center justify-between rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5"
+      >
+        <Text
+          className={`text-sm ${value ? "text-slate-900" : "text-slate-400"}`}
+        >
+          {value || placeholder}
+        </Text>
+        <Ionicons name="calendar-outline" size={18} color="#f97316" />
+      </Pressable>
+    </View>
+  );
+}
+
 function ChoiceRow({
   label,
   values,
@@ -133,8 +163,51 @@ export default function ClientFormModal({
     { uri: string; name: string; type: string; documentType: string }[]
   >([]);
   const [saving, setSaving] = useState(false);
+  const [datePickerField, setDatePickerField] = useState<
+    "follow_up_date" | "next_follow_up_date" | null
+  >(null);
+  const [showDatePicker, setShowDatePicker] = useState(false);
   const set = (key: string, value: unknown) =>
     setForm((current: any) => ({ ...current, [key]: value }));
+
+  const openDatePicker = (field: "follow_up_date" | "next_follow_up_date") => {
+    setDatePickerField(field);
+    setShowDatePicker(true);
+  };
+
+  const handleDatePickerChange = (event: any, selectedDate?: Date) => {
+    if (event?.type === "dismissed") {
+      setShowDatePicker(false);
+      setDatePickerField(null);
+      return;
+    }
+
+    const chosenDate = selectedDate ?? new Date();
+    const isoDate = `${chosenDate.getFullYear()}-${String(chosenDate.getMonth() + 1).padStart(2, "0")}-${String(chosenDate.getDate()).padStart(2, "0")}`;
+
+    if (datePickerField === "follow_up_date") {
+      set("follow_up_date", isoDate);
+    }
+
+    if (datePickerField === "next_follow_up_date") {
+      set("next_follow_up_date", isoDate);
+    }
+
+    setShowDatePicker(false);
+    setDatePickerField(null);
+  };
+
+  const parseDateValue = (value: string) => {
+    if (!value) return new Date();
+
+    const [year, month, day] = value.split("-").map(Number);
+    if (year && month && day) {
+      return new Date(year, month - 1, day);
+    }
+
+    const parsed = new Date(value);
+    return Number.isNaN(parsed.getTime()) ? new Date() : parsed;
+  };
 
   useEffect(() => {
     if (!visible) return;
@@ -353,10 +426,10 @@ export default function ClientFormModal({
               <Text className="mb-4 text-base font-black text-slate-900">
                 Follow-up Scheduling
               </Text>
-              <Field
-                label="Follow-up Date (YYYY-MM-DD)"
+              <DateField
+                label="Follow-up Date"
                 value={form.follow_up_date}
-                onChange={(value) => set("follow_up_date", value)}
+                onPress={() => openDatePicker("follow_up_date")}
                 placeholder="YYYY-MM-DD"
               />
               <Field
@@ -365,10 +438,10 @@ export default function ClientFormModal({
                 onChange={(value) => set("follow_up_time", value)}
                 placeholder="HH:MM"
               />
-              <Field
-                label="Next Follow-up Date (YYYY-MM-DD)"
+              <DateField
+                label="Next Follow-up Date"
                 value={form.next_follow_up_date}
-                onChange={(value) => set("next_follow_up_date", value)}
+                onPress={() => openDatePicker("next_follow_up_date")}
                 placeholder="YYYY-MM-DD"
               />
               <Field
@@ -383,6 +456,16 @@ export default function ClientFormModal({
                 value={form.follow_up_status}
                 onChange={(value) => set("follow_up_status", value)}
               />
+              {showDatePicker && datePickerField ? (
+                <View className="mb-3">
+                  <DateTimePicker
+                    value={parseDateValue(form[datePickerField] || "")}
+                    mode="date"
+                    display="default"
+                    onChange={handleDatePickerChange}
+                  />
+                </View>
+              ) : null}
               <Pressable
                 onPress={() => set("reminder", !form.reminder)}
                 className="mb-3 flex-row items-center justify-between rounded-xl border border-slate-200 bg-slate-50 p-3"

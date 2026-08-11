@@ -1,4 +1,5 @@
 import { Ionicons } from "@expo/vector-icons";
+import { useRouter } from "expo-router";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import {
   ActivityIndicator,
@@ -25,6 +26,7 @@ const filters = [
 const ROLES = ["Project Manager", "Developer", "QA", "UI/UX", "Support"];
 
 export default function ProjectsScreen() {
+  const router = useRouter();
   const [projects, setProjects] = useState<any[]>([]);
   const [assignedProjects, setAssignedProjects] = useState<any[]>([]);
   const [unassignedProjects, setUnassignedProjects] = useState<any[]>([]);
@@ -602,9 +604,11 @@ export default function ProjectsScreen() {
             </View>
           ) : (
             visibleProjects.map((project, idx) => (
-              <View
+              <TouchableOpacity
                 key={`${project.uuid || project.projectId || idx}`}
                 className="bg-white rounded-3xl p-4 mb-4 border border-slate-100 shadow-sm"
+                activeOpacity={0.88}
+                onPress={() => router.push(`/admin/project-detail/${project.uuid || project.projectId}`)}
               >
                 <View className="flex-row items-start justify-between mb-4">
                   <View className="flex-row items-center flex-1">
@@ -696,7 +700,9 @@ export default function ProjectsScreen() {
 
                 {activeTab === "unassigned" && (
                   <View className="mt-4 flex-row items-center justify-between">
-                    <TouchableOpacity className="bg-orange-50 border border-orange-200 rounded-xl px-4 py-2">
+                    <TouchableOpacity
+                      onPress={() => router.push(`/admin/project-detail/${project.uuid || project.projectId}`)}
+                      className="bg-orange-50 border border-orange-200 rounded-xl px-4 py-2">
                       <Text className="text-orange-700 font-black text-xs">
                         View Details
                       </Text>
@@ -721,7 +727,7 @@ export default function ProjectsScreen() {
                     </TouchableOpacity>
                   </View>
                 )}
-              </View>
+              </TouchableOpacity>
             ))
           )}
         </View>
