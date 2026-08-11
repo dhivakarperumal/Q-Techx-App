@@ -2,13 +2,13 @@ import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import {
-  ActivityIndicator,
-  Modal,
-  ScrollView,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  View,
+    ActivityIndicator,
+    Modal,
+    ScrollView,
+    Text,
+    TextInput,
+    TouchableOpacity,
+    View,
 } from "react-native";
 
 import api from "../../api";
@@ -608,7 +608,11 @@ export default function ProjectsScreen() {
                 key={`${project.uuid || project.projectId || idx}`}
                 className="mb-4 overflow-hidden rounded-[28px] border border-slate-200 bg-white shadow-sm"
                 activeOpacity={0.9}
-                onPress={() => router.push(`/admin/project-detail/${project.uuid || project.projectId}`)}
+                onPress={() =>
+                  router.push(
+                    `/admin/project-detail/${project.uuid || project.projectId}`,
+                  )
+                }
               >
                 <View className="border-b border-slate-100 bg-slate-50/80 px-4 py-4">
                   <View className="flex-row items-start justify-between">
@@ -649,8 +653,12 @@ export default function ProjectsScreen() {
                       </View>
                     </View>
 
-                    <View className={`rounded-full px-2.5 py-1 ${project.statusBg}`}>
-                      <Text className={`text-[10px] font-black ${project.statusColor}`}>
+                    <View
+                      className={`rounded-full px-2.5 py-1 ${project.statusBg}`}
+                    >
+                      <Text
+                        className={`text-[10px] font-black ${project.statusColor}`}
+                      >
                         {project.status}
                       </Text>
                     </View>
@@ -660,7 +668,11 @@ export default function ProjectsScreen() {
                 <View className="px-4 py-4">
                   <View className="mb-3 flex-row items-center justify-between">
                     <View className="flex-row items-center">
-                      <Ionicons name="pulse-outline" size={13} color="#64748b" />
+                      <Ionicons
+                        name="pulse-outline"
+                        size={13}
+                        color="#64748b"
+                      />
                       <Text className="ml-1 text-xs font-semibold text-slate-500">
                         Progress
                       </Text>
@@ -695,7 +707,11 @@ export default function ProjectsScreen() {
                   {activeTab === "unassigned" ? (
                     <View className="flex-row items-center justify-between gap-2">
                       <TouchableOpacity
-                        onPress={() => router.push(`/admin/project-detail/${project.uuid || project.projectId}`)}
+                        onPress={() =>
+                          router.push(
+                            `/admin/project-detail/${project.uuid || project.projectId}`,
+                          )
+                        }
                         className="flex-1 rounded-2xl border border-orange-200 bg-orange-50 px-4 py-2.5"
                       >
                         <Text className="text-center text-xs font-black text-orange-700">
@@ -726,7 +742,11 @@ export default function ProjectsScreen() {
                       <Text className="text-xs font-semibold text-slate-400">
                         Open project to review details
                       </Text>
-                      <Ionicons name="chevron-forward" size={16} color="#94a3b8" />
+                      <Ionicons
+                        name="chevron-forward"
+                        size={16}
+                        color="#94a3b8"
+                      />
                     </View>
                   )}
                 </View>
