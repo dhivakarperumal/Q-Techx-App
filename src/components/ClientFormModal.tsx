@@ -57,7 +57,7 @@ const emptyForm = {
   reminder: false,
 };
 const inputClass =
-  "rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm text-slate-900";
+  "rounded-xl border border-slate-200 bg-slate-50 px-2 py-2.5 text-sm text-slate-900";
 
 function Field({
   label,
@@ -263,7 +263,7 @@ export default function ClientFormModal({
           </View>
           <ScrollView
             contentContainerStyle={{
-              paddingHorizontal: 20,
+              paddingHorizontal: 3,
               paddingTop: 16,
               paddingBottom: 36,
             }}
@@ -283,21 +283,25 @@ export default function ClientFormModal({
                 label="Company Name"
                 value={form.company_name}
                 onChange={(value) => set("company_name", value)}
+                placeholder="Enter company name"
               />
               <Field
                 label="Email"
                 value={form.email}
                 onChange={(value) => set("email", value)}
+                placeholder="name@example.com"
               />
               <Field
                 label="Phone Number"
                 value={form.phone_number}
                 onChange={(value) => set("phone_number", value)}
+                placeholder="Enter phone number"
               />
               <Field
                 label="Contact Person"
                 value={form.contact_person}
                 onChange={(value) => set("contact_person", value)}
+                placeholder="Enter contact person"
               />
               <ChoiceRow
                 label="Client Status"
@@ -322,23 +326,27 @@ export default function ClientFormModal({
                 label="Business Name"
                 value={form.business_name}
                 onChange={(value) => set("business_name", value)}
+                placeholder="Enter business name"
               />
               <Field
                 label="Business Type"
                 value={form.business_type}
                 onChange={(value) => set("business_type", value)}
+                placeholder="e.g. Retail, IT, Consulting"
               />
               <Field
                 label="Requirement"
                 value={form.requirement}
                 onChange={(value) => set("requirement", value)}
                 multiline
+                placeholder="Describe the requirement"
               />
               <Field
                 label="Notes / Summary"
                 value={form.notes_summary}
                 onChange={(value) => set("notes_summary", value)}
                 multiline
+                placeholder="Add notes or summary"
               />
             </View>
             <View className="mt-4 rounded-[24px] border border-slate-100 bg-white p-4 shadow-sm">
@@ -349,21 +357,25 @@ export default function ClientFormModal({
                 label="Follow-up Date (YYYY-MM-DD)"
                 value={form.follow_up_date}
                 onChange={(value) => set("follow_up_date", value)}
+                placeholder="YYYY-MM-DD"
               />
               <Field
                 label="Follow-up Time (HH:MM)"
                 value={form.follow_up_time}
                 onChange={(value) => set("follow_up_time", value)}
+                placeholder="HH:MM"
               />
               <Field
                 label="Next Follow-up Date (YYYY-MM-DD)"
                 value={form.next_follow_up_date}
                 onChange={(value) => set("next_follow_up_date", value)}
+                placeholder="YYYY-MM-DD"
               />
               <Field
                 label="Next Follow-up Time (HH:MM)"
                 value={form.next_follow_up_time}
                 onChange={(value) => set("next_follow_up_time", value)}
+                placeholder="HH:MM"
               />
               <ChoiceRow
                 label="Follow-up Status"
@@ -392,6 +404,7 @@ export default function ClientFormModal({
                 value={form.discussion_summary}
                 onChange={(value) => set("discussion_summary", value)}
                 multiline
+                placeholder="Add discussion notes"
               />
             </View>
             <View className="mt-4 rounded-[24px] border border-slate-100 bg-white p-4 shadow-sm">
