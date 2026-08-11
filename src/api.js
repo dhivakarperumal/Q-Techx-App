@@ -2,7 +2,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import axios from "axios";
 
 // export const API_BASE_URL = "https://dmart.qtechx.com/api";
-export const API_BASE_URL = 'http://192.168.1.6:5000/api';
+export const API_BASE_URL = "http://192.168.1.10:5000/api";
 
 const api = axios.create({
   baseURL: API_BASE_URL,
@@ -34,7 +34,8 @@ api.interceptors.response.use(
   async (error) => {
     const originalRequest = error.config;
     const retryCount = originalRequest?._retryCount || 0;
-    const isNetworkError = !error.response && (error.code || error.message === "Network Error");
+    const isNetworkError =
+      !error.response && (error.code || error.message === "Network Error");
 
     if (isNetworkError && originalRequest && retryCount < MAX_RETRIES) {
       originalRequest._retryCount = retryCount + 1;
