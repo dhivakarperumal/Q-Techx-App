@@ -1,6 +1,13 @@
-import { createContext, PropsWithChildren, useContext, useState } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { clearTokenCache } from "../api";
+import { router } from "expo-router";
+import {
+    createContext,
+    PropsWithChildren,
+    useContext,
+    useEffect,
+    useState,
+} from "react";
+import { clearTokenCache, setUnauthorizedHandler } from "../api";
 
 export type AuthUser = {
   id?: string | number;
@@ -21,6 +28,16 @@ export function AuthProvider({ children }: PropsWithChildren) {
   const [user, setUser] = useState<AuthUser | null>(null);
   const [token, setToken] = useState<string | null>(null);
 
+  useEffect(() => {
+    setUnauthorizedHandler(() => {
+      setUser(null);
+      setToken(null);
+      router.replace("/login");
+    });
+
+    return () => setUnauthorizedHandler(null);
+  }, []);
+
   const login = async (nextUser: AuthUser, nextToken: string) => {
     setUser(nextUser);
     setToken(nextToken);
@@ -34,7 +51,11 @@ export function AuthProvider({ children }: PropsWithChildren) {
     await AsyncStorage.removeItem("userToken");
   };
 
-  return <AuthContext.Provider value={{ user, token, login, logout }}>{children}</AuthContext.Provider>;
+  return (
+    <AuthContext.Provider value={{ user, token, login, logout }}>
+      {children}
+    </AuthContext.Provider>
+  );
 }
 
 export function useAuth() {

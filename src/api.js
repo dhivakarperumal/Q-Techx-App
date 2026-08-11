@@ -2,7 +2,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import axios from "axios";
 
 // export const API_BASE_URL = "https://dmart.qtechx.com/api";
-export const API_BASE_URL = 'http://192.168.1.6:5000/api';
+export const API_BASE_URL = "http://192.168.1.10:5000/api";
 
 const api = axios.create({
   baseURL: API_BASE_URL,
@@ -12,9 +12,14 @@ const api = axios.create({
 
 const MAX_RETRIES = 1;
 let cachedToken = null;
+let unauthorizedHandler = null;
 
 export function clearTokenCache() {
   cachedToken = null;
+}
+
+export function setUnauthorizedHandler(handler) {
+  unauthorizedHandler = handler;
 }
 
 api.interceptors.request.use(async (config) => {
@@ -34,7 +39,8 @@ api.interceptors.response.use(
   async (error) => {
     const originalRequest = error.config;
     const retryCount = originalRequest?._retryCount || 0;
-    const isNetworkError = !error.response && (error.code || error.message === "Network Error");
+    const isNetworkError =
+      !error.response && (error.code || error.message === "Network Error");
 
     if (isNetworkError && originalRequest && retryCount < MAX_RETRIES) {
       originalRequest._retryCount = retryCount + 1;
@@ -42,6 +48,12 @@ api.interceptors.response.use(
     }
 
     if (error.response) {
+      if (error.response.status === 401 || error.response.status === 403) {
+        cachedToken = null;
+        await AsyncStorage.removeItem("userToken");
+        unauthorizedHandler?.();
+      }
+
       return Promise.reject({
         status: error.response.status,
         message: error.response.data?.message || "Server error",
