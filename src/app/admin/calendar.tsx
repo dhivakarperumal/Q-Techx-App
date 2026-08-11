@@ -16,10 +16,9 @@ const STATUSES   = ['Scheduled', 'Ongoing', 'Completed', 'Cancelled'];
 const REMINDERS  = ['At time of event', '10 min before', '30 min before', '1 hour before', '1 day before'];
 
 const EVENT_TYPE_COLORS: Record<string, string> = {
-  Meeting: '#ef4444', Holiday: '#22c55e', Leave: '#8b5cf6',
-  Birthday: '#ec4899', Anniversary: '#d946ef', 'Client Meeting': '#6366f1',
-  Training: '#10b981', 'Office Event': '#1e3a8a', 'Project Deadline': '#a855f7',
-  Reminder: '#f97316', Interview: '#eab308', Other: '#64748b',
+  Meeting: '#ef4444', Holiday: '#22c55e', 
+  Birthday: '#ec4899',  'Office Event': '#1e3a8a', 'Project Deadline': '#a855f7',
+  Interview: '#eab308', 
 };
 
 const defaultForm = {
