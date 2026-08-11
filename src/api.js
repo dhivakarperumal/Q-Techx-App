@@ -18,12 +18,14 @@ export function clearTokenCache() {
 }
 
 api.interceptors.request.use(async (config) => {
-  if (!cachedToken) {
-    cachedToken = await AsyncStorage.getItem("userToken");
-  }
+  const storageToken = await AsyncStorage.getItem("userToken");
+  const activeToken = storageToken || cachedToken;
 
-  if (cachedToken) {
-    config.headers.Authorization = `Bearer ${cachedToken}`;
+  if (activeToken) {
+    cachedToken = activeToken;
+    config.headers.Authorization = `Bearer ${activeToken}`;
+  } else {
+    delete config.headers.Authorization;
   }
 
   return config;

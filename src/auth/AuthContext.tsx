@@ -30,8 +30,8 @@ export function AuthProvider({ children }: PropsWithChildren) {
   const [isLoading, setIsLoading] = useState<boolean>(true);
 
   useEffect(() => {
-    AsyncStorage.multiGet(["userToken", "authUser"]).then(
-      ([storedToken, storedUser]) => {
+    AsyncStorage.multiGet(["userToken", "authUser"])
+      .then(([storedToken, storedUser]) => {
         if (storedToken[1]) {
           setToken(storedToken[1]);
         }
@@ -44,13 +44,14 @@ export function AuthProvider({ children }: PropsWithChildren) {
           }
         }
         setIsLoading(false);
-      },
-    ).catch(() => {
-      setIsLoading(false);
-    });
+      })
+      .catch(() => {
+        setIsLoading(false);
+      });
   }, []);
 
   const login = async (nextUser: AuthUser, nextToken: string) => {
+    clearTokenCache();
     setUser(nextUser);
     setToken(nextToken);
     await AsyncStorage.multiSet([
@@ -60,9 +61,9 @@ export function AuthProvider({ children }: PropsWithChildren) {
   };
 
   const logout = async () => {
+    clearTokenCache();
     setUser(null);
     setToken(null);
-    clearTokenCache();
     await AsyncStorage.multiRemove(["userToken", "authUser"]);
   };
 

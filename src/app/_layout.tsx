@@ -1,40 +1,42 @@
-import { Stack, useRouter, useSegments } from "expo-router";
+import {
+    Stack,
+    useRootNavigationState,
+    useRouter,
+    useSegments,
+} from "expo-router";
 import { useEffect } from "react";
-import { ActivityIndicator, View } from "react-native";
+import { SafeAreaProvider } from "react-native-safe-area-context";
 import "../../global.css";
 import { AuthProvider, useAuth } from "../auth/AuthContext";
 import { getRoleHome } from "../auth/roleUtils";
-import { SafeAreaProvider } from "react-native-safe-area-context";
 
 function RootLayoutNav() {
   const { user, isLoading } = useAuth();
   const segments = useSegments();
   const router = useRouter();
+  const navigationState = useRootNavigationState();
 
   useEffect(() => {
-    if (isLoading) return;
+    if (isLoading || !navigationState?.key) return;
 
+    const currentPath = `/${segments.join("/")}`;
     const inAuthGroup = segments[0] === "admin" || segments[0] === "employee";
-    
-    if (!user && inAuthGroup) {
+
+    if (!user && inAuthGroup && currentPath !== "/login") {
       router.replace("/login");
     } else if (user) {
-      if (segments[0] === "login" || segments.length === 0 || segments[0] === "") {
+      if (
+        segments[0] === "login" ||
+        segments.length === 0 ||
+        segments[0] === ""
+      ) {
         const home = getRoleHome(user.role);
-        if (home) {
+        if (home && currentPath !== home) {
           router.replace(home);
         }
       }
     }
-  }, [user, isLoading, segments]);
-
-  if (isLoading) {
-    return (
-      <View style={{ flex: 1, justifyContent: "center", alignItems: "center", backgroundColor: "#111317" }}>
-        <ActivityIndicator size="large" color="#f97316" />
-      </View>
-    );
-  }
+  }, [user, isLoading, segments, router, navigationState]);
 
   return <Stack screenOptions={{ headerShown: false }} />;
 }
