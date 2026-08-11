@@ -16,9 +16,10 @@ const STATUSES   = ['Scheduled', 'Ongoing', 'Completed', 'Cancelled'];
 const REMINDERS  = ['At time of event', '10 min before', '30 min before', '1 hour before', '1 day before'];
 
 const EVENT_TYPE_COLORS: Record<string, string> = {
-  Meeting: '#ef4444', Holiday: '#22c55e', 
-  Birthday: '#ec4899',  'Office Event': '#1e3a8a', 'Project Deadline': '#a855f7',
-  Interview: '#eab308', 
+  Meeting: '#ef4444', Holiday: '#22c55e', Leave: '#8b5cf6',
+  Birthday: '#ec4899', Anniversary: '#d946ef', 'Client Meeting': '#6366f1',
+  Training: '#10b981', 'Office Event': '#1e3a8a', 'Project Deadline': '#a855f7',
+  Reminder: '#f97316', Interview: '#eab308', Other: '#64748b',
 };
 
 const defaultForm = {
@@ -78,6 +79,7 @@ export default function AdminCalendarScreen() {
   const [projects, setProjects] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [currentDate, setCurrentDate] = useState(dayjs());
+  const [selectedDate, setSelectedDate] = useState<dayjs.Dayjs | null>(null);
   
   const [showModal, setShowModal] = useState(false);
   const [showEmpSelector, setShowEmpSelector] = useState(false);
@@ -164,11 +166,14 @@ export default function AdminCalendarScreen() {
     }
   };
   
-  const upcomingEvents = events
-    .filter(ev => dayjs(ev.startDate).valueOf() >= dayjs().startOf('day').valueOf())
-    .sort((a, b) => dayjs(`${a.startDate} ${a.startTime || '00:00'}`).valueOf() - dayjs(`${b.startDate} ${b.startTime || '00:00'}`).valueOf());
+  const displayedEvents = selectedDate
+    ? events.filter(ev => dayjs(ev.startDate).isSame(selectedDate, 'day'))
+    : events.filter(ev => dayjs(ev.startDate).valueOf() >= dayjs().startOf('day').valueOf());
 
-  const groupedEvents = upcomingEvents.reduce((acc: any, ev) => {
+  const sortedEvents = displayedEvents.sort((a, b) => dayjs(`${a.startDate} ${a.startTime || '00:00'}`).valueOf() - dayjs(`${b.startDate} ${b.startTime || '00:00'}`).valueOf());
+  const finalEvents = selectedDate ? sortedEvents : sortedEvents.slice(0, 10);
+
+  const groupedEvents = finalEvents.reduce((acc: any, ev) => {
     const dateStr = dayjs(ev.startDate).format('dddd, MMMM D, YYYY');
     if (!acc[dateStr]) acc[dateStr] = [];
     acc[dateStr].push(ev);
@@ -235,16 +240,36 @@ export default function AdminCalendarScreen() {
                 const isSunday = idx % 7 === 0 && day !== null;
                 const dStr = currentDate.date(day || 1).format('YYYY-MM-DD');
                 
+                const isSelected = selectedDate && selectedDate.isSame(dStr, 'day');
+                
                 const dayEvents = events.filter(ev => {
                   const s = dayjs(ev.startDate).valueOf(), e = dayjs(ev.endDate).valueOf(), d = dayjs(dStr).startOf('day').valueOf();
                   return d >= s && d <= e;
                 });
                 
                 return (
-                  <View key={idx} style={{ width: `${100 / 7}%`, aspectRatio: 1, alignItems: "center", justifyContent: "center", padding: 2 }}>
+                  <TouchableOpacity 
+                    key={idx} 
+                    activeOpacity={0.7}
+                    onPress={() => {
+                      if (day !== null) {
+                        const d = currentDate.date(day);
+                        if (selectedDate && selectedDate.isSame(d, 'day')) {
+                          setSelectedDate(null); // deselect
+                        } else {
+                          setSelectedDate(d);
+                        }
+                      }
+                    }}
+                    style={{ width: `${100 / 7}%`, aspectRatio: 1, alignItems: "center", justifyContent: "center", padding: 2 }}
+                  >
                     {day !== null && (
-                      <View style={{ width: 32, height: 32, borderRadius: 16, alignItems: "center", justifyContent: "center", backgroundColor: isToday ? "#2563eb" : "transparent" }}>
-                        <Text style={{ fontSize: 13, fontWeight: isToday ? "800" : "500", color: isToday ? "#fff" : isSunday ? "#ef4444" : "#334155" }}>
+                      <View style={{ 
+                        width: 32, height: 32, borderRadius: 16, alignItems: "center", justifyContent: "center", 
+                        backgroundColor: isToday ? "#2563eb" : "transparent",
+                        borderWidth: isSelected ? 2 : 0, borderColor: isSelected ? "#F8740E" : "transparent"
+                      }}>
+                        <Text style={{ fontSize: 13, fontWeight: isToday ? "800" : "500", color: isToday ? "#fff" : isSelected ? "#F8740E" : isSunday ? "#ef4444" : "#334155" }}>
                           {day}
                         </Text>
                         {dayEvents.length > 0 && !isToday && (
@@ -256,7 +281,7 @@ export default function AdminCalendarScreen() {
                         )}
                       </View>
                     )}
-                  </View>
+                  </TouchableOpacity>
                 );
               })}
             </View>
@@ -274,11 +299,13 @@ export default function AdminCalendarScreen() {
 
           {/* Grouped Upcoming Events */}
           <Text style={{ marginTop: 24, marginBottom: 12, fontSize: 11, fontWeight: "700", letterSpacing: 1.2, textTransform: "uppercase", color: "#94a3b8" }}>
-            Upcoming Events
+            {selectedDate ? `Events on ${selectedDate.format('MMMM D, YYYY')}` : 'Upcoming Events'}
           </Text>
           <View style={{ gap: 20 }}>
             {Object.keys(groupedEvents).length === 0 ? (
-              <Text style={{ textAlign: "center", color: "#94a3b8", marginVertical: 20 }}>No upcoming events.</Text>
+              <Text style={{ textAlign: "center", color: "#94a3b8", marginVertical: 20 }}>
+                {selectedDate ? "No events scheduled for this day." : "No upcoming events."}
+              </Text>
             ) : Object.keys(groupedEvents).map(dateStr => (
               <View key={dateStr}>
                 <Text style={{ fontSize: 14, fontWeight: "700", color: "#0f172a", marginBottom: 10 }}>{dateStr}</Text>
@@ -289,7 +316,8 @@ export default function AdminCalendarScreen() {
                       <TouchableOpacity 
                         key={ev._id || Math.random().toString()} 
                         onPress={() => setSelectedEvent(ev)}
-                        style={{ flexDirection: "row", alignItems: "center", borderRadius: 16, backgroundColor: "#fff", borderWidth: 1, borderColor: "#e2e8f0", borderLeftWidth: 4, borderLeftColor: color, padding: 14 }}
+                        style={{ flexDirection: "row", alignItems: "center", borderRadius: 16, backgroundColor: "#fff", borderWidth: 1, borderColor: color, borderLeftWidth: 4, borderLeftColor: color, padding: 14 }}
+
                       >
                         <View style={{ flex: 1, marginLeft: 6 }}>
                           <Text style={{ fontSize: 15, fontWeight: "700", color: "#0f172a" }}>{ev.title}</Text>
