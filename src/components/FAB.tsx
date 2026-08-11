@@ -15,7 +15,7 @@ export function FAB({ onPress }: FABProps) {
       accessibilityLabel="Create project"
       style={{
         position: "absolute",
-        bottom: 100,
+        bottom: 120,
         right: 22,
         width: 56,
         height: 56,
