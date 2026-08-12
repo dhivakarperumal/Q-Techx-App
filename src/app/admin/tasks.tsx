@@ -1,4 +1,5 @@
 import { Ionicons } from "@expo/vector-icons";
+import { LinearGradient } from "expo-linear-gradient";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import * as DocumentPicker from "expo-document-picker";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
@@ -250,6 +251,7 @@ export default function TasksScreen() {
   const [statusSheetVisible, setStatusSheetVisible] = useState(false);
   const [updatingStatus, setUpdatingStatus] = useState(false);
   const [statusUpdateError, setStatusUpdateError] = useState("");
+  const [statusDropdownOpen, setStatusDropdownOpen] = useState(false);
 
   // Reason prompt for Cancelled / Issue
   const [pendingStatus, setPendingStatus] = useState<string | null>(null);
@@ -668,34 +670,43 @@ export default function TasksScreen() {
           />
         }
       >
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerClassName="mb-6 px-5"
-        >
+        <View className="px-5 mt-5 mb-2 flex-row flex-wrap justify-between">
           {stats.map(([label, value, sub, icon, color, background]) => (
             <View
               key={label}
-              className="mr-4 w-[130px] rounded-[24px] border border-slate-100 bg-white p-4 shadow-sm"
+              className="mb-3 w-[48%] overflow-hidden rounded-2xl bg-white border border-orange-100" style={{ shadowColor: "#f97316", shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.12, shadowRadius: 10, elevation: 4 }}
             >
-              <View
-                className="mb-3 h-10 w-10 items-center justify-center rounded-[14px]"
-                style={{ backgroundColor: background }}
+              <LinearGradient
+                colors={["#ffffff", "#fff7ed"]}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+                className="px-4 py-4"
               >
-                <Ionicons name={icon} size={22} color={color} />
-              </View>
-              <Text className="mb-1 text-[10px] font-bold text-slate-500">
-                {label}
-              </Text>
-              <Text className="mb-1 text-2xl font-black text-slate-900">
-                {value}
-              </Text>
-              <Text className="text-[10px] font-medium text-slate-400">
-                {sub}
-              </Text>
+                <View className="flex-row items-center mb-3">
+                  <View className="h-10 w-10 items-center justify-center rounded-xl bg-black">
+                    <Ionicons name={icon as any} size={20} color="#f97316" />
+                  </View>
+                  <View className="ml-2 flex-1">
+                    <Text
+                      className="text-[10px] font-bold uppercase tracking-[0.5px] text-gray-500"
+                      numberOfLines={2}
+                    >
+                      {label}
+                    </Text>
+                  </View>
+                </View>
+                <View className="flex-row items-baseline justify-between">
+                  <Text className="text-[22px] font-black text-black">
+                    {value}
+                  </Text>
+                  <Text className="text-[10px] font-bold text-orange-500">
+                    {sub}
+                  </Text>
+                </View>
+              </LinearGradient>
             </View>
           ))}
-        </ScrollView>
+        </View>
 
         <View className="mb-4 flex-row items-center gap-3 px-5">
           <View className="flex-1 flex-row items-center rounded-2xl border border-slate-200 bg-white px-4 py-3 shadow-sm">
@@ -710,32 +721,54 @@ export default function TasksScreen() {
           </View>
         </View>
 
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerClassName="mb-6 px-5"
+        <View className="mb-6 px-5 flex-row">
+          <Pressable
+            onPress={() => setStatusDropdownOpen(true)}
+            className="w-40 h-12 rounded-2xl border border-slate-200 bg-white px-4 flex-row items-center justify-between"
+          >
+            <Text className="text-xs font-medium text-slate-700">
+              {statusFilter === "All" ? "All Tasks" : statusFilter}
+            </Text>
+            <Ionicons name="chevron-down" size={16} color="#64748b" />
+          </Pressable>
+        </View>
+
+        <Modal
+          visible={statusDropdownOpen}
+          transparent
+          animationType="fade"
+          onRequestClose={() => setStatusDropdownOpen(false)}
         >
-          {statusFilters.map((filter) => (
-            <TouchableOpacity
-              key={filter}
-              onPress={() => setStatusFilter(filter)}
-              className={`mr-3 flex-row items-center rounded-full border px-4 py-2 ${statusFilter === filter ? "border-orange-500 bg-orange-50" : "border-slate-200 bg-white"}`}
+          <Pressable
+            className="flex-1 bg-black/40 justify-center px-8"
+            onPress={() => setStatusDropdownOpen(false)}
+          >
+            <Pressable
+              className="bg-white rounded-2xl overflow-hidden max-h-[70%]"
+              onPress={(e) => e.stopPropagation()}
             >
-              <View
-                className="mr-2 h-2 w-2 rounded-full"
-                style={{
-                  backgroundColor:
-                    filter === "All" ? "#f97316" : statusColors[filter]?.text,
-                }}
-              />
-              <Text
-                className={`text-xs font-bold ${statusFilter === filter ? "text-orange-600" : "text-slate-600"}`}
-              >
-                {filter === "All" ? "All Tasks" : filter}
+              <Text className="px-5 py-4 text-base font-bold text-slate-900 border-b border-slate-100">
+                Select Status
               </Text>
-            </TouchableOpacity>
-          ))}
-        </ScrollView>
+              <ScrollView>
+                {statusFilters.map((filter) => (
+                  <Pressable
+                    key={filter}
+                    onPress={() => {
+                      setStatusFilter(filter);
+                      setStatusDropdownOpen(false);
+                    }}
+                    className="px-5 py-4 border-b border-slate-100"
+                  >
+                    <Text className={`text-sm ${statusFilter === filter ? "font-bold text-orange-500" : "text-slate-700"}`}>
+                      {filter === "All" ? "All Tasks" : filter}
+                    </Text>
+                  </Pressable>
+                ))}
+              </ScrollView>
+            </Pressable>
+          </Pressable>
+        </Modal>
 
         <View className="mb-4 px-5">
           <Text className="text-sm font-bold text-slate-800">
@@ -861,34 +894,37 @@ export default function TasksScreen() {
         onRequestClose={closeTaskSheet}
       >
         <KeyboardAvoidingView
-          className="flex-1 justify-end"
+          className="flex-1 justify-end bg-black/25"
           behavior={Platform.OS === "ios" ? "padding" : "height"}
         >
           <Pressable
-            className="absolute inset-0 bg-black/40"
+            className="absolute inset-0"
             onPress={closeTaskSheet}
           />
-          <View className="max-h-[88%] rounded-t-[28px] bg-white px-5 pb-8 pt-5">
-            <View className="mb-5 flex-row items-center justify-between">
-              <View>
-                <Text className="text-xl font-black text-slate-900">
+          <View className="max-h-[92%] rounded-t-[32px] border border-slate-200 bg-[#f8fafc] shadow-2xl">
+            <View className="items-center pt-3">
+              <View className="h-1.5 w-14 rounded-full bg-slate-300" />
+            </View>
+            <View className="flex-row items-center justify-between border-b border-slate-200 bg-black px-5 pb-4 pt-4 rounded-t-[32px]">
+              <View className="flex-1 pr-3">
+                <Text className="text-xl font-black text-orange-500">
                   New Task
                 </Text>
-                <Text className="mt-1 text-xs text-slate-500">
+                <Text className="mt-1 text-xs text-orange-200">
                   Add a task to a project
                 </Text>
               </View>
               <Pressable
-                accessibilityLabel="Close"
                 onPress={closeTaskSheet}
-                className="h-9 w-9 items-center justify-center rounded-full bg-slate-100"
+                className="h-9 w-9 items-center justify-center rounded-full bg-orange-100"
               >
-                <Ionicons name="close" size={20} color="#64748b" />
+                <Ionicons name="close" size={20} color="#c2410c" />
               </Pressable>
             </View>
             <ScrollView
               keyboardShouldPersistTaps="handled"
               showsVerticalScrollIndicator={false}
+              contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 32, paddingTop: 20 }}
             >
               <Text className="mb-2 text-xs font-bold text-slate-500">
                 Project *
