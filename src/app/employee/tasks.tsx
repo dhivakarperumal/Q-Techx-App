@@ -1,82 +1,499 @@
 import { Ionicons } from "@expo/vector-icons";
-import { ScrollView, Text, View } from "react-native";
+import { useCallback, useEffect, useState } from "react";
+import {
+  ActivityIndicator,
+  RefreshControl,
+  ScrollView,
+  Text,
+  View,
+} from "react-native";
+import api from "../../api";
+import { useAuth } from "../../auth/AuthContext";
 import { BottomHome } from "../../components/BottomHome";
 import { TopHeader } from "../../components/TopHeader";
 
-const tasks = [
-  {
-    title: "Complete project documentation",
-    due: "Due today",
-    status: "In progress",
-    priority: "High",
-    color: "#2563eb",
-  },
-  {
-    title: "Review assigned designs",
-    due: "Due tomorrow",
-    status: "Pending",
-    priority: "Medium",
-    color: "#f97316",
-  },
-  {
-    title: "Submit weekly report",
-    due: "Completed",
-    status: "Completed",
-    priority: "Low",
-    color: "#16a34a",
-  },
-] as const;
+type ApiTask = {
+  id?: string | number;
+  task_id?: string | number;
+  task_uuid?: string;
+  task_code?: string;
+  task_name?: string;
+  task_title?: string;
+  title?: string;
+  name?: string;
+  module_name?: string;
+  moduleName?: string;
+  module?: string;
+  description?: string;
+  task_description?: string;
+  project_id?: string | number;
+  project_uuid?: string;
+  project_name?: string;
+  projectName?: string;
+  project?: string;
+  team?: string;
+  assigned_to?: string | number | null;
+  assigned_to_name?: string | null;
+  assigned_to_code?: string | null;
+  assigned_by?: string | number | null;
+  assignment_date?: string;
+  start_date?: string;
+  startDate?: string;
+  due_date?: string;
+  dueDate?: string;
+  completion_date?: string | null;
+  priority?: string;
+  task_priority?: string;
+  status?: string;
+  task_status?: string;
+  current_status?: string;
+  comments?: string | null;
+  comment?: string | null;
+  cancel_reason?: string | null;
+  issue_reason?: string | null;
+  attachments?: unknown;
+  files?: unknown;
+  documents?: unknown;
+  task_attachments?: unknown;
+  progress?: number;
+  active?: number;
+  created_at?: string;
+  updated_at?: string;
+  task_details?: unknown;
+  [key: string]: unknown;
+};
+
+const statusColors: Record<string, string> = {
+  Completed: "#16a34a",
+  "In Progress": "#2563eb",
+  Pending: "#f97316",
+};
+
+const employeeReference = (user: Record<string, unknown> | null) => {
+  if (!user) return "";
+  return (
+    [
+      user.employee_id,
+      user.employeeId,
+      user.user_id,
+      user.id,
+      user._id,
+      user.employee?.employee_id,
+      user.employee?.employeeId,
+      user.employee?.id,
+    ]
+      .filter(Boolean)
+      .map(String)[0] || ""
+  );
+};
+
+const getTaskStatus = (value?: string | number | null) => {
+  const status = String(value || "Pending")
+    .trim()
+    .toLowerCase();
+  if (["done", "complete", "completed", "finished"].includes(status)) {
+    return "Completed";
+  }
+  if (["in progress", "inprogress", "ongoing", "started"].includes(status)) {
+    return "In Progress";
+  }
+  return "Pending";
+};
+
+const getDueText = (value?: string | number | null) => {
+  if (!value) return "No due date";
+  const date = new Date(String(value));
+  if (Number.isNaN(date.getTime())) return String(value);
+  return date.toLocaleDateString(undefined, {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  });
+};
+
+const getTaskTitle = (task: ApiTask) =>
+  String(
+    task.task_name ||
+      task.task_title ||
+      task.title ||
+      task.name ||
+      task.module_name ||
+      task.project_name ||
+      "Assigned task",
+  );
+
+const getTaskProjectName = (task: ApiTask) =>
+  String(
+    task.project_name ||
+      task.projectName ||
+      task.project ||
+      task.team ||
+      "No project",
+  );
+
+const getTaskModuleName = (task: ApiTask) =>
+  String(task.module_name || task.moduleName || task.module || "");
+
+const getTaskDescription = (task: ApiTask) =>
+  String(task.description || task.task_description || "");
+
+const firstValue = (...values: any[]) =>
+  values.find(
+    (value) =>
+      value !== undefined && value !== null && String(value).trim() !== "",
+  );
+
+const parseTaskDetails = (row: any): any => {
+  const details = row?.task_details ?? row?.taskDetails ?? row?.task_detail;
+  if (!details) return null;
+  if (typeof details === "string") {
+    try {
+      return JSON.parse(details);
+    } catch {
+      return null;
+    }
+  }
+  return details;
+};
+
+const buildTaskRecord = (row: any, details: any = {}): any => ({
+  ...row,
+  ...details,
+  assigned_to:
+    row?.assigned_to ??
+    row?.employee_id ??
+    row?.assigned_employee_id ??
+    row?.employeeId ??
+    details?.assigned_to,
+  assigned_to_name:
+    row?.assigned_to_name ?? row?.assigned_to_name ?? details?.assigned_to_name,
+  assigned_by:
+    row?.assigned_by ?? details?.assigned_by ?? row?.assigned_by,
+  assignment_date:
+    row?.assignment_date ?? details?.assignment_date ?? row?.assignment_date,
+});
+
+const normalizeAssignment = (row: any): ApiTask[] => {
+  const taskDetails = parseTaskDetails(row);
+
+  if (Array.isArray(taskDetails) && taskDetails.length > 0) {
+    return taskDetails.map((detail) => normalizeTask(buildTaskRecord(row, detail)));
+  }
+
+  return [normalizeTask(buildTaskRecord(row, taskDetails || {}))];
+};
+
+const normalizeTask = (row: any): ApiTask => {
+  const taskDetails = parseTaskDetails(row) || {};
+
+  return {
+    ...row,
+    ...taskDetails,
+    id: row?.id ?? row?.task_id ?? row?.uuid ?? row?.task_uuid,
+    task_id: row?.task_id ?? row?.id ?? row?.uuid,
+    task_uuid: row?.task_uuid ?? row?.uuid,
+    task_name:
+      row?.task_name ??
+      taskDetails?.task_name ??
+      row?.name ??
+      row?.title ??
+      taskDetails?.title ??
+      row?.task_title ??
+      "",
+    name:
+      row?.name ??
+      taskDetails?.name ??
+      row?.task_name ??
+      row?.title ??
+      taskDetails?.title ??
+      "",
+    project_name:
+      row?.project_name ??
+      taskDetails?.project_name ??
+      row?.projectName ??
+      row?.project ??
+      row?.team ??
+      taskDetails?.team ??
+      "",
+    module_name:
+      row?.module_name ??
+      taskDetails?.module_name ??
+      row?.moduleName ??
+      row?.module ??
+      "",
+    description:
+      row?.description ??
+      taskDetails?.description ??
+      row?.task_description ??
+      taskDetails?.task_description ??
+      row?.details ??
+      "",
+    comments:
+      row?.comments ??
+      taskDetails?.comments ??
+      row?.comment ??
+      taskDetails?.comment ??
+      row?.cancel_reason ??
+      row?.issue_reason ??
+      "",
+    attachments:
+      row?.attachments ??
+      taskDetails?.attachments ??
+      row?.files ??
+      row?.documents ??
+      row?.task_attachments,
+    start_date:
+      row?.start_date ??
+      row?.startDate ??
+      row?.assignment_date ??
+      taskDetails?.start_date ??
+      taskDetails?.startDate,
+    due_date:
+      row?.due_date ??
+      row?.dueDate ??
+      row?.deadline ??
+      taskDetails?.due_date ??
+      taskDetails?.dueDate,
+    status:
+      row?.status ??
+      taskDetails?.status ??
+      row?.task_status ??
+      row?.current_status,
+    priority: row?.priority ?? taskDetails?.priority ?? row?.task_priority,
+    assigned_to:
+      row?.assigned_to ??
+      row?.employee_id ??
+      row?.assigned_employee_id ??
+      row?.employeeId ??
+      taskDetails?.assigned_to,
+  };
+};
+
+const getTaskComments = (task: ApiTask) =>
+  String(
+    firstValue(
+      task.comments,
+      task.comment,
+      task.cancel_reason,
+      task.issue_reason,
+      task.task_comments,
+      task.task_comment,
+      task.comment_text,
+    ) || "",
+  );
+
+const getTaskAttachmentsLabel = (task: ApiTask) => {
+  const attachments =
+    task.attachments || task.files || task.documents || task.task_attachments;
+  if (!attachments) return "No attachments";
+  if (Array.isArray(attachments)) {
+    return `${attachments.length} attachment${attachments.length === 1 ? "" : "s"}`;
+  }
+  return String(attachments);
+};
+
+const collectRows = (payload: any): any[] => {
+  if (Array.isArray(payload)) return payload;
+  if (!payload || typeof payload !== "object") return [];
+
+  const candidates = [
+    payload.tasks,
+    payload.data,
+    payload.rows,
+    payload.results,
+    payload.assignments,
+    payload.employee_task_assignments,
+    payload.task_assignments,
+    payload.items,
+    payload.today,
+  ];
+
+  for (const candidate of candidates) {
+    if (Array.isArray(candidate)) return candidate;
+    if (candidate && typeof candidate === "object") {
+      const nested = collectRows(candidate);
+      if (nested.length) return nested;
+    }
+  }
+
+  return [];
+};
+
 
 export default function EmployeeTasksScreen() {
+  const { user } = useAuth();
+  const [tasks, setTasks] = useState<ApiTask[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+  const [error, setError] = useState("");
+
+  const fetchTasks = useCallback(
+    async (isRefresh = false) => {
+      try {
+        if (isRefresh) setRefreshing(true);
+        else setLoading(true);
+        setError("");
+
+        const employeeId = employeeReference(user);
+        const { data: assignmentPayload } = await api.get("/tasks/assignments");
+        const rows = collectRows(assignmentPayload).flatMap(normalizeAssignment);
+
+        const filtered = rows.filter((task) => {
+          const assignedEmployeeId = String(
+            task.assigned_to ??
+              task.employee_id ??
+              task.assigned_employee_id ??
+              task.employeeId ??
+              "",
+          );
+          const matchesEmployee =
+            !assignedEmployeeId || assignedEmployeeId === String(employeeId);
+          return matchesEmployee;
+        });
+
+        setTasks(filtered);
+      } catch (requestError: any) {
+        setError(requestError?.message || "Unable to load assigned tasks.");
+        setTasks([]);
+      } finally {
+        setLoading(false);
+        setRefreshing(false);
+      }
+    },
+    [user],
+  );
+
+  useEffect(() => {
+    fetchTasks();
+  }, [fetchTasks]);
+
   return (
     <View className="flex-1 bg-slate-50">
       <TopHeader title="Tasks" subtitle="Your assigned work" />
-      <ScrollView className="flex-1" contentContainerClassName="px-5 py-6">
-        <Text className="text-3xl font-bold text-slate-950">My tasks</Text>
-        <Text className="mt-2 text-base text-slate-500">
-          Stay on top of your daily responsibilities.
-        </Text>
+      <ScrollView
+        className="flex-1"
+        contentContainerClassName="px-5 py-6"
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={() => fetchTasks(true)}
+            tintColor="#2563eb"
+          />
+        }
+      >
+        {loading ? (
+          <View className="mt-8 items-center py-10">
+            <ActivityIndicator size="large" color="#2563eb" />
+            <Text className="mt-3 text-sm text-slate-500">
+              Loading assigned tasks...
+            </Text>
+          </View>
+        ) : error ? (
+          <View className="mt-6 rounded-2xl border border-rose-200 bg-rose-50 p-5">
+            <Text className="font-semibold text-rose-700">{error}</Text>
+          </View>
+        ) : tasks.length === 0 ? (
+          <View className="mt-6 rounded-2xl border border-dashed border-slate-300 bg-white p-5">
+            <Text className="text-center text-sm text-slate-500">
+              No assigned tasks right now.
+            </Text>
+          </View>
+        ) : (
+          <View className="mt-6 gap-3">
+            {tasks.map((task, index) => {
+              const title = getTaskTitle(task);
+              const project = getTaskProjectName(task);
+              const moduleName = getTaskModuleName(task);
+              const description = getTaskDescription(task);
+              const comments = getTaskComments(task);
+              const attachmentsLabel = getTaskAttachmentsLabel(task);
+              const status = getTaskStatus(
+                task.status || task.task_status || task.current_status,
+              );
+              const color = statusColors[status] || "#f97316";
+              const start = getDueText(
+                task.start_date || task.startDate || task.assignment_date,
+              );
+              const due = getDueText(
+                task.due_date || task.dueDate || task.deadline,
+              );
+              const priority = String(
+                task.priority || task.task_priority || "Medium",
+              );
 
-        <View className="mt-6 gap-3">
-          {tasks.map(({ title, due, status, priority, color }) => (
-            <View
-              key={title}
-              className="flex-row items-center rounded-2xl border border-slate-200 bg-white p-4 shadow-sm shadow-slate-200"
-            >
-              <View className="h-11 w-11 items-center justify-center rounded-xl bg-slate-100">
-                <Ionicons
-                  name="checkmark-circle-outline"
-                  size={24}
-                  color={color}
-                />
-              </View>
-
-              <View className="ml-3 flex-1">
-                <Text className="text-base font-bold text-slate-900">
-                  {title}
-                </Text>
-                <Text className="mt-1 text-sm" style={{ color }}>
-                  {due}
-                </Text>
-              </View>
-
-              <View className="items-end">
-                <Text
-                  className="rounded-full px-2 py-1 text-[10px] font-semibold uppercase tracking-wide"
-                  style={{
-                    color,
-                    backgroundColor: `${color}15`,
-                  }}
+              return (
+                <View
+                  key={`${title}-${index}`}
+                  className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm shadow-slate-200"
                 >
-                  {status}
-                </Text>
-                <Text className="mt-2 text-[11px] text-slate-500">
-                  {priority}
-                </Text>
-              </View>
-            </View>
-          ))}
-        </View>
+                  <View className="flex-row items-start">
+                    <View className="h-11 w-11 items-center justify-center rounded-xl bg-slate-100">
+                      <Ionicons
+                        name="checkmark-circle-outline"
+                        size={24}
+                        color={color}
+                      />
+                    </View>
+
+                    <View className="ml-3 flex-1">
+                      <Text className="text-base font-bold text-slate-900">
+                        {title}
+                      </Text>
+                      {moduleName ? (
+                        <Text className="mt-1 text-sm text-slate-500">
+                          {moduleName}
+                        </Text>
+                      ) : null}
+                      <Text className="mt-1 text-sm text-slate-500">
+                        {project}
+                      </Text>
+                      {description ? (
+                        <Text
+                          numberOfLines={2}
+                          className="mt-1 text-sm text-slate-500"
+                        >
+                          {description}
+                        </Text>
+                      ) : null}
+
+                      <View className="mt-3 flex-row flex-wrap gap-3">
+                        <Text className="text-[11px] text-slate-500">
+                          Start: {start}
+                        </Text>
+                        <Text className="text-[11px] text-slate-500">
+                          End: {due}
+                        </Text>
+                        <Text className="text-[11px] text-slate-500">
+                          {attachmentsLabel}
+                        </Text>
+                      </View>
+                      {comments ? (
+                        <Text className="mt-2 text-[11px] text-slate-500">
+                          Reason: {comments}
+                        </Text>
+                      ) : null}
+                    </View>
+
+                    <View className="items-end">
+                      <Text
+                        className="rounded-full px-2 py-1 text-[10px] font-semibold uppercase tracking-wide"
+                        style={{
+                          color,
+                          backgroundColor: `${color}15`,
+                        }}
+                      >
+                        {status}
+                      </Text>
+                      <Text className="mt-2 text-[11px] text-slate-500">
+                        {priority}
+                      </Text>
+                    </View>
+                  </View>
+                </View>
+              );
+            })}
+          </View>
+        )}
       </ScrollView>
       <BottomHome />
     </View>
