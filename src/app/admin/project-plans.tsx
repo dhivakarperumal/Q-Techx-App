@@ -688,24 +688,24 @@ export default function ProjectPlansScreen() {
 
   return (
     <View className="flex-1 bg-[#F9FAFB]">
-      <View className="flex-row items-center justify-between border-b border-slate-100 bg-white px-5 pb-4 pt-12">
-        <View className="flex-row items-center">
-          <Pressable
-            accessibilityLabel="Go back"
-            onPress={() => router.back()}
-            className="mr-3 h-10 w-10 items-center justify-center rounded-full bg-slate-100"
-          >
-            <Ionicons name="arrow-back" size={20} color="#334155" />
-          </Pressable>
-          <View>
-            <Text className="text-xl font-black text-slate-900">
-              Project Plans
-            </Text>
-            <Text className="mt-0.5 text-xs text-slate-500">
-              {plans.length} plans, {activeCount} active
-            </Text>
-          </View>
-        </View>
+      <View style={{
+        flexDirection: "row", alignItems: "center",
+        paddingHorizontal: 16, paddingVertical: 14,
+        backgroundColor: "#fff",
+        borderBottomWidth: 1, borderBottomColor: "#f1f5f9",
+      }}>
+        <Pressable
+          onPress={() => router.back()}
+          style={{
+            width: 38, height: 38, borderRadius: 12,
+            backgroundColor: "#f1f5f9",
+            alignItems: "center", justifyContent: "center",
+            marginRight: 12,
+          }}
+        >
+          <Ionicons name="arrow-back" size={20} color="#0f172a" />
+        </Pressable>
+        <Text style={{ fontSize: 18, fontWeight: "800", color: "#0f172a" }}>Project Plans</Text>
       </View>
 
       <ScrollView
