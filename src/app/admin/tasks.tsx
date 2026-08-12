@@ -46,6 +46,7 @@ type PlanModule = {
 const statusOptions = [
   "Pending",
   "Accepted",
+  "To Do",
   "In Progress",
   "Review",
   "Testing",
@@ -60,6 +61,7 @@ const statusColors: Record<
   { text: string; background: string; progress: string }
 > = {
   Pending: { text: "#f97316", background: "#fef3c7", progress: "#f59e0b" },
+  "To Do": { text: "#f97316", background: "#fef3c7", progress: "#f59e0b" },
   Accepted: { text: "#0f766e", background: "#ccfbf1", progress: "#14b8a6" },
   "In Progress": {
     text: "#2563eb",
@@ -74,6 +76,19 @@ const statusColors: Record<
   Issue: { text: "#c2410c", background: "#ffedd5", progress: "#f97316" },
 };
 
+const STATUS_PROGRESS_MAP: Record<string, number> = {
+  "Pending": 0,
+  "Accepted": 10,
+  "To Do": 5,
+  "In Progress": 50,
+  "Review": 75,
+  "Testing": 85,
+  "Completed": 100,
+  "On Hold": 30,
+  "Cancelled": 0,
+  "Issue": 40,
+};
+
 const valueOf = (value: unknown) => {
   const number = Number(value);
   return Number.isFinite(number) ? number : 0;
@@ -86,14 +101,13 @@ const firstValue = (...values: unknown[]) =>
   );
 
 const displayStatus = (value: unknown) => {
-  const status = String(value || "Pending")
-    .trim()
-    .toLowerCase()
-    .replace(/[_-]+/g, " ")
-    .replace(/\s+/g, " ");
+  if (!value) return "Pending";
+  const rawStatus = String(value).trim();
+  const status = rawStatus.toLowerCase();
+  
   if (["done", "complete", "completed", "finished"].includes(status))
     return "Completed";
-  if (["in progress", "inprogress", "ongoing", "started"].includes(status))
+  if (["in progress", "inprogress", "ongoing", "started", "progress"].includes(status))
     return "In Progress";
   if (["accepted", "approved"].includes(status)) return "Accepted";
   if (["review", "in review", "under review"].includes(status)) return "Review";
@@ -101,7 +115,13 @@ const displayStatus = (value: unknown) => {
   if (["on hold", "hold"].includes(status)) return "On Hold";
   if (["cancelled", "canceled"].includes(status)) return "Cancelled";
   if (["issue", "problem", "blocked"].includes(status)) return "Issue";
-  return "Pending";
+  if (["pending", "to do"].includes(status)) {
+    // Return original case if it matches, otherwise fallback
+    if (rawStatus === "To Do" || rawStatus === "Pending") return rawStatus;
+    if (status === "to do") return "To Do";
+    return "Pending";
+  }
+  return rawStatus || "Pending";
 };
 
 const displayDate = (value: unknown) => {
@@ -143,21 +163,27 @@ const mapProject = (project: any, index: number): ProjectOption => ({
 });
 
 const mapTask = (raw: any, index: number): Task => {
+  const getEffectiveProgress = (rawProgress: any, mappedStatus: string) => {
+    if (rawProgress !== null && rawProgress !== undefined && rawProgress !== "") {
+      const numericProgress = Number(rawProgress);
+      // If progress is strictly greater than 0, use it. Otherwise, use the status-based fallback.
+      // This prevents default 0s in the database from hiding the status-based progress (e.g. 50% for In Progress).
+      if (Number.isFinite(numericProgress) && numericProgress > 0) return numericProgress;
+    }
+    return STATUS_PROGRESS_MAP[mappedStatus] ?? 0;
+  };
+
   const status = displayStatus(
     firstValue(raw.status, raw.task_status, raw.current_status),
   );
+  
+  const rawProgressValue = firstValue(raw.progress, raw.progress_percentage);
   const progress = Math.min(
     100,
     Math.max(
       0,
-      valueOf(
-        firstValue(
-          raw.progress,
-          raw.progress_percentage,
-          status === "Completed" ? 100 : 0,
-        ),
-      ),
-    ),
+      getEffectiveProgress(rawProgressValue, status)
+    )
   );
   const assignee =
     raw.assignee || raw.assigned_to || raw.employee || raw.user || {};
@@ -170,7 +196,7 @@ const mapTask = (raw: any, index: number): Task => {
   const baseUrl = API_BASE_URL.replace(/\/api$/, "");
 
   return {
-    id: String(firstValue(raw.id, raw.task_id, raw.uuid, index)),
+    id: String(firstValue(raw.uuid, raw.task_uuid, raw.task_id, raw.id, index)),
     title: String(
       firstValue(raw.title, raw.task_name, raw.name, "Untitled task"),
     ),
