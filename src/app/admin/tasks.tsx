@@ -105,7 +105,7 @@ const displayStatus = (value: unknown) => {
   if (!value) return "Pending";
   const rawStatus = String(value).trim();
   const status = rawStatus.toLowerCase();
-  
+
   if (["done", "complete", "completed", "finished"].includes(status))
     return "Completed";
   if (["in progress", "inprogress", "ongoing", "started", "progress"].includes(status))
@@ -131,10 +131,10 @@ const displayDate = (value: unknown) => {
   return Number.isNaN(date.getTime())
     ? String(value)
     : date.toLocaleDateString("en-IN", {
-        month: "short",
-        day: "numeric",
-        year: "numeric",
-      });
+      month: "short",
+      day: "numeric",
+      year: "numeric",
+    });
 };
 
 const extractTasks = (responseData: any): any[] => {
@@ -153,10 +153,10 @@ const mapProject = (project: any, index: number): ProjectOption => ({
   id: String(project.uuid ?? project.id ?? index),
   name: String(
     project.project_name ??
-      project.projectName ??
-      project.name ??
-      project.title ??
-      "Untitled project",
+    project.projectName ??
+    project.name ??
+    project.title ??
+    "Untitled project",
   ),
   code: String(
     project.project_code ?? project.projectCode ?? project.code ?? "PRJ",
@@ -177,7 +177,7 @@ const mapTask = (raw: any, index: number): Task => {
   const status = displayStatus(
     firstValue(raw.status, raw.task_status, raw.current_status),
   );
-  
+
   const rawProgressValue = firstValue(raw.progress, raw.progress_percentage);
   const progress = Math.min(
     100,
@@ -415,15 +415,15 @@ export default function TasksScreen() {
           employeeRows.map((employee: any) => ({
             id: String(
               employee.employee_id ??
-                employee.id ??
-                employee.employeeCode ??
-                employee.employee_code,
+              employee.id ??
+              employee.employeeCode ??
+              employee.employee_code,
             ),
             name: String(
               employee.full_name ||
-                employee.employee_name ||
-                `${employee.first_name || ""} ${employee.last_name || ""}`.trim() ||
-                "Employee",
+              employee.employee_name ||
+              `${employee.first_name || ""} ${employee.last_name || ""}`.trim() ||
+              "Employee",
             ),
             role: employee.designation || employee.role,
           })),
@@ -446,15 +446,15 @@ export default function TasksScreen() {
         setModules(
           Array.isArray(parsedModules)
             ? parsedModules.map((module: any) => ({
-                title:
-                  module.title ||
-                  module.name ||
-                  module.module_name ||
-                  "Untitled module",
-                duration: module.duration,
-                description: module.description,
-                documentName: module.documentName || module.document,
-              }))
+              title:
+                module.title ||
+                module.name ||
+                module.module_name ||
+                "Untitled module",
+              duration: module.duration,
+              description: module.description,
+              documentName: module.documentName || module.document,
+            }))
             : [],
         );
       })
@@ -708,9 +708,11 @@ export default function TasksScreen() {
           ))}
         </View>
 
-        <View className="mb-4 flex-row items-center gap-3 px-5">
-          <View className="flex-1 flex-row items-center rounded-2xl border border-slate-200 bg-white px-4 py-3 shadow-sm">
+        <View className="mb-6 flex-row items-center gap-3 px-5">
+          {/* Search - 3/4 */}
+          <View className="flex-[3] flex-row items-center rounded-2xl border border-slate-200 bg-white px-4 py-1 shadow-sm">
             <Ionicons name="search" size={20} color="#94a3b8" />
+
             <TextInput
               value={search}
               onChangeText={setSearch}
@@ -719,17 +721,24 @@ export default function TasksScreen() {
               className="ml-2 flex-1 text-sm font-medium text-slate-800"
             />
           </View>
-        </View>
 
-        <View className="mb-6 px-5 flex-row">
+          {/* All Tasks - 1/4 */}
           <Pressable
             onPress={() => setStatusDropdownOpen(true)}
-            className="w-40 h-12 rounded-2xl border border-slate-200 bg-white px-4 flex-row items-center justify-between"
+            className="flex-1 h-12 py-4 rounded-2xl border border-slate-200 bg-white px-3 flex-row items-center justify-between"
           >
-            <Text className="text-xs font-medium text-slate-700">
+            <Text
+              className="text-xs font-medium text-slate-700"
+              numberOfLines={1}
+            >
               {statusFilter === "All" ? "All Tasks" : statusFilter}
             </Text>
-            <Ionicons name="chevron-down" size={16} color="#64748b" />
+
+            <Ionicons
+              name="chevron-down"
+              size={16}
+              color="#64748b"
+            />
           </Pressable>
         </View>
 
@@ -1011,8 +1020,8 @@ export default function TasksScreen() {
                             ...current,
                             selectedModules: selected
                               ? current.selectedModules.filter(
-                                  (title) => title !== module.title,
-                                )
+                                (title) => title !== module.title,
+                              )
                               : [...current.selectedModules, module.title],
                           }))
                         }
