@@ -4,6 +4,8 @@ import { useRouter } from "expo-router";
 import React, { useEffect, useState } from "react";
 import {
   Image,
+  Modal,
+  Pressable,
   ScrollView,
   Text,
   TextInput,
@@ -15,19 +17,17 @@ import api, { API_BASE_URL } from "../../api";
 import { AdminBottomBar } from "../../components/admin-bottom-bar";
 import { TopHeader } from "../../components/TopHeader";
 
-const FILTER_OPTIONS = [
-  { label: "All Members", icon: "people" },
-  { label: "Development", icon: "code-slash" },
-  { label: "Design", icon: "color-palette" },
-  { label: "Marketing", icon: "megaphone" },
-];
 
 export default function TeamScreen() {
   const router = useRouter();
   const [team, setTeam] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
-  const [activeFilter, setActiveFilter] = useState("All Members");
+  const [statusFilter, setStatusFilter] = useState("");
+  const [roleFilter, setRoleFilter] = useState("");
+
+  const [statusDropdownOpen, setStatusDropdownOpen] = useState(false);
+  const [roleDropdownOpen, setRoleDropdownOpen] = useState(false);
 
   useEffect(() => {
     const fetchTeam = async () => {
@@ -66,7 +66,7 @@ export default function TeamScreen() {
             team: emp.department || emp.team || emp.employee_code || "General",
             email: emp.email || "N/A",
             phone: emp.phone || emp.mobile || "N/A",
-            status: emp.status || "Active",
+            status: emp.employment_status || emp.status || "Active",
             statusColor:
               emp.status === "Inactive" ? "text-red-600" : "text-green-600",
             statusBg:
@@ -89,9 +89,6 @@ export default function TeamScreen() {
   // Calculate stats dynamically based on the fetched team data
   const total = team.length;
   const activeCount = team.filter((m) => m.status === "Active").length;
-  const leaveCount = team.filter(
-    (m) => m.status === "On Leave" || m.status === "Leave",
-  ).length;
   const inactiveCount = team.filter((m) => m.status === "Inactive").length;
 
   const getPercent = (count: number) =>
@@ -117,13 +114,13 @@ export default function TeamScreen() {
       subColor: "text-green-500",
     },
     {
-      label: "On Leave",
-      value: String(leaveCount),
-      sub: getPercent(leaveCount),
-      icon: "person",
+      label: "Roles",
+      value: String(new Set(team.map((m) => m.role).filter(Boolean)).size),
+      sub: "All Roles",
+      icon: "briefcase",
       color: "#f97316",
       bg: "#fff7ed",
-      subColor: "text-yellow-500",
+      subColor: "text-violet-500",
     },
     {
       label: "Inactive",
@@ -137,13 +134,19 @@ export default function TeamScreen() {
   ];
 
   const filteredTeam = team.filter((member) => {
+    const search = searchQuery.toLowerCase();
+
     const matchesSearch =
-      member.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      member.email.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesFilter =
-      activeFilter === "All Members" ||
-      member.team.toLowerCase().includes(activeFilter.toLowerCase());
-    return matchesSearch && matchesFilter;
+      member.name.toLowerCase().includes(search) ||
+      member.email.toLowerCase().includes(search);
+
+    const matchesStatus =
+      !statusFilter || member.status === statusFilter;
+
+    const matchesRole =
+      !roleFilter || member.role === roleFilter;
+
+    return matchesSearch && matchesStatus && matchesRole;
   });
 
   return (
@@ -185,9 +188,12 @@ export default function TeamScreen() {
         </View>
 
         {/* ── SEARCH & FILTER ── */}
-        <View className="px-5 mb-4 flex-row items-center gap-3">
-          <View className="flex-1 bg-white border border-slate-200 rounded-2xl flex-row items-center px-4 py-2 shadow-sm">
+        <View className="px-5 mb-6">
+
+          {/* Search */}
+          <View className="bg-white border border-slate-200 rounded-2xl flex-row items-center px-4 py-2 shadow-sm mb-3">
             <Ionicons name="search" size={16} color="#94a3b8" />
+
             <TextInput
               placeholder="Search team members..."
               placeholderTextColor="#94a3b8"
@@ -196,70 +202,155 @@ export default function TeamScreen() {
               className="flex-1 ml-2 text-sm font-medium text-slate-800"
             />
           </View>
-          {/* <TouchableOpacity className="bg-white border border-slate-200 rounded-2xl flex-row items-center px-4 py-2 shadow-sm">
-            <Ionicons name="filter" size={16} color="#64748b" />
-            <Text className="text-slate-700 font-bold text-sm ml-2 mr-1">
-              Filter
-            </Text>
-            <Ionicons name="chevron-down" size={14} color="#64748b" />
-          </TouchableOpacity> */}
+
+          {/* Dropdown Filters */}
+          <View className="flex-row gap-3">
+
+            {/* Status */}
+            <View className="flex-1">
+              <TouchableOpacity
+                onPress={() => {
+                  setStatusDropdownOpen(true);
+                  setRoleDropdownOpen(false);
+                }}
+                className="h-11 bg-white border border-slate-200 rounded-xl px-3 flex-row items-center justify-between"
+              >
+                <Text className="text-xs font-medium text-slate-700">
+                  {statusFilter || "All Status"}
+                </Text>
+
+                <Ionicons
+                  name="chevron-down"
+                  size={15}
+                  color="#64748b"
+                />
+              </TouchableOpacity>
+            </View>
+
+            {/* Role */}
+            <View className="flex-1">
+              <TouchableOpacity
+                onPress={() => {
+                  setRoleDropdownOpen(true);
+                  setStatusDropdownOpen(false);
+                }}
+                className="h-11 bg-white border border-slate-200 rounded-xl px-3 flex-row items-center justify-between"
+              >
+                <Text className="text-xs font-medium text-slate-700">
+                  {roleFilter || "All Roles"}
+                </Text>
+
+                <Ionicons
+                  name="chevron-down"
+                  size={15}
+                  color="#64748b"
+                />
+              </TouchableOpacity>
+            </View>
+
+          </View>
         </View>
 
-        {/* ── FILTER PILLS ── */}
-        <View className="mb-6">
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            contentContainerClassName="px-5 flex-row items-center"
+        <Modal
+          visible={statusDropdownOpen}
+          transparent
+          animationType="fade"
+          onRequestClose={() => setStatusDropdownOpen(false)}
+        >
+          <Pressable
+            className="flex-1 bg-black/40 justify-center px-8"
+            onPress={() => setStatusDropdownOpen(false)}
           >
-            {FILTER_OPTIONS.map((filter, idx) => {
-              const isActive = activeFilter === filter.label;
-              return (
+            <Pressable
+              className="bg-white rounded-2xl overflow-hidden"
+              onPress={(e) => e.stopPropagation()}
+            >
+              <Text className="px-5 py-4 text-base font-bold text-slate-900 border-b border-slate-100">
+                Select Status
+              </Text>
+
+              {[
+                "",
+                "Active",
+                "Inactive",
+                "Terminated",
+                "Resigned",
+              ].map((status) => (
                 <TouchableOpacity
-                  key={idx}
-                  onPress={() => setActiveFilter(filter.label)}
-                  className={`flex-row items-center px-4 py-2 rounded-full mr-3 border ${
-                    isActive
-                      ? "border-orange-500 bg-orange-50"
-                      : "border-slate-200 bg-white"
-                  }`}
+                  key={status || "all"}
+                  onPress={() => {
+                    setStatusFilter(status);
+                    setStatusDropdownOpen(false);
+                  }}
+                  className="px-5 py-4 border-b border-slate-100"
                 >
-                  <Ionicons
-                    name={filter.icon as any}
-                    size={14}
-                    color={isActive ? "#f97316" : "#94a3b8"}
-                    className="mr-2"
-                  />
                   <Text
-                    className={`text-xs font-bold ${isActive ? "text-orange-600 ml-1.5" : "text-slate-600 ml-1.5"}`}
+                    className={`text-sm ${statusFilter === status
+                        ? "font-bold text-orange-500"
+                        : "text-slate-700"
+                      }`}
                   >
-                    {filter.label}
+                    {status || "All Status"}
                   </Text>
                 </TouchableOpacity>
-              );
-            })}
+              ))}
+            </Pressable>
+          </Pressable>
+        </Modal>
 
-            {/* More Dropdown Pill */}
-            <TouchableOpacity className="flex-row items-center px-4 py-2 rounded-full border border-slate-200 bg-white ml-2">
-              <Text className="text-slate-600 text-xs font-bold mr-1.5">
-                More
-              </Text>
-              <Ionicons name="chevron-down" size={14} color="#64748b" />
-            </TouchableOpacity>
-          </ScrollView>
-        </View>
+        <Modal
+  visible={roleDropdownOpen}
+  transparent
+  animationType="fade"
+  onRequestClose={() => setRoleDropdownOpen(false)}
+>
+  <Pressable
+    className="flex-1 bg-black/40 justify-center px-8"
+    onPress={() => setRoleDropdownOpen(false)}
+  >
+    <Pressable
+      className="bg-white rounded-2xl overflow-hidden"
+      onPress={(e) => e.stopPropagation()}
+    >
+      <Text className="px-5 py-4 text-base font-bold text-slate-900 border-b border-slate-100">
+        Select Role
+      </Text>
+
+      {[
+        "",
+        "Employee",
+        "Manager",
+        "HR",
+        "Admin",
+      ].map((role) => (
+        <TouchableOpacity
+          key={role || "all"}
+          onPress={() => {
+            setRoleFilter(role);
+            setRoleDropdownOpen(false);
+          }}
+          className="px-5 py-4 border-b border-slate-100"
+        >
+          <Text
+            className={`text-sm ${
+              roleFilter === role
+                ? "font-bold text-orange-500"
+                : "text-slate-700"
+            }`}
+          >
+            {role || "All Roles"}
+          </Text>
+        </TouchableOpacity>
+      ))}
+    </Pressable>
+  </Pressable>
+</Modal>
 
         {/* ── LIST HEADER ── */}
         <View className="px-5 mb-4 flex-row items-center justify-between">
           <Text className="text-slate-800 font-bold text-sm">
             Team Members ({filteredTeam.length})
           </Text>
-          <TouchableOpacity className="flex-row items-center">
-            <Text className="text-slate-500 text-xs font-medium mr-1">
-              Sort by: Recent
-            </Text>
-            <Ionicons name="chevron-down" size={14} color="#94a3b8" />
-          </TouchableOpacity>
         </View>
 
         {/* ── TEAM LIST ── */}
