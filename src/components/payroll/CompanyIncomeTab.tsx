@@ -168,20 +168,14 @@ export default function CompanyIncomeTab() {
   };
 
   return (
-    <ScrollView className="flex-1 bg-[#F9FAFB] p-4" refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#f97316" />}>
-      {/* Header */}
+    <View className="flex-1">
+      <ScrollView className="flex-1 bg-[#F9FAFB] p-4" refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#f97316" />}>
+        {/* Header */}
       <View className="flex-row justify-between items-center mb-6 mt-2">
         <View>
           <Text className="text-xl font-bold text-slate-900">Company Income</Text>
           <Text className="text-sm text-slate-500">Record and track company incomes</Text>
         </View>
-        <TouchableOpacity
-          onPress={openForm}
-          className="flex-row items-center gap-2 bg-[#f97316] px-4 py-2.5 rounded-xl shadow-sm"
-        >
-          <Plus size={18} color="#fff" />
-          <Text className="text-white font-semibold text-sm">New Income</Text>
-        </TouchableOpacity>
       </View>
 
       {/* History List */}
@@ -238,15 +232,15 @@ export default function CompanyIncomeTab() {
       {/* Record/Edit Income Modal */}
       <Modal visible={showForm} animationType="slide" transparent={true}>
         <View className="flex-1 bg-black/50 justify-end">
-          <View className="bg-white rounded-t-3xl p-6 h-[85%] shadow-2xl">
-            <View className="flex-row justify-between items-center mb-6">
-              <Text className="text-slate-900 text-lg font-bold">{editId ? 'Edit Income' : 'Record Income'}</Text>
+          <View className="bg-white rounded-t-3xl h-[85%] shadow-2xl overflow-hidden">
+            <View className="flex-row justify-between items-center p-6 bg-slate-900">
+              <Text className="text-white text-lg font-bold">{editId ? 'Edit Income' : 'Record Income'}</Text>
               <TouchableOpacity onPress={resetForm}>
-                <X size={24} color="#64748b" />
+                <X size={24} color="#fff" />
               </TouchableOpacity>
             </View>
 
-            <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ gap: 16, paddingBottom: 40 }}>
+            <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ gap: 16, padding: 24, paddingBottom: 40 }}>
               
               <View>
                 <Text className="text-slate-500 text-xs font-bold uppercase mb-1">Invoice Number</Text>
@@ -420,5 +414,13 @@ export default function CompanyIncomeTab() {
         </Modal>
       )}
     </ScrollView>
+    {/* FAB */}
+    <TouchableOpacity
+      onPress={openForm}
+      className="absolute bottom-6 right-6 w-14 h-14 bg-[#f97316] rounded-full items-center justify-center shadow-lg"
+    >
+      <Plus size={24} color="#fff" />
+    </TouchableOpacity>
+  </View>
   );
 }

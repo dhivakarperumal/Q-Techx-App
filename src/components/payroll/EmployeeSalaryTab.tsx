@@ -205,20 +205,14 @@ export default function EmployeeSalaryTab() {
   };
 
   return (
-    <ScrollView className="flex-1 bg-[#F9FAFB] p-4" refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#f97316" />}>
-      <View className="flex-row justify-between items-center mb-6 mt-2">
-        <View>
-          <Text className="text-xl font-bold text-slate-900">Employee Salary</Text>
-          <Text className="text-sm text-slate-500">Manage and distribute salaries</Text>
+    <View className="flex-1">
+      <ScrollView className="flex-1 bg-[#F9FAFB] p-4" refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#f97316" />}>
+        <View className="flex-row justify-between items-center mb-6 mt-2">
+          <View>
+            <Text className="text-xl font-bold text-slate-900">Employee Salary</Text>
+            <Text className="text-sm text-slate-500">Manage and distribute salaries</Text>
+          </View>
         </View>
-        <TouchableOpacity
-          onPress={() => { resetForm(); setShowForm(true); }}
-          className="flex-row items-center gap-2 bg-emerald-600 px-4 py-2.5 rounded-xl shadow-sm"
-        >
-          <Plus size={18} color="#fff" />
-          <Text className="text-white font-semibold text-sm">Pay Salary</Text>
-        </TouchableOpacity>
-      </View>
 
       <View className="bg-white border border-slate-100 rounded-2xl overflow-hidden shadow-sm mb-10">
         <View className="p-4 border-b border-slate-100 bg-slate-50 flex-row items-center gap-2">
@@ -273,15 +267,15 @@ export default function EmployeeSalaryTab() {
       {/* Pay/Edit Salary Modal */}
       <Modal visible={showForm} animationType="slide" transparent={true}>
         <View className="flex-1 bg-black/50 justify-end">
-          <View className="bg-white rounded-t-3xl p-6 h-[90%] shadow-2xl">
-            <View className="flex-row justify-between items-center mb-6">
-              <Text className="text-slate-900 text-lg font-bold">{editId ? 'Edit Salary' : 'Process Salary'}</Text>
+          <View className="bg-white rounded-t-3xl h-[90%] shadow-2xl overflow-hidden">
+            <View className="flex-row justify-between items-center p-6 bg-slate-900">
+              <Text className="text-white text-lg font-bold">{editId ? 'Edit Payment' : 'Process Salary Payment'}</Text>
               <TouchableOpacity onPress={resetForm}>
-                <X size={24} color="#64748b" />
+                <X size={24} color="#fff" />
               </TouchableOpacity>
             </View>
 
-            <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ gap: 16, paddingBottom: 40 }}>
+            <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ gap: 16, padding: 24, paddingBottom: 40 }}>
               
               <View className="flex-row gap-4">
                 <View className="flex-1">
@@ -469,5 +463,13 @@ export default function EmployeeSalaryTab() {
         </Modal>
       )}
     </ScrollView>
+    {/* FAB */}
+    <TouchableOpacity
+      onPress={() => { resetForm(); setShowForm(true); }}
+      className="absolute bottom-6 right-6 w-14 h-14 bg-[#f97316] rounded-full items-center justify-center shadow-lg"
+    >
+      <Plus size={24} color="#fff" />
+    </TouchableOpacity>
+  </View>
   );
 }

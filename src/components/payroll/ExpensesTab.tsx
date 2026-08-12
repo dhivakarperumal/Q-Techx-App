@@ -482,6 +482,7 @@ export default function ExpensesTab() {
           </View>
         </View>
       </Modal>
+    </ScrollView>
 
       {/* FAB */}
       <TouchableOpacity
