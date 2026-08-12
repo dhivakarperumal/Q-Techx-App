@@ -673,6 +673,7 @@ export default function ProjectsScreen() {
                       </View>
                     </View>
                   </View>
+                  <Ionicons name="chevron-forward" size={20} color="#cbd5e1" />
                 </View>
 
                 <View>
