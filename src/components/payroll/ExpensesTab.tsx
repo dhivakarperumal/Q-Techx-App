@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from "react";
 import { View, Text, ScrollView, TouchableOpacity, TextInput, Modal, ActivityIndicator, Alert, RefreshControl } from "react-native";
-import { Receipt, DollarSign, PlusCircle, X, Filter } from "lucide-react-native";
+import { Receipt, DollarSign, Filter, PlusCircle, X, ChevronDown, Check } from "lucide-react-native";
 import { PieChart } from "react-native-gifted-charts";
 import api from "../../api";
+import { FAB } from "../FAB";
 
 const expenseFilterTypeOptions = [
   "Salary", "Project Payment", "Income", "Office Rent", "Electricity Bill",
@@ -172,8 +173,8 @@ export default function ExpensesTab() {
   }));
 
   return (
-    <View className="flex-1">
-      <ScrollView className="flex-1 bg-[#F9FAFB] p-4" refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#f97316" />}>
+    <View className="flex-1 bg-[#F9FAFB]">
+      <ScrollView className="flex-1 p-4" refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#f97316" />}>
       {/* ── Stats Overview ── */}
       <View className="flex-row justify-between mb-4 gap-2">
         <View className="flex-1 bg-white border border-emerald-100 rounded-2xl p-4 overflow-hidden relative shadow-sm">
@@ -274,7 +275,7 @@ export default function ExpensesTab() {
       </View>
 
       {/* Expenses List */}
-      <View className="bg-white border border-slate-100 rounded-2xl overflow-hidden shadow-sm mb-10">
+      <View className="bg-white border border-slate-100 rounded-2xl overflow-hidden shadow-sm mb-20">
         {loading ? (
           <View className="items-center justify-center py-10">
             <ActivityIndicator size="large" color="#f97316" />
@@ -393,15 +394,18 @@ export default function ExpensesTab() {
       {/* Add Expense Modal */}
       <Modal visible={showExpenseForm} animationType="slide" transparent={true}>
         <View className="flex-1 bg-black/50 justify-end">
-          <View className="bg-white rounded-t-3xl h-5/6 shadow-2xl overflow-hidden">
-            <View className="flex-row justify-between items-center p-6 bg-slate-900">
-              <Text className="text-white text-lg font-bold">Record New Expense</Text>
-              <TouchableOpacity onPress={() => setShowExpenseForm(false)}>
-                <X size={24} color="#fff" />
-              </TouchableOpacity>
-            </View>
-
-            <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ gap: 12, padding: 24, paddingBottom: 40 }}>
+          <View className="bg-white rounded-t-3xl pt-2 h-[85%] shadow-2xl">
+            <View className="w-12 h-1.5 bg-slate-200 rounded-full mx-auto mb-4" />
+            <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ padding: 20, paddingBottom: 40 }}>
+              <View className="bg-black rounded-3xl p-5 mb-6 flex-row justify-between items-center">
+                <View>
+                  <Text className="text-orange-500 text-lg font-bold">Record New Expense</Text>
+                  <Text className="text-white text-xs mt-1">Add a new expense record</Text>
+                </View>
+                <TouchableOpacity onPress={() => setShowExpenseForm(false)} className="bg-orange-100 p-2 rounded-full">
+                  <X size={20} color="#f97316" />
+                </TouchableOpacity>
+              </View>
               <View>
                 <Text className="text-slate-500 text-xs font-bold uppercase mb-1">Expense Type</Text>
                 <TextInput
@@ -485,12 +489,7 @@ export default function ExpensesTab() {
     </ScrollView>
 
       {/* FAB */}
-      <TouchableOpacity
-        onPress={() => setShowExpenseForm(true)}
-        className="absolute bottom-6 right-6 w-14 h-14 bg-[#f97316] rounded-full items-center justify-center shadow-lg"
-      >
-        <PlusCircle size={24} color="#fff" />
-      </TouchableOpacity>
+      <FAB onPress={() => setShowExpenseForm(true)} style={{ bottom: 32 }} />
     </View>
   );
 }

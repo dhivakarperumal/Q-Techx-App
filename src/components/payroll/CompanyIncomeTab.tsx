@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from "react";
 import { View, Text, ScrollView, TouchableOpacity, TextInput, Modal, ActivityIndicator, Alert, RefreshControl } from "react-native";
-import { DollarSign, Plus, X, Search, History, Edit, Trash2, Briefcase, Eye } from "lucide-react-native";
+import { X, History, Edit, Trash2, Briefcase, Eye } from "lucide-react-native";
 import api from "../../api";
+import { FAB } from "../FAB";
 
 export default function CompanyIncomeTab() {
   const [interns, setInterns] = useState([]);
@@ -232,15 +233,18 @@ export default function CompanyIncomeTab() {
       {/* Record/Edit Income Modal */}
       <Modal visible={showForm} animationType="slide" transparent={true}>
         <View className="flex-1 bg-black/50 justify-end">
-          <View className="bg-white rounded-t-3xl h-[85%] shadow-2xl overflow-hidden">
-            <View className="flex-row justify-between items-center p-6 bg-slate-900">
-              <Text className="text-white text-lg font-bold">{editId ? 'Edit Income' : 'Record Income'}</Text>
-              <TouchableOpacity onPress={resetForm}>
-                <X size={24} color="#fff" />
-              </TouchableOpacity>
-            </View>
-
-            <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ gap: 16, padding: 24, paddingBottom: 40 }}>
+          <View className="bg-white rounded-t-3xl pt-2 h-[85%] shadow-2xl">
+            <View className="w-12 h-1.5 bg-slate-200 rounded-full mx-auto mb-4" />
+            <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ padding: 20, paddingBottom: 40 }}>
+              <View className="bg-black rounded-3xl p-5 mb-6 flex-row justify-between items-center">
+                <View>
+                  <Text className="text-orange-500 text-lg font-bold">{editId ? 'Edit Income' : 'Record Income'}</Text>
+                  <Text className="text-white text-xs mt-1">Add a company income record</Text>
+                </View>
+                <TouchableOpacity onPress={resetForm} className="bg-orange-100 p-2 rounded-full">
+                  <X size={20} color="#f97316" />
+                </TouchableOpacity>
+              </View>
               
               <View>
                 <Text className="text-slate-500 text-xs font-bold uppercase mb-1">Invoice Number</Text>
@@ -415,12 +419,8 @@ export default function CompanyIncomeTab() {
       )}
     </ScrollView>
     {/* FAB */}
-    <TouchableOpacity
-      onPress={openForm}
-      className="absolute bottom-6 right-6 w-14 h-14 bg-[#f97316] rounded-full items-center justify-center shadow-lg"
-    >
-      <Plus size={24} color="#fff" />
-    </TouchableOpacity>
+    {/* FAB */}
+    <FAB onPress={openForm} style={{ bottom: 32 }} />
   </View>
   );
 }
