@@ -16,6 +16,7 @@ import { AdminBottomBar } from "../../components/admin-bottom-bar";
 import ClientFormModal from "../../components/ClientFormModal";
 import { FAB } from "../../components/FAB";
 import { TopHeader } from "../../components/TopHeader";
+import { LinearGradient } from "expo-linear-gradient";
 
 type Client = Record<string, any>;
 
@@ -45,10 +46,10 @@ const dateLabel = (value?: string) => {
   return Number.isNaN(date.getTime())
     ? value
     : date.toLocaleDateString("en-IN", {
-        day: "2-digit",
-        month: "short",
-        year: "numeric",
-      });
+      day: "2-digit",
+      month: "short",
+      year: "numeric",
+    });
 };
 
 export default function ClientsScreen() {
@@ -107,6 +108,7 @@ export default function ClientsScreen() {
 
   const activeCount = clients.filter((c) => c.client_status === "Active").length;
   const inactiveCount = clients.filter((c) => c.client_status === "Inactive").length;
+  const leadCount = clients.filter((c) => c.client_status === "Lead").length;
   const pendingCount = clients.filter(
     (c) => c.follow_up_status !== "Completed" && c.follow_up_status !== "Cancelled"
   ).length;
@@ -125,69 +127,152 @@ export default function ClientsScreen() {
           />
         }
       >
-        {/* ── Stat Cards ── */}
-        <View className="mt-5 flex-row gap-3">
-          <View className="flex-1 overflow-hidden rounded-3xl bg-white border-t-4 border-orange-500 shadow-sm">
-            <View className="px-5 py-5">
-              <View className="flex-row items-center justify-between">
-                <View>
-                  <Text className="text-[10px] font-bold uppercase tracking-[0.5px] text-slate-400">Total Clients</Text>
-                  <Text className="mt-2 text-3xl font-black text-slate-900">{clients.length}</Text>
+        {/* ── CLIENT STATS SECTION ── */}
+        <View className="mt-5 mb-2 flex-row flex-wrap justify-between">
+          {/* Total Clients */}
+          <View className="mb-3 w-[48%] overflow-hidden rounded-2xl bg-white shadow-sm border-t-4 border-orange-500">
+            <LinearGradient
+              colors={["#ffffff", "#fff7ed"]}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+              className="px-4 py-4"
+            >
+              <View className="flex-row items-center mb-3">
+                <View className="h-10 w-10 items-center justify-center rounded-xl bg-black">
+                  <Ionicons name="people" size={20} color="#f97316" />
                 </View>
-                <View className="h-11 w-11 items-center justify-center rounded-xl bg-slate-100">
-                  <Ionicons name="people" size={22} color="#64748b" />
+
+                <View className="ml-2 flex-1">
+                  <Text
+                    className="text-[10px] font-bold uppercase tracking-[0.5px] text-gray-500"
+                    numberOfLines={2}
+                  >
+                    Total Clients
+                  </Text>
                 </View>
               </View>
-            </View>
+
+              <View className="flex-row items-baseline justify-between">
+                <Text className="text-[22px] font-black text-black">
+                  {clients.length}
+                </Text>
+
+                <Text className="text-[10px] font-bold text-orange-500">
+                  All Clients
+                </Text>
+              </View>
+            </LinearGradient>
           </View>
-          <View className="flex-1 overflow-hidden rounded-3xl bg-white border-t-4 border-emerald-500 shadow-sm">
-            <View className="px-5 py-5">
-              <View className="flex-row items-center justify-between">
-                <View>
-                  <Text className="text-[10px] font-bold uppercase tracking-[0.5px] text-slate-400">Active</Text>
-                  <Text className="mt-2 text-3xl font-black text-emerald-600">{activeCount}</Text>
+
+          {/* Active Clients */}
+          <View className="mb-3 w-[48%] overflow-hidden rounded-2xl bg-white shadow-sm border-t-4 border-orange-500">
+            <LinearGradient
+              colors={["#ffffff", "#fff7ed"]}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+              className="px-4 py-4"
+            >
+              <View className="flex-row items-center mb-3">
+                <View className="h-10 w-10 items-center justify-center rounded-xl bg-black">
+                  <Ionicons name="person-add" size={20} color="#f97316" />
                 </View>
-                <View className="h-11 w-11 items-center justify-center rounded-xl bg-emerald-100">
-                  <Ionicons name="checkmark-circle" size={24} color="#10b981" />
+
+                <View className="ml-2 flex-1">
+                  <Text
+                    className="text-[10px] font-bold uppercase tracking-[0.5px] text-gray-500"
+                    numberOfLines={2}
+                  >
+                    Active
+                  </Text>
                 </View>
               </View>
-            </View>
+
+              <View className="flex-row items-baseline justify-between">
+                <Text className="text-[22px] font-black text-black">
+                  {activeCount}
+                </Text>
+
+                <Text className="text-[10px] font-bold text-orange-500">
+                  Active Clients
+                </Text>
+              </View>
+            </LinearGradient>
+          </View>
+
+          {/* Leads */}
+          <View className="mb-3 w-[48%] overflow-hidden rounded-2xl bg-white shadow-sm border-t-4 border-orange-500">
+            <LinearGradient
+              colors={["#ffffff", "#fff7ed"]}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+              className="px-4 py-4"
+            >
+              <View className="flex-row items-center mb-3">
+                <View className="h-10 w-10 items-center justify-center rounded-xl bg-black">
+                  <Ionicons name="trending-up" size={20} color="#f97316" />
+                </View>
+
+                <View className="ml-2 flex-1">
+                  <Text
+                    className="text-[10px] font-bold uppercase tracking-[0.5px] text-gray-500"
+                    numberOfLines={2}
+                  >
+                    Leads
+                  </Text>
+                </View>
+              </View>
+
+              <View className="flex-row items-baseline justify-between">
+                <Text className="text-[22px] font-black text-black">
+                  {leadCount}
+                </Text>
+
+                <Text className="text-[10px] font-bold text-orange-500">
+                  Open Leads
+                </Text>
+              </View>
+            </LinearGradient>
+          </View>
+
+          {/* Pending */}
+          <View className="mb-3 w-[48%] overflow-hidden rounded-2xl bg-white shadow-sm border-t-4 border-orange-500">
+            <LinearGradient
+              colors={["#ffffff", "#fff7ed"]}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+              className="px-4 py-4"
+            >
+              <View className="flex-row items-center mb-3">
+                <View className="h-10 w-10 items-center justify-center rounded-xl bg-black">
+                  <Ionicons name="time" size={20} color="#f97316" />
+                </View>
+
+                <View className="ml-2 flex-1">
+                  <Text
+                    className="text-[10px] font-bold uppercase tracking-[0.5px] text-gray-500"
+                    numberOfLines={2}
+                  >
+                    Pending
+                  </Text>
+                </View>
+              </View>
+
+              <View className="flex-row items-baseline justify-between">
+                <Text className="text-[22px] font-black text-black">
+                  {pendingCount}
+                </Text>
+
+                <Text className="text-[10px] font-bold text-orange-500">
+                  Follow-up Pending
+                </Text>
+              </View>
+            </LinearGradient>
           </View>
         </View>
 
-        <View className="mt-3 flex-row gap-3">
-          <View className="flex-1 overflow-hidden rounded-3xl bg-white border-t-4 border-rose-500 shadow-sm">
-            <View className="px-5 py-5">
-              <View className="flex-row items-center justify-between">
-                <View>
-                  <Text className="text-[10px] font-bold uppercase tracking-[0.5px] text-slate-400">Inactive</Text>
-                  <Text className="mt-2 text-3xl font-black text-rose-600">{inactiveCount}</Text>
-                </View>
-                <View className="h-11 w-11 items-center justify-center rounded-xl bg-rose-100">
-                  <Ionicons name="close-circle" size={24} color="#e11d48" />
-                </View>
-              </View>
-            </View>
-          </View>
-          <View className="flex-1 overflow-hidden rounded-3xl bg-white border-t-4 border-amber-500 shadow-sm">
-            <View className="px-5 py-5">
-              <View className="flex-row items-center justify-between">
-                <View>
-                  <Text className="text-[10px] font-bold uppercase tracking-[0.5px] text-slate-400">Pending</Text>
-                  <Text className="mt-2 text-3xl font-black text-amber-500">{pendingCount}</Text>
-                </View>
-                <View className="h-11 w-11 items-center justify-center rounded-xl bg-amber-100">
-                  <Ionicons name="time" size={24} color="#f59e0b" />
-                </View>
-              </View>
-            </View>
-          </View>
-        </View>
-
-        
 
         {/* ── Search ── */}
-        <View className="mt-5 flex-row items-center rounded-xl border border-slate-200 bg-white px-3">
+        <View className="mt-3 flex-row items-center rounded-xl border border-slate-200 bg-white px-3">
           <Ionicons name="search" size={18} color="#94a3b8" />
           <TextInput
             value={search}
@@ -199,7 +284,7 @@ export default function ClientsScreen() {
         </View>
 
         {/* ── Filters ── */}
-        <View className="mt-4 flex-row gap-3">
+        <View className="mt-3 flex-row gap-3">
           <Pressable
             onPress={() => {
               setServiceDropdownOpen(true);
@@ -321,45 +406,59 @@ export default function ClientsScreen() {
                 onPress={() =>
                   router.push(`/admin/client-detail/${client.uuid}`)
                 }
-                className="mb-3 flex-row items-start rounded-[24px] border border-slate-100 bg-white p-4 shadow-sm"
+                className="mb-3 rounded-[24px] border border-slate-100 bg-white p-4 shadow-sm"
               >
-                <View className="mr-4">
-                  <View className="h-14 w-14 rounded-3xl items-center justify-center" style={{ backgroundColor: avatarColor }}>
-                    <Text style={{ fontSize: 17, fontWeight: "800", color: "#fff" }}>
-                      {initials}
-                    </Text>
-                  </View>
-                </View>
-
-                <View className="flex-1">
-                  <View className="flex-row items-center justify-between">
-                    <View className="flex-1 pr-3">
+                <View className="flex-row items-start justify-between gap-3">
+                  <View className="flex-row flex-1 items-start gap-4">
+                    <View className="h-14 w-14 rounded-3xl items-center justify-center" style={{ backgroundColor: avatarColor }}>
+                      <Text style={{ fontSize: 17, fontWeight: "800", color: "#fff" }}>
+                        {initials}
+                      </Text>
+                    </View>
+                    <View className="flex-1">
                       <Text className="text-base font-bold text-slate-900">
                         {client.client_name || "Unnamed client"}
                       </Text>
-                      <Text className="mt-1 text-xs text-slate-500">
-                        {client.company_name || client.service_type || "No company details"}
-                      </Text>
-                    </View>
-                    <View className="items-end">
-                      <View className="rounded-full border px-3 py-1" style={{ backgroundColor: statusBg[client.client_status] || "#f1f5f9" }}>
-                        <Text style={{ fontSize: 10, fontWeight: "700", color: statusColor[client.client_status] || "#64748b" }}>
-                          {client.client_status || "-"}
-                        </Text>
+                      <View className="mt-2 flex-row flex-wrap items-center gap-2">
+                        {client.service_type ? (
+                          <View className="rounded-full bg-orange-50 px-3 py-1">
+                            <Text className="text-[11px] font-bold text-orange-600">{client.service_type}</Text>
+                          </View>
+                        ) : null}
+                        {client.follow_up_status ? (
+                          <View className="rounded-full bg-slate-100 px-3 py-1">
+                            <Text className="text-[11px] font-semibold text-slate-600">{client.follow_up_status}</Text>
+                          </View>
+                        ) : null}
                       </View>
-                      <Ionicons name="chevron-forward" size={16} color="#cbd5e1" style={{ marginTop: 10 }} />
+                      <Text className="mt-2 text-xs text-slate-500">
+                        {client.company_name || "No company details"}
+                      </Text>
                     </View>
                   </View>
-                  <View className="mt-3">
-                    <Text className="text-[11px] text-slate-500">
-                      Added {dateLabel(client.created_at)}
-                    </Text>
-                    {client.follow_up_status ? (
-                      <Text className="mt-1 text-[11px] font-bold text-slate-700">
-                        {client.follow_up_status}
+                  <View className="items-end justify-between pt-1">
+                    <View className="rounded-full border px-3 py-1" style={{ backgroundColor: statusBg[client.client_status] || "#f1f5f9" }}>
+                      <Text style={{ fontSize: 10, fontWeight: "700", color: statusColor[client.client_status] || "#64748b" }}>
+                        {client.client_status || "-"}
                       </Text>
-                    ) : null}
+                    </View>
+                    <Ionicons name="chevron-forward" size={16} color="#cbd5e1" />
                   </View>
+                </View>
+
+                <View className="mt-4 flex-row flex-wrap gap-3">
+                  {client.email ? (
+                    <View className="flex-row items-center gap-2 rounded-2xl bg-slate-50 px-3 py-2">
+                      <Ionicons name="mail-outline" size={14} color="#94a3b8" />
+                      <Text className="text-[11px] text-slate-500">{client.email}</Text>
+                    </View>
+                  ) : null}
+                  {client.phone_number ? (
+                    <View className="flex-row items-center gap-2 rounded-2xl bg-slate-50 px-3 py-2">
+                      <Ionicons name="call-outline" size={14} color="#94a3b8" />
+                      <Text className="text-[11px] text-slate-500">{client.phone_number}</Text>
+                    </View>
+                  ) : null}
                 </View>
               </Pressable>
             );
