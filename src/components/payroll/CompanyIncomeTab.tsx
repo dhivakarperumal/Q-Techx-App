@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { View, Text, ScrollView, TouchableOpacity, TextInput, Modal, ActivityIndicator, Alert } from "react-native";
+import { View, Text, ScrollView, TouchableOpacity, TextInput, Modal, ActivityIndicator, Alert, RefreshControl } from "react-native";
 import { DollarSign, Plus, X, Search, History, Edit, Trash2, Briefcase, Eye } from "lucide-react-native";
 import api from "../../api";
 
@@ -30,6 +30,14 @@ export default function CompanyIncomeTab() {
   useEffect(() => {
     fetchInterns();
     fetchHistory();
+  }, []);
+
+  const [refreshing, setRefreshing] = useState(false);
+  const onRefresh = React.useCallback(async () => {
+    setRefreshing(true);
+    await fetchInterns();
+    await fetchHistory();
+    setRefreshing(false);
   }, []);
 
   const fetchInterns = async () => {
@@ -160,7 +168,7 @@ export default function CompanyIncomeTab() {
   };
 
   return (
-    <ScrollView className="flex-1 bg-[#F9FAFB] p-4">
+    <ScrollView className="flex-1 bg-[#F9FAFB] p-4" refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#f97316" />}>
       {/* Header */}
       <View className="flex-row justify-between items-center mb-6 mt-2">
         <View>

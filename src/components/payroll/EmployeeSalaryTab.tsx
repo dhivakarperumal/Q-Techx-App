@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { View, Text, ScrollView, TouchableOpacity, TextInput, Modal, ActivityIndicator, Alert } from "react-native";
+import { View, Text, ScrollView, TouchableOpacity, TextInput, Modal, ActivityIndicator, Alert, RefreshControl } from "react-native";
 import { DollarSign, Search, CheckCircle, Plus, Receipt, User, Calendar, X, Edit, Trash2, Eye } from "lucide-react-native";
 import api from "../../api";
 
@@ -33,6 +33,14 @@ export default function EmployeeSalaryTab() {
   useEffect(() => {
     fetchEmployees();
     fetchHistory();
+  }, []);
+
+  const [refreshing, setRefreshing] = useState(false);
+  const onRefresh = React.useCallback(async () => {
+    setRefreshing(true);
+    await fetchEmployees();
+    await fetchHistory();
+    setRefreshing(false);
   }, []);
 
   const fetchEmployees = async () => {
@@ -197,7 +205,7 @@ export default function EmployeeSalaryTab() {
   };
 
   return (
-    <ScrollView className="flex-1 bg-[#F9FAFB] p-4">
+    <ScrollView className="flex-1 bg-[#F9FAFB] p-4" refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#f97316" />}>
       <View className="flex-row justify-between items-center mb-6 mt-2">
         <View>
           <Text className="text-xl font-bold text-slate-900">Employee Salary</Text>

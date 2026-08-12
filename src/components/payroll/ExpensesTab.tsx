@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { View, Text, ScrollView, TouchableOpacity, TextInput, Modal, ActivityIndicator, Alert } from "react-native";
+import { View, Text, ScrollView, TouchableOpacity, TextInput, Modal, ActivityIndicator, Alert, RefreshControl } from "react-native";
 import { Receipt, DollarSign, PlusCircle, X, Filter } from "lucide-react-native";
 import { PieChart } from "react-native-gifted-charts";
 import api from "../../api";
@@ -71,6 +71,14 @@ export default function ExpensesTab() {
   useEffect(() => {
     fetchFund();
     fetchExpenses();
+  }, []);
+
+  const [refreshing, setRefreshing] = useState(false);
+  const onRefresh = React.useCallback(async () => {
+    setRefreshing(true);
+    await fetchFund();
+    await fetchExpenses();
+    setRefreshing(false);
   }, []);
 
   const handleUpdateFund = async () => {
@@ -164,7 +172,7 @@ export default function ExpensesTab() {
   }));
 
   return (
-    <ScrollView className="flex-1 bg-[#F9FAFB] p-4">
+    <ScrollView className="flex-1 bg-[#F9FAFB] p-4" refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#f97316" />}>
       {/* ── Stats Overview ── */}
       <View className="flex-row justify-between mb-4 gap-2">
         <View className="flex-1 bg-white border border-emerald-100 rounded-2xl p-4 overflow-hidden relative shadow-sm">

@@ -15,6 +15,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 import api from "../../api";
 
@@ -687,7 +688,7 @@ export default function ProjectPlansScreen() {
   };
 
   return (
-    <View className="flex-1 bg-[#F9FAFB]">
+    <SafeAreaView edges={["top"]} style={{ flex: 1, backgroundColor: "#F9FAFB" }}>
       <View style={{
         flexDirection: "row", alignItems: "center",
         paddingHorizontal: 16, paddingVertical: 14,
@@ -1290,7 +1291,8 @@ export default function ProjectPlansScreen() {
             </ScrollView>
           </View>
         </View>
-      </Modal>
-    </View>
+        </Modal>
+      </SafeAreaView>
+    </>
   );
 }
