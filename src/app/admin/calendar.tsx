@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { ScrollView, Text, TouchableOpacity, View, TextInput, Modal, Switch, ActivityIndicator, Alert } from "react-native";
+import { ScrollView, Text, TouchableOpacity, View, TextInput, Modal, Switch, RefreshControl, ActivityIndicator, Alert } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
@@ -84,6 +84,7 @@ export default function AdminCalendarScreen() {
   const [showModal, setShowModal] = useState(false);
   const [showEmpSelector, setShowEmpSelector] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
   const [formData, setFormData] = useState(defaultForm);
   
   const [selectedEvent, setSelectedEvent] = useState<any>(null);
@@ -92,7 +93,9 @@ export default function AdminCalendarScreen() {
     fetchData();
   }, []);
 
-  const fetchData = async () => {
+  const fetchData = async (refresh = false) => {
+    if (refresh) setRefreshing(true);
+    else setIsLoading(true);
     try {
       const [eventsRes, empRes, projRes] = await Promise.all([
         api.get('/events').catch(() => ({ data: [] })),
@@ -107,6 +110,7 @@ export default function AdminCalendarScreen() {
       Alert.alert("Error", "Failed to load calendar data.");
     } finally {
       setIsLoading(false);
+      setRefreshing(false);
     }
   };
 
@@ -211,7 +215,7 @@ export default function AdminCalendarScreen() {
           <ActivityIndicator size="large" color="#F8740E" />
         </View>
       ) : (
-        <ScrollView style={{ flex: 1 }} contentContainerStyle={{ padding: 20, paddingBottom: 40 }}>
+        <ScrollView style={{ flex: 1 }} contentContainerStyle={{ padding: 20, paddingBottom: 40 }} refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => fetchData(true)} tintColor="#f97316" />}>
           {/* Month Calendar */}
           <View style={{ borderRadius: 22, backgroundColor: "#fff", borderWidth: 1, borderColor: "#e2e8f0", padding: 16, shadowColor: "#000", shadowOpacity: 0.04, shadowRadius: 8, elevation: 2 }}>
             <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
