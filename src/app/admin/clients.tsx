@@ -184,25 +184,7 @@ export default function ClientsScreen() {
           </View>
         </View>
 
-        {/* ── Tabs ── */}
-        <View className="mt-6 flex-row rounded-xl bg-slate-200 p-1">
-          <Pressable
-            onPress={() => setActiveTab("All Clients")}
-            className={`flex-1 items-center rounded-lg py-2.5 ${activeTab === "All Clients" ? "bg-white shadow-sm" : ""}`}
-          >
-            <Text className={`text-sm font-bold ${activeTab === "All Clients" ? "text-slate-900" : "text-slate-500"}`}>
-              All Clients ({clients.length})
-            </Text>
-          </Pressable>
-          <Pressable
-            onPress={() => setActiveTab("Follow-Up / Pending")}
-            className={`flex-1 items-center rounded-lg py-2.5 ${activeTab === "Follow-Up / Pending" ? "bg-white shadow-sm" : ""}`}
-          >
-            <Text className={`text-sm font-bold ${activeTab === "Follow-Up / Pending" ? "text-slate-900" : "text-slate-500"}`}>
-              Pending ({pendingCount})
-            </Text>
-          </Pressable>
-        </View>
+        
 
         {/* ── Search ── */}
         <View className="mt-5 flex-row items-center rounded-xl border border-slate-200 bg-white px-3">
@@ -212,7 +194,7 @@ export default function ClientsScreen() {
             onChangeText={setSearch}
             placeholder="Search clients..."
             placeholderTextColor="#94a3b8"
-            className="flex-1 px-2 py-3 text-sm text-slate-900"
+            className="flex-1 px-2 py-5 rounded text-sm text-slate-900"
           />
         </View>
 
@@ -225,7 +207,7 @@ export default function ClientsScreen() {
             }}
             className="flex-1 h-12 rounded-2xl border border-slate-200 bg-white px-4 flex-row items-center justify-between"
           >
-            <Text className="text-sm font-medium text-slate-700">
+            <Text className="text-xs font-medium text-slate-700">
               {serviceFilter || "All Services"}
             </Text>
             <Ionicons name="chevron-down" size={16} color="#64748b" />
@@ -238,7 +220,7 @@ export default function ClientsScreen() {
             }}
             className="flex-1 h-12 rounded-2xl border border-slate-200 bg-white px-4 flex-row items-center justify-between"
           >
-            <Text className="text-sm font-medium text-slate-700">
+            <Text className="text-xs font-medium text-slate-700">
               {followUpFilter || "All Follow-up"}
             </Text>
             <Ionicons name="chevron-down" size={16} color="#64748b" />
