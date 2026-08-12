@@ -3,6 +3,7 @@ import { useRouter } from "expo-router";
 import React, { useCallback, useEffect, useState } from "react";
 import {
   Alert,
+  Modal,
   Pressable,
   RefreshControl,
   ScrollView,
@@ -56,10 +57,17 @@ export default function ClientsScreen() {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [search, setSearch] = useState("");
+  const [serviceFilter, setServiceFilter] = useState("");
+  const [followUpFilter, setFollowUpFilter] = useState("");
+  const [serviceDropdownOpen, setServiceDropdownOpen] = useState(false);
+  const [followUpDropdownOpen, setFollowUpDropdownOpen] = useState(false);
   const [formVisible, setFormVisible] = useState(false);
   const [activeTab, setActiveTab] = useState<"All Clients" | "Follow-Up / Pending">(
     "All Clients"
   );
+
+  const SERVICE_TYPES = ["Website", "Mobile App", "Web App", "Software", "Other"];
+  const FOLLOW_UP_STATUSES = ["Pending", "Follow Up", "Completed", "Rescheduled", "Cancelled"];
 
   const loadClients = useCallback(
     async (refresh = false) => {
@@ -68,6 +76,8 @@ export default function ClientsScreen() {
       try {
         const query = new URLSearchParams({ page: "1", limit: "100" });
         if (search) query.set("search", search);
+        if (serviceFilter) query.set("service_type", serviceFilter);
+        if (followUpFilter) query.set("follow_up_status", followUpFilter);
         const response = await api.get(`/clients?${query.toString()}`);
         setClients(response.data?.data || response.data?.clients || []);
       } catch (error: any) {
@@ -80,7 +90,7 @@ export default function ClientsScreen() {
         setRefreshing(false);
       }
     },
-    [search]
+    [search, serviceFilter, followUpFilter]
   );
 
   useEffect(() => {
@@ -117,50 +127,58 @@ export default function ClientsScreen() {
       >
         {/* ── Stat Cards ── */}
         <View className="mt-5 flex-row gap-3">
-          <View className="flex-1 rounded-3xl bg-white p-5 shadow-sm min-h-[100px] justify-center">
-            <View className="flex-row items-center justify-between">
-              <View>
-                <Text className="text-xs font-bold text-slate-400">TOTAL</Text>
-                <Text className="mt-1 text-3xl font-black text-slate-900">{clients.length}</Text>
-              </View>
-              <View className="h-11 w-11 items-center justify-center rounded-full bg-slate-100">
-                <Ionicons name="people" size={22} color="#64748b" />
+          <View className="flex-1 overflow-hidden rounded-3xl bg-white border-t-4 border-orange-500 shadow-sm">
+            <View className="px-5 py-5">
+              <View className="flex-row items-center justify-between">
+                <View>
+                  <Text className="text-[10px] font-bold uppercase tracking-[0.5px] text-slate-400">Total Clients</Text>
+                  <Text className="mt-2 text-3xl font-black text-slate-900">{clients.length}</Text>
+                </View>
+                <View className="h-11 w-11 items-center justify-center rounded-xl bg-slate-100">
+                  <Ionicons name="people" size={22} color="#64748b" />
+                </View>
               </View>
             </View>
           </View>
-          <View className="flex-1 rounded-3xl bg-white p-5 shadow-sm min-h-[100px] justify-center">
-            <View className="flex-row items-center justify-between">
-              <View>
-                <Text className="text-xs font-bold text-slate-400">ACTIVE</Text>
-                <Text className="mt-1 text-3xl font-black text-emerald-600">{activeCount}</Text>
-              </View>
-              <View className="h-11 w-11 items-center justify-center rounded-full bg-emerald-100">
-                <Ionicons name="checkmark-circle" size={24} color="#10b981" />
+          <View className="flex-1 overflow-hidden rounded-3xl bg-white border-t-4 border-emerald-500 shadow-sm">
+            <View className="px-5 py-5">
+              <View className="flex-row items-center justify-between">
+                <View>
+                  <Text className="text-[10px] font-bold uppercase tracking-[0.5px] text-slate-400">Active</Text>
+                  <Text className="mt-2 text-3xl font-black text-emerald-600">{activeCount}</Text>
+                </View>
+                <View className="h-11 w-11 items-center justify-center rounded-xl bg-emerald-100">
+                  <Ionicons name="checkmark-circle" size={24} color="#10b981" />
+                </View>
               </View>
             </View>
           </View>
         </View>
 
         <View className="mt-3 flex-row gap-3">
-          <View className="flex-1 rounded-3xl bg-white p-5 shadow-sm min-h-[100px] justify-center">
-            <View className="flex-row items-center justify-between">
-              <View>
-                <Text className="text-xs font-bold text-slate-400">INACTIVE</Text>
-                <Text className="mt-1 text-3xl font-black text-rose-600">{inactiveCount}</Text>
-              </View>
-              <View className="h-11 w-11 items-center justify-center rounded-full bg-rose-100">
-                <Ionicons name="close-circle" size={24} color="#e11d48" />
+          <View className="flex-1 overflow-hidden rounded-3xl bg-white border-t-4 border-rose-500 shadow-sm">
+            <View className="px-5 py-5">
+              <View className="flex-row items-center justify-between">
+                <View>
+                  <Text className="text-[10px] font-bold uppercase tracking-[0.5px] text-slate-400">Inactive</Text>
+                  <Text className="mt-2 text-3xl font-black text-rose-600">{inactiveCount}</Text>
+                </View>
+                <View className="h-11 w-11 items-center justify-center rounded-xl bg-rose-100">
+                  <Ionicons name="close-circle" size={24} color="#e11d48" />
+                </View>
               </View>
             </View>
           </View>
-          <View className="flex-1 rounded-3xl bg-white p-5 shadow-sm min-h-[100px] justify-center">
-            <View className="flex-row items-center justify-between">
-              <View>
-                <Text className="text-xs font-bold text-slate-400">PENDING</Text>
-                <Text className="mt-1 text-3xl font-black text-amber-500">{pendingCount}</Text>
-              </View>
-              <View className="h-11 w-11 items-center justify-center rounded-full bg-amber-100">
-                <Ionicons name="time" size={24} color="#f59e0b" />
+          <View className="flex-1 overflow-hidden rounded-3xl bg-white border-t-4 border-amber-500 shadow-sm">
+            <View className="px-5 py-5">
+              <View className="flex-row items-center justify-between">
+                <View>
+                  <Text className="text-[10px] font-bold uppercase tracking-[0.5px] text-slate-400">Pending</Text>
+                  <Text className="mt-2 text-3xl font-black text-amber-500">{pendingCount}</Text>
+                </View>
+                <View className="h-11 w-11 items-center justify-center rounded-xl bg-amber-100">
+                  <Ionicons name="time" size={24} color="#f59e0b" />
+                </View>
               </View>
             </View>
           </View>
@@ -198,6 +216,105 @@ export default function ClientsScreen() {
           />
         </View>
 
+        {/* ── Filters ── */}
+        <View className="mt-4 flex-row gap-3">
+          <Pressable
+            onPress={() => {
+              setServiceDropdownOpen(true);
+              setFollowUpDropdownOpen(false);
+            }}
+            className="flex-1 h-12 rounded-2xl border border-slate-200 bg-white px-4 flex-row items-center justify-between"
+          >
+            <Text className="text-sm font-medium text-slate-700">
+              {serviceFilter || "All Services"}
+            </Text>
+            <Ionicons name="chevron-down" size={16} color="#64748b" />
+          </Pressable>
+
+          <Pressable
+            onPress={() => {
+              setFollowUpDropdownOpen(true);
+              setServiceDropdownOpen(false);
+            }}
+            className="flex-1 h-12 rounded-2xl border border-slate-200 bg-white px-4 flex-row items-center justify-between"
+          >
+            <Text className="text-sm font-medium text-slate-700">
+              {followUpFilter || "All Follow-up"}
+            </Text>
+            <Ionicons name="chevron-down" size={16} color="#64748b" />
+          </Pressable>
+        </View>
+
+        <Modal
+          visible={serviceDropdownOpen}
+          transparent
+          animationType="fade"
+          onRequestClose={() => setServiceDropdownOpen(false)}
+        >
+          <Pressable
+            className="flex-1 bg-black/40 justify-center px-8"
+            onPress={() => setServiceDropdownOpen(false)}
+          >
+            <Pressable
+              className="bg-white rounded-2xl overflow-hidden"
+              onPress={(e) => e.stopPropagation()}
+            >
+              <Text className="px-5 py-4 text-base font-bold text-slate-900 border-b border-slate-100">
+                Select Service Type
+              </Text>
+              {["", ...SERVICE_TYPES].map((value) => (
+                <Pressable
+                  key={value || "all"}
+                  onPress={() => {
+                    setServiceFilter(value);
+                    setServiceDropdownOpen(false);
+                  }}
+                  className="px-5 py-4 border-b border-slate-100"
+                >
+                  <Text className={`text-sm ${serviceFilter === value ? "font-bold text-orange-500" : "text-slate-700"}`}>
+                    {value || "All Services"}
+                  </Text>
+                </Pressable>
+              ))}
+            </Pressable>
+          </Pressable>
+        </Modal>
+
+        <Modal
+          visible={followUpDropdownOpen}
+          transparent
+          animationType="fade"
+          onRequestClose={() => setFollowUpDropdownOpen(false)}
+        >
+          <Pressable
+            className="flex-1 bg-black/40 justify-center px-8"
+            onPress={() => setFollowUpDropdownOpen(false)}
+          >
+            <Pressable
+              className="bg-white rounded-2xl overflow-hidden"
+              onPress={(e) => e.stopPropagation()}
+            >
+              <Text className="px-5 py-4 text-base font-bold text-slate-900 border-b border-slate-100">
+                Select Follow-up Status
+              </Text>
+              {["", ...FOLLOW_UP_STATUSES].map((value) => (
+                <Pressable
+                  key={value || "all"}
+                  onPress={() => {
+                    setFollowUpFilter(value);
+                    setFollowUpDropdownOpen(false);
+                  }}
+                  className="px-5 py-4 border-b border-slate-100"
+                >
+                  <Text className={`text-sm ${followUpFilter === value ? "font-bold text-orange-500" : "text-slate-700"}`}>
+                    {value || "All Follow-up"}
+                  </Text>
+                </Pressable>
+              ))}
+            </Pressable>
+          </Pressable>
+        </Modal>
+
         {/* ── Client List ── */}
         <Text className="mb-3 mt-6 text-lg font-black text-slate-900">
           Client Directory
@@ -222,59 +339,45 @@ export default function ClientsScreen() {
                 onPress={() =>
                   router.push(`/admin/client-detail/${client.uuid}`)
                 }
-                className="mb-3 flex-row items-center rounded-3xl border border-slate-100 bg-white p-4 shadow-sm"
+                className="mb-3 flex-row items-start rounded-[24px] border border-slate-100 bg-white p-4 shadow-sm"
               >
-                {/* Avatar */}
-                <View
-                  style={{
-                    width: 50,
-                    height: 50,
-                    borderRadius: 16,
-                    backgroundColor: avatarColor,
-                    alignItems: "center",
-                    justifyContent: "center",
-                  }}
-                >
-                  <Text style={{ fontSize: 17, fontWeight: "800", color: "#fff" }}>
-                    {initials}
-                  </Text>
-                </View>
-
-                {/* Info */}
-                <View className="ml-3 flex-1">
-                  <Text className="text-base font-bold text-slate-900">
-                    {client.client_name || "Unnamed client"}
-                  </Text>
-                  <Text className="mt-0.5 text-xs text-slate-500">
-                    {client.company_name || client.service_type || "No company details"}
-                  </Text>
-                  <Text className="mt-0.5 text-[11px] text-slate-400">
-                    Added {dateLabel(client.created_at)}
-                    {client.follow_up_status ? ` · ${client.follow_up_status}` : ""}
-                  </Text>
-                </View>
-
-                {/* Status badge + chevron */}
-                <View style={{ alignItems: "flex-end", gap: 6 }}>
-                  <View
-                    style={{
-                      paddingHorizontal: 10,
-                      paddingVertical: 4,
-                      borderRadius: 20,
-                      backgroundColor: statusBg[client.client_status] || "#f1f5f9",
-                    }}
-                  >
-                    <Text
-                      style={{
-                        fontSize: 10,
-                        fontWeight: "700",
-                        color: statusColor[client.client_status] || "#64748b",
-                      }}
-                    >
-                      {client.client_status || "-"}
+                <View className="mr-4">
+                  <View className="h-14 w-14 rounded-3xl items-center justify-center" style={{ backgroundColor: avatarColor }}>
+                    <Text style={{ fontSize: 17, fontWeight: "800", color: "#fff" }}>
+                      {initials}
                     </Text>
                   </View>
-                  <Ionicons name="chevron-forward" size={14} color="#cbd5e1" />
+                </View>
+
+                <View className="flex-1">
+                  <View className="flex-row items-center justify-between">
+                    <View className="flex-1 pr-3">
+                      <Text className="text-base font-bold text-slate-900">
+                        {client.client_name || "Unnamed client"}
+                      </Text>
+                      <Text className="mt-1 text-xs text-slate-500">
+                        {client.company_name || client.service_type || "No company details"}
+                      </Text>
+                    </View>
+                    <View className="items-end">
+                      <View className="rounded-full border px-3 py-1" style={{ backgroundColor: statusBg[client.client_status] || "#f1f5f9" }}>
+                        <Text style={{ fontSize: 10, fontWeight: "700", color: statusColor[client.client_status] || "#64748b" }}>
+                          {client.client_status || "-"}
+                        </Text>
+                      </View>
+                      <Ionicons name="chevron-forward" size={16} color="#cbd5e1" style={{ marginTop: 10 }} />
+                    </View>
+                  </View>
+                  <View className="mt-3">
+                    <Text className="text-[11px] text-slate-500">
+                      Added {dateLabel(client.created_at)}
+                    </Text>
+                    {client.follow_up_status ? (
+                      <Text className="mt-1 text-[11px] font-bold text-slate-700">
+                        {client.follow_up_status}
+                      </Text>
+                    ) : null}
+                  </View>
                 </View>
               </Pressable>
             );

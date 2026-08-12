@@ -358,20 +358,20 @@ export default function ClientFormModal({
           <View className="items-center pt-3">
             <View className="h-1.5 w-14 rounded-full bg-slate-300" />
           </View>
-          <View className="flex-row items-center justify-between border-b border-slate-200 bg-white px-5 pb-4 pt-4 rounded-t-[32px]">
+          <View className="flex-row items-center justify-between border-b border-slate-200 bg-black px-5 pb-4 pt-4 rounded-t-[32px]">
             <View className="flex-1 pr-3">
-              <Text className="text-xl font-black text-slate-900">
+              <Text className="text-xl font-black text-orange-500">
                 {client ? "Edit Client" : "Add Client"}
               </Text>
-              <Text className="mt-1 text-xs text-slate-500">
+              <Text className="mt-1 text-xs text-orange-200">
                 Complete the client profile and follow-up details.
               </Text>
             </View>
             <Pressable
               onPress={onClose}
-              className="h-9 w-9 items-center justify-center rounded-full bg-slate-100"
+              className="h-9 w-9 items-center justify-center rounded-full bg-orange-100"
             >
-              <Ionicons name="close" size={20} color="#475569" />
+              <Ionicons name="close" size={20} color="#c2410c" />
             </Pressable>
           </View>
           <ScrollView
@@ -586,7 +586,20 @@ export default function ClientFormModal({
             <Pressable
               disabled={saving}
               onPress={submit}
-              className="mt-6 items-center rounded-2xl bg-orange-500 py-4 shadow-lg"
+              style={{
+                width: 220,
+                alignSelf: "center",
+                marginTop: 24,
+                alignItems: "center",
+                borderRadius: 24,
+                backgroundColor: saving ? "#cbd5e1" : "#f97316",
+                paddingVertical: 14,
+                shadowColor: "#f97316",
+                shadowOffset: { width: 0, height: 4 },
+                shadowOpacity: saving ? 0 : 0.25,
+                shadowRadius: 10,
+                elevation: saving ? 0 : 5,
+              }}
             >
               <Text className="font-black text-white">
                 {saving

@@ -2,13 +2,13 @@ import { Ionicons } from "@expo/vector-icons";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import React, { useEffect, useState } from "react";
 import {
-  Alert,
-  Pressable,
-  ScrollView,
-  Text,
-  TextInput,
-  View,
-  ActivityIndicator,
+    ActivityIndicator,
+    Alert,
+    Pressable,
+    ScrollView,
+    Text,
+    TextInput,
+    View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import api from "../../../api";
@@ -296,35 +296,7 @@ export default function ClientDetailScreen() {
         contentContainerStyle={{ padding: 16, paddingBottom: 60 }}
         showsVerticalScrollIndicator={false}
       >
-        {/* Action buttons at top */}
-        <View style={{ flexDirection: "row", gap: 12, marginBottom: 16 }}>
-          <Pressable
-            onPress={() => setEditVisible(true)}
-            style={{
-              flex: 1, flexDirection: "row", alignItems: "center", justifyContent: "center",
-              gap: 6, paddingVertical: 13, borderRadius: 16,
-              borderWidth: 1.5, borderColor: "#f97316",
-            }}
-          >
-            <Ionicons name="create-outline" size={18} color="#f97316" />
-            <Text style={{ fontSize: 14, fontWeight: "700", color: "#f97316" }}>Edit Client</Text>
-          </Pressable>
-          <Pressable
-            onPress={handleDelete}
-            style={{
-              flex: 1, flexDirection: "row", alignItems: "center", justifyContent: "center",
-              gap: 6, paddingVertical: 13, borderRadius: 16,
-              backgroundColor: "#ef4444",
-              shadowColor: "#ef4444", shadowOffset: { width: 0, height: 4 },
-              shadowOpacity: 0.28, shadowRadius: 10, elevation: 5,
-            }}
-          >
-            <Ionicons name="trash-outline" size={18} color="#fff" />
-            <Text style={{ fontSize: 14, fontWeight: "700", color: "#fff" }}>Delete</Text>
-          </Pressable>
-        </View>
-
-        {/* ── Contact Information ── */}
+          {/* ── Contact Information ── */}
         <Card>
           <CardTitle title="Contact Information" icon="person-outline" />
           <InfoRow icon="mail-outline"      label="Email"          value={client.email} />
@@ -512,6 +484,42 @@ export default function ClientDetailScreen() {
             </View>
           )}
         </Card>
+
+        <View style={{ flexDirection: "row", justifyContent: "center", gap: 12, marginTop: 16 }}>
+          <Pressable
+            onPress={() => setEditVisible(true)}
+            style={{
+              width: 56,
+              height: 56,
+              borderRadius: 18,
+              backgroundColor: "#fff",
+              alignItems: "center",
+              justifyContent: "center",
+              borderWidth: 1,
+              borderColor: "#f97316",
+            }}
+          >
+            <Ionicons name="create-outline" size={22} color="#f97316" />
+          </Pressable>
+          <Pressable
+            onPress={handleDelete}
+            style={{
+              width: 56,
+              height: 56,
+              borderRadius: 18,
+              backgroundColor: "#ef4444",
+              alignItems: "center",
+              justifyContent: "center",
+              shadowColor: "#ef4444",
+              shadowOffset: { width: 0, height: 4 },
+              shadowOpacity: 0.28,
+              shadowRadius: 10,
+              elevation: 5,
+            }}
+          >
+            <Ionicons name="trash-outline" size={22} color="#fff" />
+          </Pressable>
+        </View>
       </ScrollView>
 
       {/* Edit modal */}
