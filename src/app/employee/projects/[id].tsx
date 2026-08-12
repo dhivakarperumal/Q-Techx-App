@@ -55,6 +55,7 @@ export default function EmployeeProjectDetailsScreen() {
   const [project, setProject] = useState<Project | null>(null);
   const [progress, setProgress] = useState<Progress | null>(null);
   const [employees, setEmployees] = useState<Employee[]>([]);
+  const [tasks, setTasks] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState("");
@@ -64,14 +65,74 @@ export default function EmployeeProjectDetailsScreen() {
     try {
       if (isRefresh) setRefreshing(true); else setLoading(true);
       setError("");
-      const [projectResponse, progressResponse, assignmentsResponse] = await Promise.all([
+      let fetchedProject: any = null;
+      const [projectResponse, progressResponse, assignmentsResponse, tasksResponse] = await Promise.allSettled([
         api.get(`/projects/${id}`),
         api.get(`/projects/${id}/progress`),
-        api.get(`/projects/${id}/assignments`).catch(() => ({ data: {} })),
+        api.get(`/projects/${id}/assignments`),
+        api.get(`/tasks/assignments`)
       ]);
-      setProject(projectResponse.data?.data || null);
-      setProgress(progressResponse.data || null);
-      setEmployees(normalizeEmployees(assignmentsResponse.data));
+      
+      if (projectResponse.status === "fulfilled") {
+        const d = projectResponse.value.data;
+        fetchedProject = d?.data ?? d;
+        setProject(fetchedProject);
+      }
+      
+      if (progressResponse.status === "fulfilled") {
+        setProgress(progressResponse.value.data || null);
+      }
+      
+      if (assignmentsResponse.status === "fulfilled") {
+        setEmployees(normalizeEmployees(assignmentsResponse.value.data));
+      }
+      
+      if (tasksResponse.status === "fulfilled") {
+        const extract = (res: any) => {
+          const payload = res?.data ?? res;
+          if (Array.isArray(payload)) return payload;
+          return payload?.tasks || payload?.rows || payload?.results || payload?.data || [];
+        };
+        let rows = extract(tasksResponse.value.data);
+        if (!Array.isArray(rows)) {
+          if (rows?.data && Array.isArray(rows.data)) rows = rows.data;
+          else if (rows?.tasks && Array.isArray(rows.tasks)) rows = rows.tasks;
+          else rows = [];
+        }
+        
+        let filteredRows = rows.filter((t: any) => {
+          if (!t) return false;
+          let pId = "";
+          if (typeof t.project === "string" || typeof t.project === "number") {
+             pId = String(t.project);
+          } else {
+             pId = String(t.project_id || t.projectId || t.project_uuid || t.project?.uuid || t.project?.id || "");
+          }
+          if (pId) {
+            if (pId === String(id)) return true;
+            if (fetchedProject && (pId === String(fetchedProject.id) || pId === String(fetchedProject.projectId) || pId === String(fetchedProject.project_id))) {
+              return true;
+            }
+          }
+          
+          let possibleName = String(t.project_name || t.projectName || t.project?.name || t.project?.title || "");
+          if (!possibleName && typeof t.project === "string" && isNaN(Number(t.project))) {
+            possibleName = t.project;
+          }
+          const pName = possibleName.toLowerCase().trim();
+          
+          const currentProjName1 = String(fetchedProject?.title || "").toLowerCase().trim();
+          const currentProjName2 = String(fetchedProject?.name || "").toLowerCase().trim();
+          const currentProjName3 = String(fetchedProject?.project_name || "").toLowerCase().trim();
+          
+          if (pName && (pName === currentProjName1 || pName === currentProjName2 || pName === currentProjName3)) {
+            return true;
+          }
+          
+          return false;
+        });
+        setTasks(filteredRows);
+      }
     } catch (requestError: any) {
       setError(requestError?.message || "Unable to load project details.");
     } finally {
@@ -93,5 +154,51 @@ export default function EmployeeProjectDetailsScreen() {
     <Text className="mb-3 mt-7 text-xs font-bold uppercase tracking-widest text-slate-400">Task progress</Text><View className="flex-row flex-wrap gap-3">{[["Total", progress?.total], ["Completed", progress?.completed], ["In Progress", progress?.inProgress], ["Pending", progress?.pending], ["On Hold", progress?.onHold], ["Cancelled", progress?.cancelled]].map(([label, value]) => <View key={String(label)} className="w-[30%] rounded-xl border border-slate-200 bg-white p-3"><Text className="text-xl font-black text-slate-900">{value ?? 0}</Text><Text className="mt-1 text-[10px] font-bold uppercase text-slate-400">{label}</Text></View>)}</View>
     <Text className="mb-3 mt-7 text-xs font-bold uppercase tracking-widest text-slate-400">Project information</Text><View className="gap-3 rounded-2xl border border-slate-200 bg-white p-4"><View className="flex-row gap-3"><View className="flex-1"><Info label="Category" value={project.project_category} /></View><View className="flex-1"><Info label="Industry" value={project.industry} /></View></View><View className="flex-row gap-3"><View className="flex-1"><Info label="Start date" value={formatDate(project.project_start_date)} /></View><View className="flex-1"><Info label="Manager" value={project.project_manager} /></View></View><Info label="Description" value={project.description} /></View>
     <Text className="mb-3 mt-7 text-xs font-bold uppercase tracking-widest text-slate-400">Team ({employees.length})</Text><View className="gap-3">{employees.length ? employees.map((employee, index) => <View key={String(employee.employee_id || index)} className="flex-row items-center rounded-2xl border border-slate-200 bg-white p-4"><View className="h-10 w-10 items-center justify-center rounded-xl bg-blue-50"><Text className="font-black text-blue-600">{(employee.employee_name || "?").slice(0, 1).toUpperCase()}</Text></View><View className="ml-3 flex-1"><Text className="font-bold text-slate-900">{employee.employee_name || "Unknown employee"}</Text><Text className="mt-1 text-xs text-slate-500">{employee.designation || "Employee"}{employee.email ? `  ·  ${employee.email}` : ""}</Text></View><Text className="text-xs font-bold text-emerald-600">{employee.status || "Assigned"}</Text></View>) : <View className="rounded-2xl border border-dashed border-slate-300 bg-white p-5"><Text className="text-center text-sm text-slate-500">No team members assigned.</Text></View>}</View>
+    <Text className="mb-3 mt-7 text-xs font-bold uppercase tracking-widest text-slate-400">Assigned Tasks ({tasks.length})</Text>
+    <View className="gap-3">
+      {(() => {
+        let allTasks: any[] = [];
+        tasks.forEach((assignment) => {
+          let details = assignment.task_details ?? assignment.task ?? assignment.details;
+          if (typeof details === "string") {
+            try { details = JSON.parse(details); } catch (e) { details = null; }
+          }
+          if (Array.isArray(details) && details.length > 0) {
+            details.forEach(d => allTasks.push({ ...assignment, ...d, _assignment_id: assignment.id }));
+          } else {
+            allTasks.push({ ...assignment, ...(details || {}), _assignment_id: assignment.id });
+          }
+        });
+        
+        if (allTasks.length === 0) {
+          return (
+            <View className="rounded-2xl border border-dashed border-slate-300 bg-white p-5">
+              <Text className="text-center text-sm text-slate-500">No tasks assigned to you for this project.</Text>
+            </View>
+          );
+        }
+
+        return allTasks.map((taskObj, index) => {
+          const title = taskObj?.title || taskObj?.task_title || taskObj?.name || taskObj?.task_name || "Untitled Task";
+          const tStatus = taskObj?.status ?? taskObj?.task_status ?? "Pending";
+          const dueDate = taskObj?.due_date ?? taskObj?.deadline;
+          const taskId = taskObj?.task_id ?? taskObj?.id ?? taskObj?.task_uuid ?? taskObj?.uuid ?? index;
+          const isDone = tStatus.toLowerCase() === "completed";
+          return (
+            <Pressable key={String(taskId) + index} onPress={() => router.push(`/employee/task/${taskId}`)} className="rounded-2xl border border-slate-200 bg-white p-4">
+              <View className="flex-row items-start justify-between">
+                <View className="flex-1 pr-3">
+                  <Text className={`font-bold text-slate-900 ${isDone ? "line-through opacity-50" : ""}`}>{title}</Text>
+                  {dueDate ? <Text className="mt-1 text-xs text-slate-500">Due: {formatDate(dueDate)}</Text> : null}
+                </View>
+                <View className={`rounded-lg px-2 py-1 ${isDone ? "bg-emerald-100" : "bg-blue-100"}`}>
+                  <Text className={`text-[10px] font-bold uppercase ${isDone ? "text-emerald-700" : "text-blue-700"}`}>{tStatus}</Text>
+                </View>
+              </View>
+            </Pressable>
+          );
+        });
+      })()}
+    </View>
   </ScrollView><BottomHome /></View>;
 }

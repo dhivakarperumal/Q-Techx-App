@@ -437,9 +437,6 @@ export default function ProjectDetailScreen() {
     project.project_status ??
     "In Progress";
   const { color: sColor, bg: sBg, icon: sIcon } = getStatus(statusStr);
-  const progress = Number(
-    project.progress ?? project.project_progress ?? project.completion ?? 0,
-  );
   const startDate =
     project.date ?? project.project_start_date ?? project.start_date;
   const endDate =
@@ -462,6 +459,13 @@ export default function ProjectDetailScreen() {
     ["in progress", "in-progress"].includes((t.status ?? "").toLowerCase()),
   ).length;
   const todoTasks = totalTasks - doneTasks - inProgressTasks;
+
+  let progress = Number(
+    project.progress ?? project.project_progress ?? project.completion ?? 0,
+  );
+  if (totalTasks > 0) {
+    progress = Math.round((doneTasks / totalTasks) * 100);
+  }
 
   const progressColor =
     statusStr === "Completed"
