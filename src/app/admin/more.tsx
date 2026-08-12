@@ -11,6 +11,7 @@ import {
 import { useAuth } from "../../auth/AuthContext";
 import { AdminBottomBar } from "../../components/admin-bottom-bar";
 import { TopHeader } from "../../components/TopHeader";
+import { LinearGradient } from "expo-linear-gradient";
 
 const menuItems = [
   {
@@ -339,31 +340,69 @@ export default function MoreScreen() {
         </View> */}
 
         {/* ── LOG OUT ── */}
-        <View className="mx-5">
+        <View className="mx-5 mt-10">
           <TouchableOpacity
-            activeOpacity={0.8}
-            className="bg-red-50 border border-red-100 rounded-[24px] p-5 flex-row items-center"
+            activeOpacity={0.85}
             onPress={() =>
-              Alert.alert("Log out", "Are you sure you want to log out?", [
-                { text: "Cancel", style: "cancel" },
-                {
-                  text: "Log out",
-                  style: "destructive",
-                  onPress: async () => {
-                    await logout();
-                    router.replace("/login");
+              Alert.alert(
+                "Log out",
+                "Are you sure you want to log out?",
+                [
+                  {
+                    text: "Cancel",
+                    style: "cancel",
                   },
-                },
-              ])
+                  {
+                    text: "Log out",
+                    style: "destructive",
+                    onPress: async () => {
+                      await logout();
+                      router.replace("/login");
+                    },
+                  },
+                ],
+              )
             }
+            className="overflow-hidden rounded-[24px] border border-orange-100"
+            style={{
+              shadowColor: "#f97316",
+              shadowOffset: { width: 0, height: 4 },
+              shadowOpacity: 0.12,
+              shadowRadius: 10,
+              elevation: 4,
+            }}
           >
-            <View className="w-10 h-10 rounded-[12px] bg-red-100 items-center justify-center mr-4">
-              <Ionicons name="log-out-outline" size={20} color="#ef4444" />
-            </View>
-            <Text className="flex-1 text-red-500 font-bold text-sm">
-              Log Out
-            </Text>
-            <Ionicons name="chevron-forward" size={18} color="#fca5a5" />
+            <LinearGradient
+              colors={["#ffffff", "#fff7ed"]}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+              className="p-5 flex-row items-center"
+            >
+              <View className="h-11 w-11 rounded-2xl bg-orange-100 items-center justify-center mr-4">
+                <Ionicons
+                  name="log-out-outline"
+                  size={21}
+                  color="#f97316"
+                />
+              </View>
+
+              <View className="flex-1">
+                <Text className="text-orange-600 font-black text-sm">
+                  Log Out
+                </Text>
+                <Text className="text-slate-500 text-[11px] mt-0.5">
+                  Sign out from your admin account
+                </Text>
+              </View>
+
+              <View className="h-9 w-9 rounded-full bg-orange-50 items-center justify-center">
+                <Ionicons
+                  name="chevron-forward"
+                  size={18}
+                  color="#f97316"
+                />
+              </View>
+            </LinearGradient>
           </TouchableOpacity>
         </View>
       </ScrollView>
