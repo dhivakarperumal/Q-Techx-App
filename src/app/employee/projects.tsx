@@ -2,13 +2,13 @@ import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
-    ActivityIndicator,
-    Pressable,
-    RefreshControl,
-    ScrollView,
-    Text,
-    TextInput,
-    View,
+  ActivityIndicator,
+  Pressable,
+  RefreshControl,
+  ScrollView,
+  Text,
+  TextInput,
+  View,
 } from "react-native";
 import api from "../../api";
 import { useAuth } from "../../auth/AuthContext";
@@ -102,10 +102,6 @@ export default function EmployeeProjectsScreen() {
   const router = useRouter();
   const { user } = useAuth();
   const [assignedProjects, setAssignedProjects] = useState<Project[]>([]);
-  const [unassignedProjects, setUnassignedProjects] = useState<Project[]>([]);
-  const [projectTab, setProjectTab] = useState<"assigned" | "unassigned">(
-    "assigned",
-  );
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState("All");
   const [loading, setLoading] = useState(true);
@@ -146,14 +142,8 @@ export default function EmployeeProjectsScreen() {
             assignedIds.has(project.uuid) ||
             (project.project_manager || "").toLowerCase() === userName,
         );
-        const unassigned = allProjects.filter(
-          (project) =>
-            !assignedIds.has(project.uuid) &&
-            (project.project_manager || "").toLowerCase() !== userName,
-        );
 
         setAssignedProjects(assigned);
-        setUnassignedProjects(unassigned);
       } catch (requestError: any) {
         setError(requestError?.message || "Unable to load assigned projects.");
       } finally {
@@ -168,8 +158,26 @@ export default function EmployeeProjectsScreen() {
     fetchProjects();
   }, [fetchProjects]);
 
-  const currentProjects =
-    projectTab === "assigned" ? assignedProjects : unassignedProjects;
+  const currentProjects = assignedProjects;
+
+  const projectSummary = useMemo(() => {
+    return currentProjects.reduce(
+      (acc, project) => {
+        const status = String(project.current_status || "").trim();
+        acc.total += 1;
+        if (status === "In Progress") acc.inProgress += 1;
+        else if (status === "Completed") acc.completed += 1;
+        else if (status === "On Hold") acc.onHold += 1;
+        return acc;
+      },
+      {
+        total: 0,
+        inProgress: 0,
+        completed: 0,
+        onHold: 0,
+      },
+    );
+  }, [currentProjects]);
 
   const filteredProjects = useMemo(
     () =>
@@ -205,19 +213,46 @@ export default function EmployeeProjectsScreen() {
           />
         }
       >
-        <View className="flex-row items-center justify-between">
-          <View>
-            <Text className="text-3xl font-black text-slate-950">
-              My projects
-            </Text>
-            <Text className="mt-1 text-sm text-slate-500">
-              Track the work you are assigned to.
-            </Text>
-          </View>
-          <View className="h-12 w-12 items-center justify-center rounded-2xl bg-orange-100">
-            <Ionicons name="folder-open-outline" size={24} color="#ea580c" />
+        <View className="mb-5 rounded-2xl bg-white p-4 shadow-sm shadow-slate-200">
+          <Text className="text-base font-bold text-slate-900">
+            Assigned project summary
+          </Text>
+          <View className="mt-4 flex-row flex-wrap gap-3">
+            <View className="min-w-[140px] flex-1 rounded-2xl border border-slate-200 bg-slate-50 p-4">
+              <Text className="text-3xl font-black text-slate-900">
+                {projectSummary.total}
+              </Text>
+              <Text className="mt-1 text-xs uppercase text-slate-500">
+                Total Assigned
+              </Text>
+            </View>
+            <View className="min-w-[140px] flex-1 rounded-2xl border border-slate-200 bg-slate-50 p-4">
+              <Text className="text-3xl font-black text-blue-700">
+                {projectSummary.inProgress}
+              </Text>
+              <Text className="mt-1 text-xs uppercase text-slate-500">
+                In Progress
+              </Text>
+            </View>
+            <View className="min-w-[140px] flex-1 rounded-2xl border border-slate-200 bg-slate-50 p-4">
+              <Text className="text-3xl font-black text-emerald-700">
+                {projectSummary.completed}
+              </Text>
+              <Text className="mt-1 text-xs uppercase text-slate-500">
+                Completed
+              </Text>
+            </View>
+            <View className="min-w-[140px] flex-1 rounded-2xl border border-slate-200 bg-slate-50 p-4">
+              <Text className="text-3xl font-black text-orange-700">
+                {projectSummary.onHold}
+              </Text>
+              <Text className="mt-1 text-xs uppercase text-slate-500">
+                On Hold
+              </Text>
+            </View>
           </View>
         </View>
+
         <View className="mt-5 flex-row items-center rounded-2xl border border-slate-200 bg-white px-4 py-3">
           <Ionicons name="search-outline" size={19} color="#94a3b8" />
           <TextInput
@@ -227,28 +262,6 @@ export default function EmployeeProjectsScreen() {
             placeholderTextColor="#94a3b8"
             className="ml-2 flex-1 text-sm text-slate-800"
           />
-        </View>
-        <View className="mt-4 flex-row rounded-2xl border border-slate-200 bg-white p-1">
-          <Pressable
-            onPress={() => setProjectTab("assigned")}
-            className={`flex-1 rounded-xl px-3 py-2 ${projectTab === "assigned" ? "bg-orange-500" : "bg-white"}`}
-          >
-            <Text
-              className={`text-center text-xs font-black ${projectTab === "assigned" ? "text-white" : "text-slate-700"}`}
-            >
-              Assigned Projects
-            </Text>
-          </Pressable>
-          <Pressable
-            onPress={() => setProjectTab("unassigned")}
-            className={`flex-1 rounded-xl px-3 py-2 ${projectTab === "unassigned" ? "bg-orange-500" : "bg-white"}`}
-          >
-            <Text
-              className={`text-center text-xs font-black ${projectTab === "unassigned" ? "text-white" : "text-slate-700"}`}
-            >
-              Unassigned Projects
-            </Text>
-          </Pressable>
         </View>
         <ScrollView
           horizontal

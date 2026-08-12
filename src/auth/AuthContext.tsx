@@ -1,16 +1,30 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import {
-    createContext,
-    PropsWithChildren,
-    useContext,
-    useEffect,
-    useState,
+  createContext,
+  PropsWithChildren,
+  useContext,
+  useEffect,
+  useState,
 } from "react";
 import { clearTokenCache } from "../api";
 
 export type AuthUser = {
   id?: string | number;
   role?: string;
+  employee_id?: string | number;
+  employeeId?: string | number;
+  uuid?: string;
+  name?: string;
+  full_name?: string;
+  first_name?: string;
+  last_name?: string;
+  employee?: {
+    id?: string | number;
+    employee_id?: string | number;
+    employeeId?: string | number;
+    uuid?: string;
+    [key: string]: unknown;
+  };
   [key: string]: unknown;
 };
 

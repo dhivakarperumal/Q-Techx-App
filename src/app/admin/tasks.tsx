@@ -3,18 +3,18 @@ import DateTimePicker from "@react-native-community/datetimepicker";
 import * as DocumentPicker from "expo-document-picker";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import {
-    ActivityIndicator,
-    Image,
-    KeyboardAvoidingView,
-    Modal,
-    Platform,
-    Pressable,
-    RefreshControl,
-    ScrollView,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View,
+  ActivityIndicator,
+  Image,
+  KeyboardAvoidingView,
+  Modal,
+  Platform,
+  Pressable,
+  RefreshControl,
+  ScrollView,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
 } from "react-native";
 
 import api, { API_BASE_URL } from "../../api";
@@ -36,20 +36,57 @@ type Task = {
 
 type ProjectOption = { id: string; name: string; code: string };
 type EmployeeOption = { id: string; name: string; role?: string };
-type PlanModule = { title: string; duration?: string; description?: string; documentName?: string };
+type PlanModule = {
+  title: string;
+  duration?: string;
+  description?: string;
+  documentName?: string;
+};
 
-const statusFilters = ["All", "In Progress", "Completed", "Pending"];
+const statusOptions = [
+  "Pending",
+  "Accepted",
+  "To Do",
+  "In Progress",
+  "Review",
+  "Testing",
+  "Completed",
+  "On Hold",
+  "Cancelled",
+  "Issue",
+];
+const statusFilters = ["All", ...statusOptions];
 const statusColors: Record<
   string,
   { text: string; background: string; progress: string }
 > = {
-  Completed: { text: "#16a34a", background: "#dcfce7", progress: "#10b981" },
+  Pending: { text: "#f97316", background: "#fef3c7", progress: "#f59e0b" },
+  "To Do": { text: "#f97316", background: "#fef3c7", progress: "#f59e0b" },
+  Accepted: { text: "#0f766e", background: "#ccfbf1", progress: "#14b8a6" },
   "In Progress": {
     text: "#2563eb",
     background: "#dbeafe",
     progress: "#3b82f6",
   },
-  Pending: { text: "#9333ea", background: "#f3e8ff", progress: "#a855f7" },
+  Review: { text: "#7c3aed", background: "#ede9fe", progress: "#8b5cf6" },
+  Testing: { text: "#7c3aed", background: "#ede9fe", progress: "#8b5cf6" },
+  Completed: { text: "#16a34a", background: "#dcfce7", progress: "#10b981" },
+  "On Hold": { text: "#92400e", background: "#fef3c7", progress: "#ea580c" },
+  Cancelled: { text: "#b91c1c", background: "#fee2e2", progress: "#ef4444" },
+  Issue: { text: "#c2410c", background: "#ffedd5", progress: "#f97316" },
+};
+
+const STATUS_PROGRESS_MAP: Record<string, number> = {
+  "Pending": 0,
+  "Accepted": 10,
+  "To Do": 5,
+  "In Progress": 50,
+  "Review": 75,
+  "Testing": 85,
+  "Completed": 100,
+  "On Hold": 30,
+  "Cancelled": 0,
+  "Issue": 40,
 };
 
 const valueOf = (value: unknown) => {
@@ -64,15 +101,27 @@ const firstValue = (...values: unknown[]) =>
   );
 
 const displayStatus = (value: unknown) => {
-  const status = String(value || "Pending")
-    .trim()
-    .toLowerCase()
-    .replace(/[_-]+/g, " ");
+  if (!value) return "Pending";
+  const rawStatus = String(value).trim();
+  const status = rawStatus.toLowerCase();
+  
   if (["done", "complete", "completed", "finished"].includes(status))
     return "Completed";
-  if (["in progress", "inprogress", "ongoing", "started"].includes(status))
+  if (["in progress", "inprogress", "ongoing", "started", "progress"].includes(status))
     return "In Progress";
-  return "Pending";
+  if (["accepted", "approved"].includes(status)) return "Accepted";
+  if (["review", "in review", "under review"].includes(status)) return "Review";
+  if (["testing", "test"].includes(status)) return "Testing";
+  if (["on hold", "hold"].includes(status)) return "On Hold";
+  if (["cancelled", "canceled"].includes(status)) return "Cancelled";
+  if (["issue", "problem", "blocked"].includes(status)) return "Issue";
+  if (["pending", "to do"].includes(status)) {
+    // Return original case if it matches, otherwise fallback
+    if (rawStatus === "To Do" || rawStatus === "Pending") return rawStatus;
+    if (status === "to do") return "To Do";
+    return "Pending";
+  }
+  return rawStatus || "Pending";
 };
 
 const displayDate = (value: unknown) => {
@@ -114,21 +163,27 @@ const mapProject = (project: any, index: number): ProjectOption => ({
 });
 
 const mapTask = (raw: any, index: number): Task => {
+  const getEffectiveProgress = (rawProgress: any, mappedStatus: string) => {
+    if (rawProgress !== null && rawProgress !== undefined && rawProgress !== "") {
+      const numericProgress = Number(rawProgress);
+      // If progress is strictly greater than 0, use it. Otherwise, use the status-based fallback.
+      // This prevents default 0s in the database from hiding the status-based progress (e.g. 50% for In Progress).
+      if (Number.isFinite(numericProgress) && numericProgress > 0) return numericProgress;
+    }
+    return STATUS_PROGRESS_MAP[mappedStatus] ?? 0;
+  };
+
   const status = displayStatus(
     firstValue(raw.status, raw.task_status, raw.current_status),
   );
+  
+  const rawProgressValue = firstValue(raw.progress, raw.progress_percentage);
   const progress = Math.min(
     100,
     Math.max(
       0,
-      valueOf(
-        firstValue(
-          raw.progress,
-          raw.progress_percentage,
-          status === "Completed" ? 100 : 0,
-        ),
-      ),
-    ),
+      getEffectiveProgress(rawProgressValue, status)
+    )
   );
   const assignee =
     raw.assignee || raw.assigned_to || raw.employee || raw.user || {};
@@ -141,7 +196,7 @@ const mapTask = (raw: any, index: number): Task => {
   const baseUrl = API_BASE_URL.replace(/\/api$/, "");
 
   return {
-    id: String(firstValue(raw.id, raw.task_id, raw.uuid, index)),
+    id: String(firstValue(raw.uuid, raw.task_uuid, raw.task_id, raw.id, index)),
     title: String(
       firstValue(raw.title, raw.task_name, raw.name, "Untitled task"),
     ),
@@ -191,7 +246,18 @@ export default function TasksScreen() {
   const [taskAttachment, setTaskAttachment] = useState<any>(null);
   const [sheetVisible, setSheetVisible] = useState(false);
   const [saving, setSaving] = useState(false);
-  const [datePickerField, setDatePickerField] = useState<"startDate" | "dueDate" | null>(null);
+  const [activeTask, setActiveTask] = useState<Task | null>(null);
+  const [statusSheetVisible, setStatusSheetVisible] = useState(false);
+  const [updatingStatus, setUpdatingStatus] = useState(false);
+  const [statusUpdateError, setStatusUpdateError] = useState("");
+
+  // Reason prompt for Cancelled / Issue
+  const [pendingStatus, setPendingStatus] = useState<string | null>(null);
+  const [reasonText, setReasonText] = useState("");
+  const [reasonSheetVisible, setReasonSheetVisible] = useState(false);
+  const [datePickerField, setDatePickerField] = useState<
+    "startDate" | "dueDate" | null
+  >(null);
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [taskForm, setTaskForm] = useState({
     projectId: "",
@@ -221,6 +287,97 @@ export default function TasksScreen() {
       setRefreshing(false);
     }
   }, []);
+
+  const openStatusSheet = (task: Task) => {
+    setActiveTask(task);
+    setStatusSheetVisible(true);
+    setStatusUpdateError("");
+  };
+
+  const closeStatusSheet = () => {
+    if (updatingStatus) return;
+    setStatusSheetVisible(false);
+    setActiveTask(null);
+    setStatusUpdateError("");
+  };
+
+  const closeReasonSheet = () => {
+    if (updatingStatus) return;
+    setReasonSheetVisible(false);
+    setPendingStatus(null);
+    setReasonText("");
+    // Re-open the status sheet so user can pick a different status
+    setStatusSheetVisible(true);
+  };
+
+  const submitStatusUpdate = async (task: Task, status: string, reason = "") => {
+    if (!task?.id) {
+      setStatusUpdateError("Unable to identify this task.");
+      return;
+    }
+
+    setUpdatingStatus(true);
+    setStatusUpdateError("");
+    const taskId = task.id;
+
+    let comments = "";
+    if (status === "Cancelled" && reason.trim()) {
+      comments = `[Cancelled]: ${reason.trim()}`;
+    } else if (status === "Issue" && reason.trim()) {
+      comments = `[Issue]: ${reason.trim()}`;
+    }
+
+    const payload: Record<string, any> = {
+      status,
+      updated_at: new Date().toISOString(),
+    };
+    if (comments) payload.comments = comments;
+
+    try {
+      await api.put(`/tasks/${taskId}`, payload);
+      setStatusSheetVisible(false);
+      setReasonSheetVisible(false);
+      setActiveTask(null);
+      setPendingStatus(null);
+      setReasonText("");
+      await fetchTasks(true);
+    } catch (error: any) {
+      if (
+        error?.status === 404 ||
+        String(error?.message).toLowerCase().includes("not found")
+      ) {
+        try {
+          await api.put(`/tasks/${taskId}/status`, payload);
+          setStatusSheetVisible(false);
+          setReasonSheetVisible(false);
+          setActiveTask(null);
+          setPendingStatus(null);
+          setReasonText("");
+          await fetchTasks(true);
+          return;
+        } catch (secondError: any) {
+          setStatusUpdateError(
+            secondError?.message || "Unable to update task status.",
+          );
+          return;
+        }
+      }
+      setStatusUpdateError(error?.message || "Unable to update task status.");
+    } finally {
+      setUpdatingStatus(false);
+    }
+  };
+
+  const updateTaskStatus = (task: Task, status: string) => {
+    if (status === "Cancelled" || status === "Issue") {
+      setPendingStatus(status);
+      setReasonText("");
+      setStatusSheetVisible(false);
+      setReasonSheetVisible(true);
+    } else {
+      submitStatusUpdate(task, status);
+    }
+  };
 
   useEffect(() => {
     fetchTasks();
@@ -280,7 +437,8 @@ export default function TasksScreen() {
             String(plan.project_id ?? plan.projectId) ===
             String(taskForm.projectId),
         );
-        const rawModules = matchedPlan?.modules ?? matchedPlan?.taskmodule ?? [];
+        const rawModules =
+          matchedPlan?.modules ?? matchedPlan?.taskmodule ?? [];
         const parsedModules =
           typeof rawModules === "string" ? JSON.parse(rawModules) : rawModules;
         setModules(
@@ -293,8 +451,7 @@ export default function TasksScreen() {
                   "Untitled module",
                 duration: module.duration,
                 description: module.description,
-                documentName:
-                  module.documentName || module.document,
+                documentName: module.documentName || module.document,
               }))
             : [],
         );
@@ -329,7 +486,8 @@ export default function TasksScreen() {
       type: "*/*",
       copyToCacheDirectory: true,
     });
-    if (!result.canceled && result.assets?.[0]) setTaskAttachment(result.assets[0]);
+    if (!result.canceled && result.assets?.[0])
+      setTaskAttachment(result.assets[0]);
   };
 
   const closeTaskSheet = () => {
@@ -366,7 +524,12 @@ export default function TasksScreen() {
   };
 
   const createTask = async () => {
-    if (!taskForm.projectId || !taskForm.assignedTo || taskForm.selectedModules.length === 0) return;
+    if (
+      !taskForm.projectId ||
+      !taskForm.assignedTo ||
+      taskForm.selectedModules.length === 0
+    )
+      return;
     setSaving(true);
     try {
       for (const moduleTitle of taskForm.selectedModules) {
@@ -388,12 +551,27 @@ export default function TasksScreen() {
         let taskBody: FormData | typeof taskFields = taskFields;
         if (taskAttachment) {
           const multipart = new FormData();
-          Object.entries(taskFields).forEach(([key, value]) => multipart.append(key, value == null ? "" : String(value)));
-          multipart.append("attachment", { uri: taskAttachment.uri, name: taskAttachment.name || "attachment", type: taskAttachment.mimeType || "application/octet-stream" } as any);
+          Object.entries(taskFields).forEach(([key, value]) =>
+            multipart.append(key, value == null ? "" : String(value)),
+          );
+          multipart.append("attachment", {
+            uri: taskAttachment.uri,
+            name: taskAttachment.name || "attachment",
+            type: taskAttachment.mimeType || "application/octet-stream",
+          } as any);
           taskBody = multipart;
         }
-        const taskResponse = await api.post("/tasks", taskBody, taskAttachment ? { headers: { "Content-Type": "multipart/form-data" } } : undefined);
-        const taskId = taskResponse.data?.data?.uuid || taskResponse.data?.data?.id || taskResponse.data?.uuid;
+        const taskResponse = await api.post(
+          "/tasks",
+          taskBody,
+          taskAttachment
+            ? { headers: { "Content-Type": "multipart/form-data" } }
+            : undefined,
+        );
+        const taskId =
+          taskResponse.data?.data?.uuid ||
+          taskResponse.data?.data?.id ||
+          taskResponse.data?.uuid;
         if (!taskId) throw new Error(`Could not create task: ${moduleTitle}`);
         await api.post("/tasks/assign", {
           project_id: taskForm.projectId,
@@ -629,7 +807,9 @@ export default function TasksScreen() {
                       </View>
                     </View>
                     <View className="ml-2 items-end justify-between">
-                      <View
+                      <TouchableOpacity
+                        onPress={() => openStatusSheet(task)}
+                        activeOpacity={0.75}
                         className="rounded-md px-2 py-1"
                         style={{ backgroundColor: colors.background }}
                       >
@@ -639,7 +819,7 @@ export default function TasksScreen() {
                         >
                           {task.status}
                         </Text>
-                      </View>
+                      </TouchableOpacity>
                       {task.avatar ? (
                         <Image
                           source={{ uri: task.avatar }}
@@ -784,7 +964,9 @@ export default function TasksScreen() {
               ) : (
                 <View className="mb-4 gap-2">
                   {modules.map((module) => {
-                    const selected = taskForm.selectedModules.includes(module.title);
+                    const selected = taskForm.selectedModules.includes(
+                      module.title,
+                    );
                     return (
                       <TouchableOpacity
                         key={module.title}
@@ -865,7 +1047,7 @@ export default function TasksScreen() {
                   </Text>
                   <ScrollView horizontal showsHorizontalScrollIndicator={false}>
                     <View className="flex-row gap-2">
-                      {['Low', 'Medium', 'High'].map((value) => (
+                      {["Low", "Medium", "High"].map((value) => (
                         <TouchableOpacity
                           key={value}
                           onPress={() =>
@@ -896,7 +1078,11 @@ export default function TasksScreen() {
                 <Text className="ml-3 flex-1 text-sm font-semibold text-slate-700">
                   {taskAttachment?.name || "Choose a document"}
                 </Text>
-                <Ionicons name="cloud-upload-outline" size={20} color="#94a3b8" />
+                <Ionicons
+                  name="cloud-upload-outline"
+                  size={20}
+                  color="#94a3b8"
+                />
               </TouchableOpacity>
               <Text className="mb-2 mt-4 text-xs font-bold text-slate-500">
                 Status
@@ -907,7 +1093,13 @@ export default function TasksScreen() {
                 className="mb-5"
               >
                 <View className="flex-row gap-2">
-                  {['Pending', 'In Progress', 'Review', 'Testing', 'Completed'].map((value) => (
+                  {[
+                    "Pending",
+                    "In Progress",
+                    "Review",
+                    "Testing",
+                    "Completed",
+                  ].map((value) => (
                     <TouchableOpacity
                       key={value}
                       onPress={() =>
@@ -926,7 +1118,12 @@ export default function TasksScreen() {
                 </View>
               </ScrollView>
               <TouchableOpacity
-                disabled={saving || !taskForm.projectId || !taskForm.assignedTo || taskForm.selectedModules.length === 0}
+                disabled={
+                  saving ||
+                  !taskForm.projectId ||
+                  !taskForm.assignedTo ||
+                  taskForm.selectedModules.length === 0
+                }
                 onPress={createTask}
                 className="items-center rounded-2xl bg-orange-500 py-4 disabled:opacity-50"
               >
@@ -954,6 +1151,170 @@ export default function TasksScreen() {
                 onChange={handleDatePickerChange}
               />
             ) : null}
+          </View>
+        </KeyboardAvoidingView>
+      </Modal>
+
+      <Modal
+        visible={statusSheetVisible}
+        transparent
+        animationType="slide"
+        onRequestClose={closeStatusSheet}
+      >
+        <KeyboardAvoidingView
+          className="flex-1 justify-end"
+          behavior={Platform.OS === "ios" ? "padding" : "height"}
+        >
+          <Pressable
+            className="absolute inset-0 bg-black/40"
+            onPress={closeStatusSheet}
+          />
+          <View className="max-h-[70%] rounded-t-[28px] bg-white px-5 pb-8 pt-5">
+            <View className="mb-5 flex-row items-center justify-between">
+              <View>
+                <Text className="text-xl font-black text-slate-900">
+                  Update Status
+                </Text>
+                <Text className="mt-1 text-xs text-slate-500">
+                  {activeTask?.title || "Select a status"}
+                </Text>
+              </View>
+              <Pressable
+                accessibilityLabel="Close"
+                onPress={closeStatusSheet}
+                className="h-9 w-9 items-center justify-center rounded-full bg-slate-100"
+              >
+                <Ionicons name="close" size={20} color="#64748b" />
+              </Pressable>
+            </View>
+
+            <ScrollView
+              keyboardShouldPersistTaps="handled"
+              showsVerticalScrollIndicator={false}
+            >
+              {statusUpdateError ? (
+                <View className="mb-4 rounded-2xl border border-rose-200 bg-rose-50 p-4">
+                  <Text className="text-sm font-semibold text-rose-700">
+                    {statusUpdateError}
+                  </Text>
+                </View>
+              ) : null}
+              <Text className="mb-3 text-sm font-bold text-slate-600">
+                Pick a new status
+              </Text>
+              <View className="flex-row flex-wrap gap-3">
+                {statusOptions.map((value) => {
+                  const isActive = activeTask?.status === value;
+                  return (
+                    <TouchableOpacity
+                      key={value}
+                      onPress={() =>
+                        activeTask && updateTaskStatus(activeTask, value)
+                      }
+                      disabled={updatingStatus}
+                      className={`rounded-2xl border px-4 py-3 ${isActive ? "border-orange-500 bg-orange-50" : "border-slate-200 bg-white"}`}
+                    >
+                      <Text
+                        className={`text-xs font-bold ${isActive ? "text-orange-600" : "text-slate-700"}`}
+                      >
+                        {value}
+                      </Text>
+                    </TouchableOpacity>
+                  );
+                })}
+              </View>
+              <TouchableOpacity
+                onPress={closeStatusSheet}
+                disabled={updatingStatus}
+                className="mt-6 items-center rounded-2xl border border-slate-200 bg-white py-4"
+              >
+                <Text className="font-bold text-slate-700">Cancel</Text>
+              </TouchableOpacity>
+            </ScrollView>
+          </View>
+        </KeyboardAvoidingView>
+      </Modal>
+
+      {/* ── Reason / Cancel prompt modal ── */}
+      <Modal
+        visible={reasonSheetVisible}
+        transparent
+        animationType="slide"
+        onRequestClose={closeReasonSheet}
+      >
+        <KeyboardAvoidingView
+          className="flex-1 justify-end"
+          behavior={Platform.OS === "ios" ? "padding" : "height"}
+        >
+          <Pressable
+            className="absolute inset-0 bg-black/40"
+            onPress={closeReasonSheet}
+          />
+          <View className="rounded-t-[28px] bg-white px-5 pb-10 pt-6">
+            <Text
+              className="text-xl font-black"
+              style={{ color: pendingStatus === "Cancelled" ? "#e11d48" : "#f97316" }}
+            >
+              {pendingStatus === "Cancelled" ? "Cancel Task" : "Report Issue"}
+            </Text>
+            <Text className="mt-1 mb-4 text-sm text-slate-500">
+              Please provide a reason for{" "}
+              {pendingStatus === "Cancelled" ? "cancelling" : "reporting an issue with"}{" "}
+              <Text className="font-bold text-slate-800">
+                {activeTask?.title || "this task"}
+              </Text>
+              .
+            </Text>
+            <TextInput
+              value={reasonText}
+              onChangeText={setReasonText}
+              placeholder={
+                pendingStatus === "Cancelled"
+                  ? "Enter cancellation reason..."
+                  : "Describe the issue you are facing..."
+              }
+              placeholderTextColor="#94a3b8"
+              multiline
+              numberOfLines={4}
+              textAlignVertical="top"
+              className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-slate-900 mb-5"
+              style={{ minHeight: 110 }}
+            />
+            {statusUpdateError ? (
+              <View className="mb-4 rounded-2xl border border-rose-200 bg-rose-50 p-3">
+                <Text className="text-sm font-semibold text-rose-700">{statusUpdateError}</Text>
+              </View>
+            ) : null}
+            <View className="flex-row gap-3">
+              <TouchableOpacity
+                onPress={closeReasonSheet}
+                disabled={updatingStatus}
+                className="flex-1 items-center rounded-2xl border border-slate-200 bg-white py-3.5"
+              >
+                <Text className="font-bold text-slate-700">Go Back</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                onPress={() =>
+                  activeTask &&
+                  pendingStatus &&
+                  submitStatusUpdate(activeTask, pendingStatus, reasonText)
+                }
+                disabled={updatingStatus}
+                className="flex-1 items-center rounded-2xl py-3.5"
+                style={{
+                  backgroundColor:
+                    pendingStatus === "Cancelled" ? "#e11d48" : "#f97316",
+                }}
+              >
+                {updatingStatus ? (
+                  <ActivityIndicator color="#fff" />
+                ) : (
+                  <Text className="font-black text-white">
+                    {pendingStatus === "Cancelled" ? "Confirm Cancel" : "Submit Issue"}
+                  </Text>
+                )}
+              </TouchableOpacity>
+            </View>
           </View>
         </KeyboardAvoidingView>
       </Modal>

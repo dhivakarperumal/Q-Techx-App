@@ -70,7 +70,7 @@ export function BottomHome() {
       edges={["bottom"]}
       className="border-t border-slate-200 bg-white"
     >
-      <View className="flex-row items-center justify-around px-3 pb-1 pt-2">
+      <View className="flex-row items-center justify-around px-2 pb-2 pt-3">
         {tabs.map((tab) => {
           const isActive = pathname === tab.href;
           const iconColor = isActive ? "#1d4ed8" : "#64748b";
@@ -81,23 +81,26 @@ export function BottomHome() {
               accessibilityLabel={tab.label}
               accessibilityRole="tab"
               accessibilityState={{ selected: isActive }}
-              className="flex-1 items-center rounded-xl px-1 py-1 active:bg-blue-50"
+              className="flex-1 items-center justify-center relative"
               onPress={() => {
                 if (!isActive) {
                   router.replace(tab.href);
                 }
               }}
             >
+              {isActive && (
+                <View className="absolute -top-3 w-8 h-1 bg-blue-700 rounded-b-full" />
+              )}
               <Ionicons
                 name={isActive ? tab.activeIcon : tab.icon}
-                size={22}
+                size={24}
                 color={iconColor}
               />
               <Text
                 className={
                   isActive
-                    ? "mt-1 text-xs font-bold text-blue-700"
-                    : "mt-1 text-xs text-slate-500"
+                    ? "mt-1 text-[10px] font-bold text-blue-700"
+                    : "mt-1 text-[10px] font-medium text-slate-500"
                 }
               >
                 {tab.label}
