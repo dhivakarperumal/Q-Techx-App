@@ -250,6 +250,11 @@ export default function TasksScreen() {
   const [statusSheetVisible, setStatusSheetVisible] = useState(false);
   const [updatingStatus, setUpdatingStatus] = useState(false);
   const [statusUpdateError, setStatusUpdateError] = useState("");
+
+  // Reason prompt for Cancelled / Issue
+  const [pendingStatus, setPendingStatus] = useState<string | null>(null);
+  const [reasonText, setReasonText] = useState("");
+  const [reasonSheetVisible, setReasonSheetVisible] = useState(false);
   const [datePickerField, setDatePickerField] = useState<
     "startDate" | "dueDate" | null
   >(null);
@@ -296,7 +301,16 @@ export default function TasksScreen() {
     setStatusUpdateError("");
   };
 
-  const updateTaskStatus = async (task: Task, status: string) => {
+  const closeReasonSheet = () => {
+    if (updatingStatus) return;
+    setReasonSheetVisible(false);
+    setPendingStatus(null);
+    setReasonText("");
+    // Re-open the status sheet so user can pick a different status
+    setStatusSheetVisible(true);
+  };
+
+  const submitStatusUpdate = async (task: Task, status: string, reason = "") => {
     if (!task?.id) {
       setStatusUpdateError("Unable to identify this task.");
       return;
@@ -306,10 +320,26 @@ export default function TasksScreen() {
     setStatusUpdateError("");
     const taskId = task.id;
 
+    let comments = "";
+    if (status === "Cancelled" && reason.trim()) {
+      comments = `[Cancelled]: ${reason.trim()}`;
+    } else if (status === "Issue" && reason.trim()) {
+      comments = `[Issue]: ${reason.trim()}`;
+    }
+
+    const payload: Record<string, any> = {
+      status,
+      updated_at: new Date().toISOString(),
+    };
+    if (comments) payload.comments = comments;
+
     try {
-      await api.put(`/tasks/${taskId}`, { status });
+      await api.put(`/tasks/${taskId}`, payload);
       setStatusSheetVisible(false);
+      setReasonSheetVisible(false);
       setActiveTask(null);
+      setPendingStatus(null);
+      setReasonText("");
       await fetchTasks(true);
     } catch (error: any) {
       if (
@@ -317,9 +347,12 @@ export default function TasksScreen() {
         String(error?.message).toLowerCase().includes("not found")
       ) {
         try {
-          await api.put(`/tasks/${taskId}/status`, { status });
+          await api.put(`/tasks/${taskId}/status`, payload);
           setStatusSheetVisible(false);
+          setReasonSheetVisible(false);
           setActiveTask(null);
+          setPendingStatus(null);
+          setReasonText("");
           await fetchTasks(true);
           return;
         } catch (secondError: any) {
@@ -329,10 +362,20 @@ export default function TasksScreen() {
           return;
         }
       }
-
       setStatusUpdateError(error?.message || "Unable to update task status.");
     } finally {
       setUpdatingStatus(false);
+    }
+  };
+
+  const updateTaskStatus = (task: Task, status: string) => {
+    if (status === "Cancelled" || status === "Issue") {
+      setPendingStatus(status);
+      setReasonText("");
+      setStatusSheetVisible(false);
+      setReasonSheetVisible(true);
+    } else {
+      submitStatusUpdate(task, status);
     }
   };
 
@@ -1188,6 +1231,90 @@ export default function TasksScreen() {
                 <Text className="font-bold text-slate-700">Cancel</Text>
               </TouchableOpacity>
             </ScrollView>
+          </View>
+        </KeyboardAvoidingView>
+      </Modal>
+
+      {/* ── Reason / Cancel prompt modal ── */}
+      <Modal
+        visible={reasonSheetVisible}
+        transparent
+        animationType="slide"
+        onRequestClose={closeReasonSheet}
+      >
+        <KeyboardAvoidingView
+          className="flex-1 justify-end"
+          behavior={Platform.OS === "ios" ? "padding" : "height"}
+        >
+          <Pressable
+            className="absolute inset-0 bg-black/40"
+            onPress={closeReasonSheet}
+          />
+          <View className="rounded-t-[28px] bg-white px-5 pb-10 pt-6">
+            <Text
+              className="text-xl font-black"
+              style={{ color: pendingStatus === "Cancelled" ? "#e11d48" : "#f97316" }}
+            >
+              {pendingStatus === "Cancelled" ? "Cancel Task" : "Report Issue"}
+            </Text>
+            <Text className="mt-1 mb-4 text-sm text-slate-500">
+              Please provide a reason for{" "}
+              {pendingStatus === "Cancelled" ? "cancelling" : "reporting an issue with"}{" "}
+              <Text className="font-bold text-slate-800">
+                {activeTask?.title || "this task"}
+              </Text>
+              .
+            </Text>
+            <TextInput
+              value={reasonText}
+              onChangeText={setReasonText}
+              placeholder={
+                pendingStatus === "Cancelled"
+                  ? "Enter cancellation reason..."
+                  : "Describe the issue you are facing..."
+              }
+              placeholderTextColor="#94a3b8"
+              multiline
+              numberOfLines={4}
+              textAlignVertical="top"
+              className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-slate-900 mb-5"
+              style={{ minHeight: 110 }}
+            />
+            {statusUpdateError ? (
+              <View className="mb-4 rounded-2xl border border-rose-200 bg-rose-50 p-3">
+                <Text className="text-sm font-semibold text-rose-700">{statusUpdateError}</Text>
+              </View>
+            ) : null}
+            <View className="flex-row gap-3">
+              <TouchableOpacity
+                onPress={closeReasonSheet}
+                disabled={updatingStatus}
+                className="flex-1 items-center rounded-2xl border border-slate-200 bg-white py-3.5"
+              >
+                <Text className="font-bold text-slate-700">Go Back</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                onPress={() =>
+                  activeTask &&
+                  pendingStatus &&
+                  submitStatusUpdate(activeTask, pendingStatus, reasonText)
+                }
+                disabled={updatingStatus}
+                className="flex-1 items-center rounded-2xl py-3.5"
+                style={{
+                  backgroundColor:
+                    pendingStatus === "Cancelled" ? "#e11d48" : "#f97316",
+                }}
+              >
+                {updatingStatus ? (
+                  <ActivityIndicator color="#fff" />
+                ) : (
+                  <Text className="font-black text-white">
+                    {pendingStatus === "Cancelled" ? "Confirm Cancel" : "Submit Issue"}
+                  </Text>
+                )}
+              </TouchableOpacity>
+            </View>
           </View>
         </KeyboardAvoidingView>
       </Modal>
