@@ -1281,6 +1281,11 @@ export default function ProjectPlansScreen() {
                 className="mb-3 mt-3 items-center rounded-2xl bg-orange-500 py-4 disabled:opacity-60"
               >
                 {saving ? (
+                  <ActivityIndicator color="#fff" />
+                ) : (
+                  <Text className="font-black text-white">
+                    {editPlanId ? "Save Changes" : "Save Project Plan"}
+                  </Text>
                 )}
               </TouchableOpacity>
             </ScrollView>
