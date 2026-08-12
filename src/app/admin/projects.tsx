@@ -1,4 +1,5 @@
 import { Ionicons } from "@expo/vector-icons";
+import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import {
@@ -9,6 +10,7 @@ import {
     TextInput,
     TouchableOpacity,
     View,
+    Pressable,
 } from "react-native";
 
 import api from "../../api";
@@ -46,6 +48,8 @@ export default function ProjectsScreen() {
   const [assignmentSuccess, setAssignmentSuccess] = useState("");
   const [employees, setEmployees] = useState<any[]>([]);
   const [assigning, setAssigning] = useState(false);
+  const [statusDropdownOpen, setStatusDropdownOpen] = useState(false);
+  const [assignmentDropdownOpen, setAssignmentDropdownOpen] = useState(false);
 
   const normalizeProject = useCallback((proj: any) => {
     const rawUuid =
@@ -447,145 +451,158 @@ export default function ProjectsScreen() {
     <View className="flex-1 bg-[#F9FAFB]">
       <TopHeader />
 
-      <ScrollView className="flex-1" contentContainerClassName="pb-32 pt-2">
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerClassName="px-5 mb-6"
-          className="overflow-visible"
-        >
+      <ScrollView className="flex-1" contentContainerStyle={{ paddingHorizontal: 20, paddingTop: 14, paddingBottom: 120 }}>
+        <View className="mt-5 mb-2 flex-row flex-wrap justify-between">
           {statCards.map((stat, idx) => (
             <View
               key={idx}
-              className="bg-white rounded-[24px] p-4 mr-4 border border-slate-100 shadow-sm w-[130px]"
+              className="mb-3 w-[48%] overflow-hidden rounded-2xl bg-white border border-orange-100" style={{ shadowColor: "#f97316", shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.12, shadowRadius: 10, elevation: 4 }}
             >
-              <View
-                className={`w-10 h-10 rounded-[14px] ${stat.bg} items-center justify-center mb-3`}
+              <LinearGradient
+                colors={["#ffffff", "#fff7ed"]}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+                className="px-4 py-4"
               >
-                <Ionicons
-                  name={stat.icon as any}
-                  size={20}
-                  color={stat.color}
-                />
-              </View>
-              <Text className="text-slate-500 font-bold text-[10px] mb-1">
-                {stat.label}
-              </Text>
-              <Text className="text-slate-900 font-black text-2xl tracking-tight mb-1">
-                {stat.value}
-              </Text>
-              <Text className="text-slate-400 text-[10px] font-medium">
-                {stat.sub}
-              </Text>
+                <View className="flex-row items-center mb-3">
+                  <View className="h-10 w-10 items-center justify-center rounded-xl bg-black">
+                    <Ionicons name={stat.icon as any} size={20} color="#f97316" />
+                  </View>
+                  <View className="ml-2 flex-1">
+                    <Text
+                      className="text-[10px] font-bold uppercase tracking-[0.5px] text-gray-500"
+                      numberOfLines={2}
+                    >
+                      {stat.label}
+                    </Text>
+                  </View>
+                </View>
+                <View className="flex-row items-baseline justify-between">
+                  <Text className="text-[22px] font-black text-black">
+                    {stat.value}
+                  </Text>
+                  <Text className="text-[10px] font-bold text-orange-500">
+                    {stat.sub}
+                  </Text>
+                </View>
+              </LinearGradient>
             </View>
           ))}
-        </ScrollView>
+        </View>
 
-        <View className="px-5 mb-4 flex-row items-center gap-3">
-          <View className="flex-1 bg-white border border-slate-200 rounded-2xl flex-row items-center px-4 py-3 shadow-sm">
-            <Ionicons name="search" size={20} color="#94a3b8" />
-            <TextInput
-              value={search}
-              onChangeText={setSearch}
-              placeholder="Search projects..."
-              placeholderTextColor="#94a3b8"
-              className="flex-1 ml-2 text-sm font-medium text-slate-800"
-            />
-          </View>
-          <TouchableOpacity className="bg-white border border-slate-200 rounded-2xl flex-row items-center px-4 py-3 shadow-sm">
-            <Ionicons name="filter" size={18} color="#64748b" />
-            <Text className="text-slate-700 font-bold text-sm ml-2 mr-1">
-              Filter
+        <View className="mt-3 flex-row items-center rounded-xl border border-slate-200 bg-white px-3 mb-3">
+          <Ionicons name="search" size={18} color="#94a3b8" />
+          <TextInput
+            value={search}
+            onChangeText={setSearch}
+            placeholder="Search projects..."
+            placeholderTextColor="#94a3b8"
+            className="flex-1 px-2 py-5 rounded text-sm text-slate-900"
+          />
+        </View>
+
+        <View className="flex-row gap-3 mb-4">
+          <Pressable
+            onPress={() => setStatusDropdownOpen(true)}
+            className="flex-1 h-12 rounded-2xl border border-slate-200 bg-white px-4 flex-row items-center justify-between"
+          >
+            <Text className="text-xs font-medium text-slate-700">
+              {selectedStatusFilter}
             </Text>
             <Ionicons name="chevron-down" size={16} color="#64748b" />
-          </TouchableOpacity>
-        </View>
-
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerClassName="px-5 mb-6"
-        >
-          {filters.map((filter, idx) => (
-            <TouchableOpacity
-              key={idx}
-              className={`flex-row items-center px-4 py-2 rounded-full mr-3 border ${
-                selectedStatusFilter === filter.label
-                  ? "border-orange-500 bg-orange-50"
-                  : "border-slate-200 bg-white"
-              }`}
-              onPress={() => setSelectedStatusFilter(filter.label)}
-            >
-              {selectedStatusFilter === filter.label ? (
-                <Ionicons
-                  name="grid"
-                  size={14}
-                  color="#f97316"
-                  className="mr-2"
-                />
-              ) : (
-                <View
-                  className="w-2 h-2 rounded-full mr-2"
-                  style={{ backgroundColor: filter.dot }}
-                />
-              )}
-              <Text
-                className={`text-xs font-bold ${selectedStatusFilter === filter.label ? "text-orange-600 ml-1.5" : "text-slate-600"}`}
-              >
-                {filter.label}
-              </Text>
-            </TouchableOpacity>
-          ))}
-        </ScrollView>
-
-        <View className="px-5 mb-4">
-          <View className="flex-row rounded-2xl border border-slate-200 bg-white p-1">
-            <TouchableOpacity
-              onPress={() => setActiveTab("assigned")}
-              className={`flex-1 rounded-xl px-3 py-2 ${activeTab === "assigned" ? "bg-orange-500" : "bg-white"}`}
-            >
-              <Text
-                className={`text-center text-xs font-black ${activeTab === "assigned" ? "text-white" : "text-slate-700"}`}
-              >
-                Assigned Projects ({assignedProjects.length})
-              </Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              onPress={() => setActiveTab("unassigned")}
-              className={`flex-1 rounded-xl px-3 py-2 ${activeTab === "unassigned" ? "bg-orange-500" : "bg-white"}`}
-            >
-              <Text
-                className={`text-center text-xs font-black ${activeTab === "unassigned" ? "text-white" : "text-slate-700"}`}
-              >
-                Unassigned Projects ({unassignedProjects.length})
-              </Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-
-        <View className="px-5 mb-4">
-          <TouchableOpacity
-            onPress={() => {
-              openAssignmentModal();
-            }}
-            className="bg-white border border-slate-200 rounded-3xl p-4 shadow-sm flex-row items-center justify-center"
+          </Pressable>
+          <Pressable
+            onPress={() => setAssignmentDropdownOpen(true)}
+            className="flex-1 h-12 rounded-2xl border border-slate-200 bg-white px-4 flex-row items-center justify-between"
           >
-            <View className="w-11 h-11 rounded-2xl bg-orange-500 items-center justify-center mr-3">
-              <Ionicons name="add" size={24} color="white" />
-            </View>
-            <View className="flex-1">
-              <Text className="text-slate-900 font-black text-sm">
-                Project Assigned
-              </Text>
-              <Text className="text-slate-500 text-[11px] font-medium">
-                Add employees to a project
-              </Text>
-            </View>
-            <Ionicons name="chevron-forward" size={18} color="#94a3b8" />
-          </TouchableOpacity>
+            <Text className="text-xs font-medium text-slate-700 capitalize">
+              {activeTab === "assigned" ? "Assigned Projects" : "Unassigned Projects"}
+            </Text>
+            <Ionicons name="chevron-down" size={16} color="#64748b" />
+          </Pressable>
         </View>
 
-        <View className="px-5">
+        <Modal
+          visible={statusDropdownOpen}
+          transparent
+          animationType="fade"
+          onRequestClose={() => setStatusDropdownOpen(false)}
+        >
+          <Pressable
+            className="flex-1 bg-black/40 justify-center px-8"
+            onPress={() => setStatusDropdownOpen(false)}
+          >
+            <Pressable
+              className="bg-white rounded-2xl overflow-hidden"
+              onPress={(e) => e.stopPropagation()}
+            >
+              <Text className="px-5 py-4 text-base font-bold text-slate-900 border-b border-slate-100">
+                Select Status
+              </Text>
+              {filters.map((filter) => (
+                <Pressable
+                  key={filter.label}
+                  onPress={() => {
+                    setSelectedStatusFilter(filter.label);
+                    setStatusDropdownOpen(false);
+                  }}
+                  className="px-5 py-4 border-b border-slate-100"
+                >
+                  <Text className={`text-sm ${selectedStatusFilter === filter.label ? "font-bold text-orange-500" : "text-slate-700"}`}>
+                    {filter.label}
+                  </Text>
+                </Pressable>
+              ))}
+            </Pressable>
+          </Pressable>
+        </Modal>
+
+        <Modal
+          visible={assignmentDropdownOpen}
+          transparent
+          animationType="fade"
+          onRequestClose={() => setAssignmentDropdownOpen(false)}
+        >
+          <Pressable
+            className="flex-1 bg-black/40 justify-center px-8"
+            onPress={() => setAssignmentDropdownOpen(false)}
+          >
+            <Pressable
+              className="bg-white rounded-2xl overflow-hidden"
+              onPress={(e) => e.stopPropagation()}
+            >
+              <Text className="px-5 py-4 text-base font-bold text-slate-900 border-b border-slate-100">
+                Select Assignment Type
+              </Text>
+              <Pressable
+                onPress={() => {
+                  setActiveTab("assigned");
+                  setAssignmentDropdownOpen(false);
+                }}
+                className="px-5 py-4 border-b border-slate-100"
+              >
+                <Text className={`text-sm ${activeTab === "assigned" ? "font-bold text-orange-500" : "text-slate-700"}`}>
+                  Assigned Projects ({assignedProjects.length})
+                </Text>
+              </Pressable>
+              <Pressable
+                onPress={() => {
+                  setActiveTab("unassigned");
+                  setAssignmentDropdownOpen(false);
+                }}
+                className="px-5 py-4 border-b border-slate-100"
+              >
+                <Text className={`text-sm ${activeTab === "unassigned" ? "font-bold text-orange-500" : "text-slate-700"}`}>
+                  Unassigned Projects ({unassignedProjects.length})
+                </Text>
+              </Pressable>
+            </Pressable>
+          </Pressable>
+        </Modal>
+
+        
+
+        <View>
           {loading || assigning ? (
             <View className="items-center py-10">
               <ActivityIndicator size="small" color="#2563eb" />
@@ -606,7 +623,7 @@ export default function ProjectsScreen() {
             visibleProjects.map((project, idx) => (
               <TouchableOpacity
                 key={`${project.uuid || project.projectId || idx}`}
-                className="mb-4 overflow-hidden rounded-[28px] border border-slate-200 bg-white shadow-sm"
+                className="mb-4 bg-white rounded-[24px] p-4 border border-slate-100 shadow-sm"
                 activeOpacity={0.9}
                 onPress={() =>
                   router.push(
@@ -614,58 +631,51 @@ export default function ProjectsScreen() {
                   )
                 }
               >
-                <View className="border-b border-slate-100 bg-slate-50/80 px-4 py-4">
-                  <View className="flex-row items-start justify-between">
-                    <View className="mr-3 flex-1 flex-row items-start">
-                      <View
-                        className={`mr-3 h-12 w-12 rounded-2xl ${project.iconBg} items-center justify-center`}
-                      >
-                        <Ionicons
-                          name={project.icon as any}
-                          size={24}
-                          color={project.iconColor}
-                        />
-                      </View>
-                      <View className="flex-1">
-                        <Text className="mb-1 text-base font-black text-slate-900">
+                <View className="flex-row items-start justify-between mb-3">
+                  <View className="flex-row flex-1">
+                    <View className="mr-4 relative h-14 w-14 rounded-full items-center justify-center bg-orange-50 border border-orange-100">
+                      <Ionicons
+                        name={project.icon as any}
+                        size={25}
+                        color="#f97316"
+                      />
+                    </View>
+                    <View className="flex-1 justify-center">
+                      <View className="flex-row items-center mb-1.5 flex-wrap">
+                        <Text className="text-slate-900 font-bold text-[15px] mr-2">
                           {project.title}
                         </Text>
-                        <View className="mb-1 flex-row items-center">
-                          <Ionicons
-                            name="business-outline"
-                            size={12}
-                            color="#94a3b8"
-                          />
-                          <Text className="ml-1 text-xs font-semibold text-slate-500">
-                            {project.company}
-                          </Text>
-                        </View>
-                        <View className="flex-row items-center">
-                          <Ionicons
-                            name="calendar-outline"
-                            size={12}
-                            color="#94a3b8"
-                          />
-                          <Text className="ml-1 text-xs font-medium text-slate-500">
-                            {project.date}
+                        <View className="px-2 py-0.5 rounded-full bg-orange-50">
+                          <Text className="text-[9px] font-bold text-orange-600">
+                            {project.status}
                           </Text>
                         </View>
                       </View>
-                    </View>
-
-                    <View
-                      className={`rounded-full px-2.5 py-1 ${project.statusBg}`}
-                    >
-                      <Text
-                        className={`text-[10px] font-black ${project.statusColor}`}
-                      >
-                        {project.status}
-                      </Text>
+                      <View className="flex-row items-center mb-1.5">
+                        <Ionicons
+                          name="business-outline"
+                          size={12}
+                          color="#94a3b8"
+                        />
+                        <Text className="ml-1 text-xs font-semibold text-slate-500">
+                          {project.company}
+                        </Text>
+                      </View>
+                      <View className="flex-row items-center">
+                        <Ionicons
+                          name="calendar-outline"
+                          size={12}
+                          color="#94a3b8"
+                        />
+                        <Text className="ml-1 text-xs font-medium text-slate-500">
+                          {project.date}
+                        </Text>
+                      </View>
                     </View>
                   </View>
                 </View>
 
-                <View className="px-4 py-4">
+                <View>
                   <View className="mb-3 flex-row items-center justify-between">
                     <View className="flex-row items-center">
                       <Ionicons
@@ -737,18 +747,7 @@ export default function ProjectsScreen() {
                         </Text>
                       </TouchableOpacity>
                     </View>
-                  ) : (
-                    <View className="flex-row items-center justify-between">
-                      <Text className="text-xs font-semibold text-slate-400">
-                        Open project to review details
-                      </Text>
-                      <Ionicons
-                        name="chevron-forward"
-                        size={16}
-                        color="#94a3b8"
-                      />
-                    </View>
-                  )}
+                  ) : null}
                 </View>
               </TouchableOpacity>
             ))
@@ -758,20 +757,26 @@ export default function ProjectsScreen() {
 
       {showAssignmentModal && (
         <Modal visible={showAssignmentModal} transparent animationType="slide">
-          <View className="flex-1 bg-black/30 justify-end">
-            <View className="bg-white rounded-t-[30px] max-h-[90%]">
-              <View className="px-5 py-4 border-b border-slate-100 flex-row items-center justify-between">
-                <View>
-                  <Text className="text-xl font-black text-slate-900">
+          <View className="flex-1 bg-black/25 justify-end">
+            <View className="max-h-[92%] rounded-t-[32px] border border-slate-200 bg-[#f8fafc] shadow-2xl">
+              <View className="items-center pt-3">
+                <View className="h-1.5 w-14 rounded-full bg-slate-300" />
+              </View>
+              <View className="flex-row items-center justify-between border-b border-slate-200 bg-black px-5 pb-4 pt-4 rounded-t-[32px]">
+                <View className="flex-1 pr-3">
+                  <Text className="text-xl font-black text-orange-500">
                     Project Assignment
                   </Text>
-                  <Text className="text-slate-500 text-xs mt-1">
+                  <Text className="mt-1 text-xs text-orange-200">
                     Assign employees to a project
                   </Text>
                 </View>
-                <TouchableOpacity onPress={() => setShowAssignmentModal(false)}>
-                  <Ionicons name="close-circle" size={26} color="#94a3b8" />
-                </TouchableOpacity>
+                <Pressable
+                  onPress={() => setShowAssignmentModal(false)}
+                  className="h-9 w-9 items-center justify-center rounded-full bg-orange-100"
+                >
+                  <Ionicons name="close" size={20} color="#c2410c" />
+                </Pressable>
               </View>
 
               <ScrollView
