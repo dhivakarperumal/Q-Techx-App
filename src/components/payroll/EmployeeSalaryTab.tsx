@@ -268,10 +268,10 @@ export default function EmployeeSalaryTab() {
       {/* Pay/Edit Salary Modal */}
       <Modal visible={showForm} animationType="slide" transparent={true}>
         <View className="flex-1 bg-black/50 justify-end">
-          <View className="bg-white rounded-t-3xl pt-2 h-[90%] shadow-2xl">
-            <View className="w-12 h-1.5 bg-slate-200 rounded-full mx-auto mb-4" />
-            <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ padding: 20, paddingBottom: 40 }}>
-              <View className="bg-black rounded-3xl p-5 mb-6 flex-row justify-between items-center">
+          <View className="bg-white rounded-t-3xl h-[90%] shadow-2xl overflow-hidden">
+            <View className="bg-black pt-4 px-6 pb-6">
+              <View className="w-12 h-1.5 bg-slate-700 rounded-full mx-auto mb-4" />
+              <View className="flex-row justify-between items-center">
                 <View>
                   <Text className="text-orange-500 text-lg font-bold">{editId ? 'Edit Payment' : 'Process Salary Payment'}</Text>
                   <Text className="text-white text-xs mt-1">Manage employee salary details</Text>
@@ -280,6 +280,8 @@ export default function EmployeeSalaryTab() {
                   <X size={20} color="#f97316" />
                 </TouchableOpacity>
               </View>
+            </View>
+            <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ padding: 24, paddingBottom: 40, gap: 16 }}>
               
               <View className="flex-row gap-4">
                 <View className="flex-1">
