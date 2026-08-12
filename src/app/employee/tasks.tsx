@@ -167,8 +167,7 @@ const buildTaskRecord = (row: any, details: any = {}): any => ({
     details?.assigned_to,
   assigned_to_name:
     row?.assigned_to_name ?? row?.assigned_to_name ?? details?.assigned_to_name,
-  assigned_by:
-    row?.assigned_by ?? details?.assigned_by ?? row?.assigned_by,
+  assigned_by: row?.assigned_by ?? details?.assigned_by ?? row?.assigned_by,
   assignment_date:
     row?.assignment_date ?? details?.assignment_date ?? row?.assignment_date,
 });
@@ -177,7 +176,9 @@ const normalizeAssignment = (row: any): ApiTask[] => {
   const taskDetails = parseTaskDetails(row);
 
   if (Array.isArray(taskDetails) && taskDetails.length > 0) {
-    return taskDetails.map((detail) => normalizeTask(buildTaskRecord(row, detail)));
+    return taskDetails.map((detail) =>
+      normalizeTask(buildTaskRecord(row, detail)),
+    );
   }
 
   return [normalizeTask(buildTaskRecord(row, taskDetails || {}))];
@@ -319,7 +320,6 @@ const collectRows = (payload: any): any[] => {
   return [];
 };
 
-
 export default function EmployeeTasksScreen() {
   const { user } = useAuth();
   const [tasks, setTasks] = useState<ApiTask[]>([]);
@@ -336,7 +336,8 @@ export default function EmployeeTasksScreen() {
 
         const employeeId = employeeReference(user);
         const { data: assignmentPayload } = await api.get("/tasks/assignments");
-        const rows = collectRows(assignmentPayload).flatMap(normalizeAssignment);
+        const rows =
+          collectRows(assignmentPayload).flatMap(normalizeAssignment);
 
         const filtered = rows.filter((task) => {
           const assignedEmployeeId = String(
