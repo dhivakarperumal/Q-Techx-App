@@ -3,10 +3,14 @@ import { useRouter } from "expo-router";
 import { useCallback, useEffect, useState } from "react";
 import {
   ActivityIndicator,
+  KeyboardAvoidingView,
+  Modal,
+  Platform,
   Pressable,
   RefreshControl,
   ScrollView,
   Text,
+  TouchableOpacity,
   View,
 } from "react-native";
 import api from "../../api";
@@ -76,6 +80,18 @@ const statusColors: Record<string, string> = {
   Cancelled: "#e11d48",
   Issue: "#f97316",
 };
+
+const statusOptions = [
+  "Pending",
+  "Accepted",
+  "In Progress",
+  "Review",
+  "Testing",
+  "Completed",
+  "On Hold",
+  "Cancelled",
+  "Issue",
+];
 
 const employeeReference = (user: Record<string, unknown> | null) => {
   if (!user) return "";
@@ -388,6 +404,64 @@ export default function EmployeeTasksScreen() {
     onHold: 0,
   });
 
+  const [activeTask, setActiveTask] = useState<ApiTask | null>(null);
+  const [statusSheetVisible, setStatusSheetVisible] = useState(false);
+  const [updatingStatus, setUpdatingStatus] = useState(false);
+  const [statusUpdateError, setStatusUpdateError] = useState("");
+
+  const openStatusSheet = (task: ApiTask) => {
+    setActiveTask(task);
+    setStatusSheetVisible(true);
+    setStatusUpdateError("");
+  };
+
+  const closeStatusSheet = () => {
+    if (updatingStatus) return;
+    setStatusSheetVisible(false);
+    setActiveTask(null);
+    setStatusUpdateError("");
+  };
+
+  const updateTaskStatus = async (task: ApiTask, status: string) => {
+    const taskId = task.task_uuid || task.uuid || task.task_id || task.id;
+    if (!taskId) {
+      setStatusUpdateError("Unable to identify this task.");
+      return;
+    }
+
+    setUpdatingStatus(true);
+    setStatusUpdateError("");
+
+    try {
+      await api.put(`/tasks/${taskId}`, { status });
+      setStatusSheetVisible(false);
+      setActiveTask(null);
+      await fetchTasks(true);
+    } catch (error: any) {
+      if (
+        error?.status === 404 ||
+        String(error?.message).toLowerCase().includes("not found")
+      ) {
+        try {
+          await api.put(`/tasks/${taskId}/status`, { status });
+          setStatusSheetVisible(false);
+          setActiveTask(null);
+          await fetchTasks(true);
+          return;
+        } catch (secondError: any) {
+          setStatusUpdateError(
+            secondError?.message || "Unable to update task status.",
+          );
+          return;
+        }
+      }
+
+      setStatusUpdateError(error?.message || "Unable to update task status.");
+    } finally {
+      setUpdatingStatus(false);
+    }
+  };
+
   const fetchTasks = useCallback(
     async (isRefresh = false) => {
       try {
@@ -608,16 +682,22 @@ export default function EmployeeTasksScreen() {
                       ) : null}
                     </View>
 
-                    <View className="items-end">
-                      <Text
-                        className="rounded-full px-2 py-1 text-[10px] font-semibold uppercase tracking-wide"
+                    <View className="items-end justify-between">
+                      <TouchableOpacity
+                        onPress={() => openStatusSheet(task)}
+                        activeOpacity={0.75}
+                        className="rounded-full px-2 py-1"
                         style={{
-                          color,
                           backgroundColor: `${color}15`,
                         }}
                       >
-                        {status}
-                      </Text>
+                        <Text
+                          className="text-[10px] font-semibold uppercase tracking-wide"
+                          style={{ color }}
+                        >
+                          {status}
+                        </Text>
+                      </TouchableOpacity>
                       <Text className="mt-2 text-[11px] text-slate-500">
                         {priority}
                       </Text>
@@ -630,6 +710,86 @@ export default function EmployeeTasksScreen() {
         )}
       </ScrollView>
       <BottomHome />
+
+      <Modal
+        visible={statusSheetVisible}
+        transparent
+        animationType="slide"
+        onRequestClose={closeStatusSheet}
+      >
+        <KeyboardAvoidingView
+          className="flex-1 justify-end"
+          behavior={Platform.OS === "ios" ? "padding" : "height"}
+        >
+          <Pressable
+            className="absolute inset-0 bg-black/40"
+            onPress={closeStatusSheet}
+          />
+          <View className="max-h-[70%] rounded-t-[28px] bg-white px-5 pb-8 pt-5">
+            <View className="mb-5 flex-row items-center justify-between">
+              <View>
+                <Text className="text-xl font-black text-slate-900">
+                  Update Status
+                </Text>
+                <Text className="mt-1 text-xs text-slate-500">
+                  {activeTask ? getTaskTitle(activeTask) : "Select a status"}
+                </Text>
+              </View>
+              <Pressable
+                accessibilityLabel="Close"
+                onPress={closeStatusSheet}
+                className="h-9 w-9 items-center justify-center rounded-full bg-slate-100"
+              >
+                <Ionicons name="close" size={20} color="#64748b" />
+              </Pressable>
+            </View>
+
+            <ScrollView
+              keyboardShouldPersistTaps="handled"
+              showsVerticalScrollIndicator={false}
+            >
+              {statusUpdateError ? (
+                <View className="mb-4 rounded-2xl border border-rose-200 bg-rose-50 p-4">
+                  <Text className="text-sm font-semibold text-rose-700">
+                    {statusUpdateError}
+                  </Text>
+                </View>
+              ) : null}
+              <Text className="mb-3 text-sm font-bold text-slate-600">
+                Pick a new status
+              </Text>
+              <View className="flex-row flex-wrap gap-3">
+                {statusOptions.map((value) => {
+                  const isActive = activeTask ? getTaskStatus(activeTask.status || activeTask.task_status || activeTask.current_status) === value : false;
+                  return (
+                    <TouchableOpacity
+                      key={value}
+                      onPress={() =>
+                        activeTask && updateTaskStatus(activeTask, value)
+                      }
+                      disabled={updatingStatus}
+                      className={`rounded-2xl border px-4 py-3 ${isActive ? "border-blue-500 bg-blue-50" : "border-slate-200 bg-white"}`}
+                    >
+                      <Text
+                        className={`text-xs font-bold ${isActive ? "text-blue-600" : "text-slate-700"}`}
+                      >
+                        {value}
+                      </Text>
+                    </TouchableOpacity>
+                  );
+                })}
+              </View>
+              <TouchableOpacity
+                onPress={closeStatusSheet}
+                disabled={updatingStatus}
+                className="mt-6 items-center rounded-2xl border border-slate-200 bg-white py-4"
+              >
+                <Text className="font-bold text-slate-700">Cancel</Text>
+              </TouchableOpacity>
+            </ScrollView>
+          </View>
+        </KeyboardAvoidingView>
+      </Modal>
     </View>
   );
 }
