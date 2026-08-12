@@ -67,6 +67,7 @@ const statusColors: Record<string, string> = {
   Completed: "#16a34a",
   "In Progress": "#2563eb",
   Pending: "#f97316",
+  "On Hold": "#ea580c",
 };
 
 const employeeReference = (user: Record<string, unknown> | null) => {
@@ -326,6 +327,12 @@ export default function EmployeeTasksScreen() {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState("");
+  const [taskSummary, setTaskSummary] = useState({
+    total: 0,
+    inProgress: 0,
+    completed: 0,
+    onHold: 0,
+  });
 
   const fetchTasks = useCallback(
     async (isRefresh = false) => {
@@ -352,7 +359,27 @@ export default function EmployeeTasksScreen() {
           return matchesEmployee;
         });
 
+        const summary = filtered.reduce(
+          (acc, task) => {
+            const status = getTaskStatus(
+              task.status || task.task_status || task.current_status,
+            );
+            acc.total += 1;
+            if (status === "In Progress") acc.inProgress += 1;
+            else if (status === "Completed") acc.completed += 1;
+            else if (status === "On Hold") acc.onHold += 1;
+            return acc;
+          },
+          {
+            total: 0,
+            inProgress: 0,
+            completed: 0,
+            onHold: 0,
+          },
+        );
+
         setTasks(filtered);
+        setTaskSummary(summary);
       } catch (requestError: any) {
         setError(requestError?.message || "Unable to load assigned tasks.");
         setTasks([]);
@@ -382,6 +409,50 @@ export default function EmployeeTasksScreen() {
           />
         }
       >
+        <View className="mb-5 rounded-2xl bg-white p-4 shadow-sm shadow-slate-200">
+          <View className="flex-row items-center justify-between">
+            <Text className="text-base font-bold text-slate-900">
+              Task summary
+            </Text>
+            <Text className="text-sm font-semibold text-slate-500">
+              Total {taskSummary.total}
+            </Text>
+          </View>
+          <View className="mt-4 flex-row flex-wrap gap-3">
+            <View className="flex-1 rounded-2xl border border-slate-200 bg-slate-50 p-3">
+              <Text className="text-2xl font-black text-slate-900">
+                {taskSummary.total}
+              </Text>
+              <Text className="mt-1 text-xs uppercase text-slate-500">
+                Total
+              </Text>
+            </View>
+            <View className="flex-1 rounded-2xl border border-slate-200 bg-slate-50 p-3">
+              <Text className="text-2xl font-black text-blue-700">
+                {taskSummary.inProgress}
+              </Text>
+              <Text className="mt-1 text-xs uppercase text-slate-500">
+                In Progress
+              </Text>
+            </View>
+            <View className="flex-1 rounded-2xl border border-slate-200 bg-slate-50 p-3">
+              <Text className="text-2xl font-black text-emerald-700">
+                {taskSummary.completed}
+              </Text>
+              <Text className="mt-1 text-xs uppercase text-slate-500">
+                Completed
+              </Text>
+            </View>
+            <View className="flex-1 rounded-2xl border border-slate-200 bg-slate-50 p-3">
+              <Text className="text-2xl font-black text-orange-700">
+                {taskSummary.onHold}
+              </Text>
+              <Text className="mt-1 text-xs uppercase text-slate-500">
+                On Hold
+              </Text>
+            </View>
+          </View>
+        </View>
         {loading ? (
           <View className="mt-8 items-center py-10">
             <ActivityIndicator size="large" color="#2563eb" />
