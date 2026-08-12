@@ -1286,6 +1286,201 @@ export default function ProjectPlansScreen() {
                   <Text className="font-black text-white">
                     {editPlanId ? "Save Changes" : "Save Project Plan"}
                   </Text>
+                  <ChoiceField
+                    label="Hosting included"
+                    value={form.hostingIncluded}
+                    options={["Yes", "No"]}
+                    onChange={(value) => updateForm("hostingIncluded", value)}
+                  />
+                </View>
+                <View className="flex-1">
+                  <ChoiceField
+                    label="Domain included"
+                    value={form.domainIncluded}
+                    options={["Yes", "No"]}
+                    onChange={(value) => updateForm("domainIncluded", value)}
+                  />
+                </View>
+              </View>
+              <FormField
+                label="Hosting type"
+                value={form.hostingType}
+                onChange={(value) => updateForm("hostingType", value)}
+              />
+              <View className="flex-row gap-3">
+                <View className="flex-1">
+                  <FormField
+                    label="Storage limit"
+                    value={form.storageLimit}
+                    onChange={(value) => updateForm("storageLimit", value)}
+                  />
+                </View>
+                <View className="flex-1">
+                  <FormField
+                    label="Bandwidth limit"
+                    value={form.bandwidthLimit}
+                    onChange={(value) => updateForm("bandwidthLimit", value)}
+                  />
+                </View>
+              </View>
+              <View className="flex-row gap-3">
+                <View className="flex-1">
+                  <FormField
+                    label="Domain extension"
+                    value={form.domainExtension}
+                    onChange={(value) => updateForm("domainExtension", value)}
+                  />
+                </View>
+                <View className="flex-1">
+                  <FormField
+                    label="Response SLA"
+                    value={form.responseSla}
+                    onChange={(value) => updateForm("responseSla", value)}
+                  />
+                </View>
+              </View>
+
+              <Text className="mb-3 mt-3 text-sm font-black text-slate-900">
+                Modules
+              </Text>
+              {form.modules.map((module, index) => (
+                <View
+                  key={`${module.title}-${index}`}
+                  className="mb-2 rounded-2xl border border-slate-200 p-3"
+                >
+                  <View className="flex-row items-center justify-between">
+                    <Text className="font-bold text-slate-900">
+                      {module.title}
+                    </Text>
+                    <TouchableOpacity
+                      onPress={() =>
+                        setForm((current) => ({
+                          ...current,
+                          modules: current.modules.filter(
+                            (_, moduleIndex) => moduleIndex !== index,
+                          ),
+                          includedModules: current.includedModules.filter(
+                            (item) => item !== module.title,
+                          ),
+                        }))
+                      }
+                    >
+                      <Ionicons
+                        name="trash-outline"
+                        size={17}
+                        color="#ef4444"
+                      />
+                    </TouchableOpacity>
+                  </View>
+                  <Text className="mt-1 text-xs text-slate-500">
+                    {module.duration}
+                    {module.description ? ` - ${module.description}` : ""}
+                  </Text>
+                </View>
+              ))}
+              <View className="rounded-2xl border border-dashed border-slate-300 p-3">
+                <FormField
+                  label="Module title"
+                  value={newModule.title}
+                  onChange={(value) =>
+                    setNewModule((current) => ({ ...current, title: value }))
+                  }
+                />
+                <View className="flex-row gap-3">
+                  <View className="flex-1">
+                    <FormField
+                      label="Duration"
+                      value={newModule.duration}
+                      onChange={(value) =>
+                        setNewModule((current) => ({
+                          ...current,
+                          duration: value,
+                        }))
+                      }
+                      keyboardType="numeric"
+                    />
+                  </View>
+                  <View className="flex-1">
+                    <SelectField
+                      label="Duration unit"
+                      value={newModule.durationType}
+                      options={["Hours", "Days", "Weeks", "Months", "Years"]}
+                      onChange={(value) =>
+                        setNewModule((current) => ({
+                          ...current,
+                          durationType: value,
+                        }))
+                      }
+                    />
+                  </View>
+                </View>
+                <FormField
+                  label="Description"
+                  value={newModule.description}
+                  onChange={(value) =>
+                    setNewModule((current) => ({
+                      ...current,
+                      description: value,
+                    }))
+                  }
+                  multiline
+                />
+                <TouchableOpacity
+                  onPress={chooseModuleDocument}
+                  className="mb-3 flex-row items-center rounded-2xl border border-dashed border-slate-300 bg-slate-50 p-3"
+                >
+                  <View className="mr-3 h-9 w-9 items-center justify-center rounded-xl bg-orange-100">
+                    <Ionicons
+                      name="cloud-upload-outline"
+                      size={19}
+                      color="#f97316"
+                    />
+                  </View>
+                  <View className="flex-1">
+                    <Text className="font-bold text-slate-800">
+                      Upload module document
+                    </Text>
+                    <Text className="mt-0.5 text-xs text-slate-500">
+                      PDF, DOC, XLS, TXT
+                    </Text>
+                    {newModule.documentName ? (
+                      <Text className="mt-0.5 text-xs font-bold text-emerald-600">
+                        {newModule.documentName}
+                      </Text>
+                    ) : null}
+                  </View>
+                  <Ionicons name="chevron-forward" size={17} color="#94a3b8" />
+                </TouchableOpacity>
+                <TouchableOpacity
+                  onPress={addModule}
+                  className="items-center rounded-xl bg-slate-800 py-3"
+                >
+                  <Text className="text-xs font-bold text-white">
+                    Add module
+                  </Text>
+                </TouchableOpacity>
+              </View>
+
+              <Text className="mb-3 mt-3 text-sm font-black text-slate-900">
+                Status
+              </Text>
+              <ChoiceField
+                label="Plan status"
+                value={form.status}
+                options={statuses}
+                onChange={(value) => updateForm("status", value)}
+              />
+              <TouchableOpacity
+                disabled={saving}
+                onPress={savePlan}
+                className="mb-3 mt-3 items-center rounded-2xl bg-orange-500 py-4 disabled:opacity-60"
+              >
+                {saving ? (
+                  <ActivityIndicator color="#fff" />
+                ) : (
+                  <Text className="font-black text-white">
+                    {editPlanId ? "Save Changes" : "Save Project Plan"}
+                  </Text>
                 )}
               </TouchableOpacity>
             </ScrollView>
@@ -1293,6 +1488,5 @@ export default function ProjectPlansScreen() {
         </View>
         </Modal>
       </SafeAreaView>
-    </>
   );
 }
