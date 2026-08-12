@@ -237,6 +237,7 @@ export default function TasksScreen() {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("All");
+  const [dateFilter, setDateFilter] = useState("All");
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState("");
@@ -252,6 +253,7 @@ export default function TasksScreen() {
   const [updatingStatus, setUpdatingStatus] = useState(false);
   const [statusUpdateError, setStatusUpdateError] = useState("");
   const [statusDropdownOpen, setStatusDropdownOpen] = useState(false);
+  const [dateDropdownOpen, setDateDropdownOpen] = useState(false);
 
   // Reason prompt for Cancelled / Issue
   const [pendingStatus, setPendingStatus] = useState<string | null>(null);
@@ -599,17 +601,57 @@ export default function TasksScreen() {
 
   const filteredTasks = useMemo(() => {
     const query = search.trim().toLowerCase();
+    
+    // Helper to check date filters
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const yesterday = new Date(today);
+    yesterday.setDate(today.getDate() - 1);
+    
+    const startOfWeek = new Date(today);
+    startOfWeek.setDate(today.getDate() - today.getDay());
+    const endOfWeek = new Date(today);
+    endOfWeek.setDate(today.getDate() + (6 - today.getDay()));
+    
+    const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+    const endOfMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+    
+    const startOfLastMonth = new Date(today.getFullYear(), today.getMonth() - 1, 1);
+    const endOfLastMonth = new Date(today.getFullYear(), today.getMonth(), 0);
+
     return tasks.filter((task) => {
-      const matchesStatus =
-        statusFilter === "All" || task.status === statusFilter;
-      const matchesSearch =
-        !query ||
-        [task.title, task.project, task.assignee, task.priority].some((value) =>
-          value.toLowerCase().includes(query),
-        );
-      return matchesStatus && matchesSearch;
+      const matchesStatus = statusFilter === "All" || task.status === statusFilter;
+      const matchesSearch = !query || [task.title, task.project, task.assignee, task.priority].some((value) =>
+        value.toLowerCase().includes(query),
+      );
+      
+      let matchesDate = true;
+      if (dateFilter !== "All" && task.date && task.date !== "No due date") {
+        const taskDate = new Date(task.date);
+        taskDate.setHours(0, 0, 0, 0);
+        
+        switch (dateFilter) {
+          case "Today":
+            matchesDate = taskDate.getTime() === today.getTime();
+            break;
+          case "Yesterday":
+            matchesDate = taskDate.getTime() === yesterday.getTime();
+            break;
+          case "This Week":
+            matchesDate = taskDate >= startOfWeek && taskDate <= endOfWeek;
+            break;
+          case "This Month":
+            matchesDate = taskDate >= startOfMonth && taskDate <= endOfMonth;
+            break;
+          case "Last Month":
+            matchesDate = taskDate >= startOfLastMonth && taskDate <= endOfLastMonth;
+            break;
+        }
+      }
+
+      return matchesStatus && matchesSearch && matchesDate;
     });
-  }, [search, statusFilter, tasks]);
+  }, [search, statusFilter, dateFilter, tasks]);
 
   const stats = useMemo(() => {
     const total = tasks.length;
@@ -708,9 +750,9 @@ export default function TasksScreen() {
           ))}
         </View>
 
-        <View className="mb-6 flex-row items-center gap-3 px-5">
-          {/* Search - 3/4 */}
-          <View className="flex-[3] flex-row items-center rounded-2xl border border-slate-200 bg-white px-4 py-1 shadow-sm">
+        <View className="mb-4 flex-row items-center gap-3 px-5">
+          {/* Search */}
+          <View className="flex-1 flex-row items-center rounded-2xl border border-slate-200 bg-white px-4 py-1 shadow-sm">
             <Ionicons name="search" size={20} color="#94a3b8" />
 
             <TextInput
@@ -721,11 +763,13 @@ export default function TasksScreen() {
               className="ml-2 flex-1 text-sm font-medium text-slate-800"
             />
           </View>
+        </View>
 
-          {/* All Tasks - 1/4 */}
+        <View className="mb-6 flex-row items-center gap-3 px-5">
+          {/* Status Dropdown */}
           <Pressable
             onPress={() => setStatusDropdownOpen(true)}
-            className="flex-1 h-12 py-4 rounded-2xl border border-slate-200 bg-white px-3 flex-row items-center justify-between"
+            className="flex-1 h-12 py-4 rounded-2xl border border-slate-200 bg-white px-3 flex-row items-center justify-between shadow-sm"
           >
             <Text
               className="text-xs font-medium text-slate-700"
@@ -734,11 +778,22 @@ export default function TasksScreen() {
               {statusFilter === "All" ? "All Tasks" : statusFilter}
             </Text>
 
-            <Ionicons
-              name="chevron-down"
-              size={16}
-              color="#64748b"
-            />
+            <Ionicons name="chevron-down" size={16} color="#64748b" />
+          </Pressable>
+
+          {/* Date Dropdown */}
+          <Pressable
+            onPress={() => setDateDropdownOpen(true)}
+            className="flex-1 h-12 py-4 rounded-2xl border border-slate-200 bg-white px-3 flex-row items-center justify-between shadow-sm"
+          >
+            <Text
+              className="text-xs font-medium text-slate-700"
+              numberOfLines={1}
+            >
+              {dateFilter === "All" ? "All Dates" : dateFilter}
+            </Text>
+
+            <Ionicons name="chevron-down" size={16} color="#64748b" />
           </Pressable>
         </View>
 
@@ -771,6 +826,43 @@ export default function TasksScreen() {
                   >
                     <Text className={`text-sm ${statusFilter === filter ? "font-bold text-orange-500" : "text-slate-700"}`}>
                       {filter === "All" ? "All Tasks" : filter}
+                    </Text>
+                  </Pressable>
+                ))}
+              </ScrollView>
+            </Pressable>
+          </Pressable>
+        </Modal>
+
+        <Modal
+          visible={dateDropdownOpen}
+          transparent
+          animationType="fade"
+          onRequestClose={() => setDateDropdownOpen(false)}
+        >
+          <Pressable
+            className="flex-1 bg-black/40 justify-center px-8"
+            onPress={() => setDateDropdownOpen(false)}
+          >
+            <Pressable
+              className="bg-white rounded-2xl overflow-hidden max-h-[70%]"
+              onPress={(e) => e.stopPropagation()}
+            >
+              <Text className="px-5 py-4 text-base font-bold text-slate-900 border-b border-slate-100">
+                Select Date
+              </Text>
+              <ScrollView>
+                {["All", "Today", "Yesterday", "This Week", "This Month", "Last Month"].map((filter) => (
+                  <Pressable
+                    key={filter}
+                    onPress={() => {
+                      setDateFilter(filter);
+                      setDateDropdownOpen(false);
+                    }}
+                    className="px-5 py-4 border-b border-slate-100"
+                  >
+                    <Text className={`text-sm ${dateFilter === filter ? "font-bold text-orange-500" : "text-slate-700"}`}>
+                      {filter === "All" ? "All Dates" : filter}
                     </Text>
                   </Pressable>
                 ))}
