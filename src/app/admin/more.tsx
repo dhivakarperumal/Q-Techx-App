@@ -298,7 +298,7 @@ export default function MoreScreen() {
         </View>
 
         {/* ── MENU ITEMS ── */}
-        <View className="mx-5 mt-6 bg-white rounded-[24px] border border-slate-100 shadow-sm overflow-hidden mb-6">
+        {/* <View className="mx-5 mt-6 bg-white rounded-[24px] border border-slate-100 shadow-sm overflow-hidden mb-6">
           <Text
             style={{
               fontSize: 11,
@@ -336,7 +336,7 @@ export default function MoreScreen() {
               <Ionicons name="chevron-forward" size={18} color="#cbd5e1" />
             </Pressable>
           ))}
-        </View>
+        </View> */}
 
         {/* ── LOG OUT ── */}
         <View className="mx-5">
