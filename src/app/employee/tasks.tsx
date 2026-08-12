@@ -14,6 +14,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import DateTimePicker from "@react-native-community/datetimepicker";
 import api from "../../api";
 import { useAuth } from "../../auth/AuthContext";
 import { BottomHome } from "../../components/BottomHome";
@@ -72,6 +73,7 @@ type ApiTask = {
 
 const statusColors: Record<string, string> = {
   Pending: "#f97316",
+  "To Do": "#f97316",
   Accepted: "#10b981",
   "In Progress": "#2563eb",
   Review: "#7c3aed",
@@ -82,8 +84,10 @@ const statusColors: Record<string, string> = {
   Issue: "#f97316",
 };
 
-const statusOptions = [
+const statusFilters = [
+  "All",
   "Pending",
+  "To Do",
   "Accepted",
   "In Progress",
   "Review",
@@ -93,6 +97,9 @@ const statusOptions = [
   "Cancelled",
   "Issue",
 ];
+
+// Options for status change sheet (exclude the 'All' filter)
+const statusOptions = statusFilters.filter((s) => s !== "All");
 
 const employeeReference = (user: Record<string, unknown> | null) => {
   if (!user) return "";
@@ -405,6 +412,21 @@ export default function EmployeeTasksScreen() {
     onHold: 0,
   });
 
+  // Filters State
+  const [search, setSearch] = useState("");
+  const [statusFilter, setStatusFilter] = useState("All");
+  const [dateFilter, setDateFilter] = useState("All");
+  
+  const [statusDropdownOpen, setStatusDropdownOpen] = useState(false);
+  const [dateDropdownOpen, setDateDropdownOpen] = useState(false);
+  
+  // Custom Date Range State
+  const [customRangeVisible, setCustomRangeVisible] = useState(false);
+  const [customStart, setCustomStart] = useState("");
+  const [customEnd, setCustomEnd] = useState("");
+  const [customPickerField, setCustomPickerField] = useState<"start" | "end" | null>(null);
+  const [showCustomDatePicker, setShowCustomDatePicker] = useState(false);
+
   const [activeTask, setActiveTask] = useState<ApiTask | null>(null);
   const [statusSheetVisible, setStatusSheetVisible] = useState(false);
   const [updatingStatus, setUpdatingStatus] = useState(false);
@@ -506,6 +528,23 @@ export default function EmployeeTasksScreen() {
     }
   };
 
+  const handleCustomDatePickerChange = (event: any, selectedDate?: Date) => {
+    if (event?.type === "dismissed") {
+      setShowCustomDatePicker(false);
+      setCustomPickerField(null);
+      return;
+    }
+
+    const chosenDate = selectedDate ?? new Date();
+    const isoDate = chosenDate.toISOString().slice(0, 10);
+
+    if (customPickerField === "start") setCustomStart(isoDate);
+    if (customPickerField === "end") setCustomEnd(isoDate);
+
+    setShowCustomDatePicker(false);
+    setCustomPickerField(null);
+  };
+
   const fetchTasks = useCallback(
     async (isRefresh = false) => {
       try {
@@ -570,6 +609,77 @@ export default function EmployeeTasksScreen() {
     fetchTasks();
   }, [fetchTasks]);
 
+  const filteredTasks = (() => {
+    const query = search.trim().toLowerCase();
+    
+    // Helper to check date filters
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const yesterday = new Date(today);
+    yesterday.setDate(today.getDate() - 1);
+    
+    const startOfWeek = new Date(today);
+    startOfWeek.setDate(today.getDate() - today.getDay());
+    const endOfWeek = new Date(today);
+    endOfWeek.setDate(today.getDate() + (6 - today.getDay()));
+    
+    const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+    const endOfMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+    
+    const startOfLastMonth = new Date(today.getFullYear(), today.getMonth() - 1, 1);
+    const endOfLastMonth = new Date(today.getFullYear(), today.getMonth(), 0);
+
+    return tasks.filter((task) => {
+      const status = getTaskStatus(task.status || task.task_status || task.current_status);
+      const matchesStatus = statusFilter === "All" || status === statusFilter;
+      const title = getTaskTitle(task);
+      const project = getTaskProjectName(task);
+      const priority = String(task.priority || task.task_priority || "Medium");
+      
+      const matchesSearch = !query || [title, project, priority].some((value) =>
+        value.toLowerCase().includes(query),
+      );
+      
+      let matchesDate = true;
+      const taskDateRaw = task.due_date || task.dueDate || task.deadline || task.start_date || task.startDate;
+      if (dateFilter !== "All" && taskDateRaw) {
+        const taskDate = new Date(String(taskDateRaw));
+        if (!Number.isNaN(taskDate.getTime())) {
+          taskDate.setHours(0, 0, 0, 0);
+          
+          switch (dateFilter) {
+            case "Today":
+              matchesDate = taskDate.getTime() === today.getTime();
+              break;
+            case "Yesterday":
+              matchesDate = taskDate.getTime() === yesterday.getTime();
+              break;
+            case "This Week":
+              matchesDate = taskDate >= startOfWeek && taskDate <= endOfWeek;
+              break;
+            case "This Month":
+              matchesDate = taskDate >= startOfMonth && taskDate <= endOfMonth;
+              break;
+            case "Last Month":
+              matchesDate = taskDate >= startOfLastMonth && taskDate <= endOfLastMonth;
+              break;
+            case "Custom Range":
+              if (customStart && customEnd) {
+                const cs = new Date(customStart);
+                cs.setHours(0, 0, 0, 0);
+                const ce = new Date(customEnd);
+                ce.setHours(23, 59, 59, 999);
+                matchesDate = taskDate >= cs && taskDate <= ce;
+              }
+              break;
+          }
+        }
+      }
+
+      return matchesStatus && matchesSearch && matchesDate;
+    });
+  })();
+
   return (
     <View className="flex-1 bg-slate-50">
       <TopHeader title="Tasks" subtitle="Your assigned work" />
@@ -628,6 +738,54 @@ export default function EmployeeTasksScreen() {
             </View>
           </View>
         </View>
+
+        {/* Filter & Search Bar */}
+        <View className="mb-4 flex-row items-center gap-3">
+          {/* Search */}
+          <View className="flex-1 flex-row items-center rounded-2xl border border-slate-200 bg-white px-4 py-1 shadow-sm shadow-slate-100">
+            <Ionicons name="search" size={20} color="#94a3b8" />
+            <TextInput
+              value={search}
+              onChangeText={setSearch}
+              placeholder="Search assigned tasks..."
+              placeholderTextColor="#94a3b8"
+              className="ml-2 flex-1 text-sm font-medium text-slate-800"
+            />
+          </View>
+        </View>
+
+        <View className="mb-6 flex-row items-center gap-3">
+          {/* Status Dropdown */}
+          <Pressable
+            onPress={() => setStatusDropdownOpen(true)}
+            className="flex-1 h-12 py-4 rounded-2xl border border-slate-200 bg-white px-3 flex-row items-center justify-between shadow-sm shadow-slate-100"
+          >
+            <Text
+              className="text-xs font-medium text-slate-700"
+              numberOfLines={1}
+            >
+              {statusFilter === "All" ? "All Tasks" : statusFilter}
+            </Text>
+            <Ionicons name="chevron-down" size={16} color="#64748b" />
+          </Pressable>
+
+          {/* Date Dropdown */}
+          <Pressable
+            onPress={() => setDateDropdownOpen(true)}
+            className="flex-1 h-12 py-4 rounded-2xl border border-slate-200 bg-white px-3 flex-row items-center justify-between shadow-sm shadow-slate-100"
+          >
+            <Text
+              className="text-xs font-medium text-slate-700"
+              numberOfLines={1}
+            >
+              {dateFilter === "Custom Range" && customStart && customEnd 
+                ? `${new Date(customStart).toLocaleDateString(undefined, {month: "short", day: "numeric"})} - ${new Date(customEnd).toLocaleDateString(undefined, {month: "short", day: "numeric"})}`
+                : dateFilter === "All" ? "All Dates" : dateFilter}
+            </Text>
+            <Ionicons name="chevron-down" size={16} color="#64748b" />
+          </Pressable>
+        </View>
+
         {loading ? (
           <View className="mt-8 items-center py-10">
             <ActivityIndicator size="large" color="#2563eb" />
@@ -639,15 +797,15 @@ export default function EmployeeTasksScreen() {
           <View className="mt-6 rounded-2xl border border-rose-200 bg-rose-50 p-5">
             <Text className="font-semibold text-rose-700">{error}</Text>
           </View>
-        ) : tasks.length === 0 ? (
+        ) : filteredTasks.length === 0 ? (
           <View className="mt-6 rounded-2xl border border-dashed border-slate-300 bg-white p-5">
             <Text className="text-center text-sm text-slate-500">
-              No assigned tasks right now.
+              No tasks found for the selected filters.
             </Text>
           </View>
         ) : (
           <View className="mt-6 gap-3">
-            {tasks.map((task, index) => {
+            {filteredTasks.map((task, index) => {
               const title = getTaskTitle(task);
               const project = getTaskProjectName(task);
               const moduleName = getTaskModuleName(task);
@@ -754,6 +912,165 @@ export default function EmployeeTasksScreen() {
         )}
       </ScrollView>
       <BottomHome />
+
+      <Modal
+        visible={statusDropdownOpen}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setStatusDropdownOpen(false)}
+      >
+        <Pressable
+          className="flex-1 bg-black/40 justify-center px-8"
+          onPress={() => setStatusDropdownOpen(false)}
+        >
+          <Pressable
+            className="bg-white rounded-2xl overflow-hidden max-h-[70%]"
+            onPress={(e) => e.stopPropagation()}
+          >
+            <Text className="px-5 py-4 text-base font-bold text-slate-900 border-b border-slate-100">
+              Select Status
+            </Text>
+            <ScrollView>
+              {statusFilters.map((filter) => (
+                <Pressable
+                  key={filter}
+                  onPress={() => {
+                    setStatusFilter(filter);
+                    setStatusDropdownOpen(false);
+                  }}
+                  className="px-5 py-4 border-b border-slate-100"
+                >
+                  <Text className={`text-sm ${statusFilter === filter ? "font-bold text-blue-600" : "text-slate-700"}`}>
+                    {filter === "All" ? "All Tasks" : filter}
+                  </Text>
+                </Pressable>
+              ))}
+            </ScrollView>
+          </Pressable>
+        </Pressable>
+      </Modal>
+
+      <Modal
+        visible={dateDropdownOpen}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setDateDropdownOpen(false)}
+      >
+        <Pressable
+          className="flex-1 bg-black/40 justify-center px-8"
+          onPress={() => setDateDropdownOpen(false)}
+        >
+          <Pressable
+            className="bg-white rounded-2xl overflow-hidden max-h-[70%]"
+            onPress={(e) => e.stopPropagation()}
+          >
+            <Text className="px-5 py-4 text-base font-bold text-slate-900 border-b border-slate-100">
+              Select Date
+            </Text>
+            <ScrollView>
+              {["All", "Today", "Yesterday", "This Week", "This Month", "Last Month", "Custom Range"].map((filter) => (
+                <Pressable
+                  key={filter}
+                  onPress={() => {
+                    setDateFilter(filter);
+                    setDateDropdownOpen(false);
+                    if (filter === "Custom Range") {
+                      setCustomRangeVisible(true);
+                    }
+                  }}
+                  className="px-5 py-4 border-b border-slate-100"
+                >
+                  <Text className={`text-sm ${dateFilter === filter ? "font-bold text-blue-600" : "text-slate-700"}`}>
+                    {filter === "All" ? "All Dates" : filter}
+                  </Text>
+                </Pressable>
+              ))}
+            </ScrollView>
+          </Pressable>
+        </Pressable>
+      </Modal>
+
+      {/* Custom Range Selection Modal */}
+      <Modal
+        visible={customRangeVisible}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setCustomRangeVisible(false)}
+      >
+        <View className="flex-1 bg-black/40 justify-center px-8">
+          <View className="bg-white rounded-2xl overflow-hidden p-6">
+            <Text className="text-lg font-bold text-slate-900 mb-4">Select Date Range</Text>
+            
+            <View className="mb-4">
+              <Text className="text-sm font-medium text-slate-700 mb-1">Start Date</Text>
+              <Pressable
+                onPress={() => {
+                  setCustomPickerField("start");
+                  setShowCustomDatePicker(true);
+                }}
+                className="h-12 rounded-xl border border-slate-200 bg-slate-50 px-4 flex-row items-center justify-between"
+              >
+                <Text className={`text-sm ${customStart ? "text-slate-900" : "text-slate-400"}`}>
+                  {customStart || "Select start date"}
+                </Text>
+                <Ionicons name="calendar-outline" size={20} color="#94a3b8" />
+              </Pressable>
+            </View>
+
+            <View className="mb-6">
+              <Text className="text-sm font-medium text-slate-700 mb-1">End Date</Text>
+              <Pressable
+                onPress={() => {
+                  setCustomPickerField("end");
+                  setShowCustomDatePicker(true);
+                }}
+                className="h-12 rounded-xl border border-slate-200 bg-slate-50 px-4 flex-row items-center justify-between"
+              >
+                <Text className={`text-sm ${customEnd ? "text-slate-900" : "text-slate-400"}`}>
+                  {customEnd || "Select end date"}
+                </Text>
+                <Ionicons name="calendar-outline" size={20} color="#94a3b8" />
+              </Pressable>
+            </View>
+
+            <View className="flex-row gap-3">
+              <TouchableOpacity
+                onPress={() => {
+                  setCustomRangeVisible(false);
+                  if (!customStart || !customEnd) {
+                    setDateFilter("All");
+                  }
+                }}
+                className="flex-1 h-12 items-center justify-center rounded-xl bg-slate-100"
+              >
+                <Text className="font-bold text-slate-700">Cancel</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                onPress={() => setCustomRangeVisible(false)}
+                disabled={!customStart || !customEnd}
+                className={`flex-1 h-12 items-center justify-center rounded-xl ${
+                  customStart && customEnd ? "bg-blue-600" : "bg-blue-300"
+                }`}
+              >
+                <Text className="font-bold text-white">Apply</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
+
+      {showCustomDatePicker && (
+        <DateTimePicker
+          value={
+            customPickerField === "start"
+              ? (customStart ? new Date(customStart) : new Date())
+              : (customEnd ? new Date(customEnd) : new Date())
+          }
+          mode="date"
+          display="default"
+          onChange={handleCustomDatePickerChange}
+        />
+      )}
 
       <Modal
         visible={statusSheetVisible}
