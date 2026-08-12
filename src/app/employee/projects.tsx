@@ -98,10 +98,28 @@ function StatusBadge({ status }: { status?: string }) {
   );
 }
 
+const getProgress = (proj: any) => {
+  const raw =
+    proj?.progress ??
+    proj?.project_progress ??
+    proj?.progress_percentage ??
+    proj?.progressPercent ??
+    proj?.progress_percent ??
+    proj?.completion ??
+    proj?.completion_percentage ??
+    proj?.overall_progress ??
+    proj?.overallProgress ??
+    0;
+  const n = Number(raw);
+  if (!Number.isFinite(n)) return 0;
+  return Math.min(100, Math.max(0, Math.round(n)));
+};
+
 export default function EmployeeProjectsScreen() {
   const router = useRouter();
   const { user } = useAuth();
   const [assignedProjects, setAssignedProjects] = useState<Project[]>([]);
+  const [progressMap, setProgressMap] = useState<Record<string, number>>({});
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState("All");
   const [loading, setLoading] = useState(true);
@@ -144,6 +162,46 @@ export default function EmployeeProjectsScreen() {
         );
 
         setAssignedProjects(assigned);
+
+        // Fetch all tasks to compute progress (completed / total per project)
+        let globalTasks: any[] = [];
+        try {
+          const globalRes = await api.get("/tasks?limit=1000&page=1");
+          const payload = globalRes.data;
+          const extractRows = (p: any): any[] => {
+            if (Array.isArray(p)) return p;
+            if (p && typeof p === "object") {
+              for (const key of ["data", "tasks", "rows", "results", "list"]) {
+                if (Array.isArray(p[key])) return p[key];
+              }
+            }
+            return [];
+          };
+          globalTasks = extractRows(payload);
+        } catch (_) {}
+
+        const newProgressMap: Record<string, number> = {};
+        assigned.forEach((p) => {
+          const projectTasks = globalTasks.filter((t: any) => {
+            const tProjId = String(t.project_id ?? t.projectId ?? t.project?.id ?? "");
+            const tProjUuid = String(t.project_uuid ?? t.project?.uuid ?? t.project ?? "");
+            const tProjName = String(t.project_name ?? t.projectName ?? t.project?.name ?? "").toLowerCase();
+            return (
+              tProjId === String(p.id) ||
+              tProjUuid === p.uuid ||
+              (p.project_name && tProjName === p.project_name.toLowerCase())
+            );
+          });
+          if (projectTasks.length > 0) {
+            const done = projectTasks.filter(
+              (t: any) => (t.status ?? t.task_status ?? "").toLowerCase() === "completed"
+            ).length;
+            newProgressMap[p.uuid] = Math.round((done / projectTasks.length) * 100);
+          } else {
+            newProgressMap[p.uuid] = 0;
+          }
+        });
+        setProgressMap(newProgressMap);
       } catch (requestError: any) {
         setError(requestError?.message || "Unable to load assigned projects.");
       } finally {
@@ -370,6 +428,49 @@ export default function EmployeeProjectsScreen() {
                           : "Project progress is being tracked"}
                       </Text>
                     </View>
+                  </View>
+                  <View className="px-4 pb-4">
+                    {(() => {
+                      const pct =
+                        progressMap[project.uuid] ?? getProgress(project);
+                      const barColor =
+                        pct >= 100
+                          ? "#10b981"
+                          : pct >= 50
+                            ? "#2563eb"
+                            : "#f97316";
+                      return (
+                        <>
+                          <View className="mb-2 flex-row items-center justify-between">
+                            <View className="flex-row items-center">
+                              <Ionicons
+                                name="pulse-outline"
+                                size={13}
+                                color="#64748b"
+                              />
+                              <Text className="ml-1 text-xs font-semibold text-slate-500">
+                                Progress
+                              </Text>
+                            </View>
+                            <Text
+                              className="text-xs font-black"
+                              style={{ color: barColor }}
+                            >
+                              {pct}%
+                            </Text>
+                          </View>
+                          <View className="mb-3 h-2.5 overflow-hidden rounded-full bg-slate-100">
+                            <View
+                              className="h-full rounded-full"
+                              style={{
+                                width: pct > 0 ? `${pct}%` : "4%",
+                                backgroundColor: barColor,
+                              }}
+                            />
+                          </View>
+                        </>
+                      );
+                    })()}
                   </View>
                 </View>
               </Pressable>
