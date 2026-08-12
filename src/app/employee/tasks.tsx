@@ -66,10 +66,15 @@ type ApiTask = {
 };
 
 const statusColors: Record<string, string> = {
-  Completed: "#16a34a",
-  "In Progress": "#2563eb",
   Pending: "#f97316",
+  Accepted: "#10b981",
+  "In Progress": "#2563eb",
+  Review: "#7c3aed",
+  Testing: "#8b5cf6",
+  Completed: "#16a34a",
   "On Hold": "#ea580c",
+  Cancelled: "#e11d48",
+  Issue: "#f97316",
 };
 
 const employeeReference = (user: Record<string, unknown> | null) => {
@@ -93,14 +98,38 @@ const employeeReference = (user: Record<string, unknown> | null) => {
 const getTaskStatus = (value?: string | number | null) => {
   const status = String(value || "Pending")
     .trim()
-    .toLowerCase();
+    .toLowerCase()
+    .replace(/[_-]+/g, " ")
+    .replace(/\s+/g, " ");
+
   if (["done", "complete", "completed", "finished"].includes(status)) {
     return "Completed";
   }
   if (["in progress", "inprogress", "ongoing", "started"].includes(status)) {
     return "In Progress";
   }
-  return "Pending";
+  if (["accepted", "approved"].includes(status)) {
+    return "Accepted";
+  }
+  if (["review", "in review"].includes(status)) {
+    return "Review";
+  }
+  if (["testing", "test"].includes(status)) {
+    return "Testing";
+  }
+  if (["on hold", "hold"].includes(status)) {
+    return "On Hold";
+  }
+  if (["cancelled", "canceled"].includes(status)) {
+    return "Cancelled";
+  }
+  if (["issue", "problem"].includes(status)) {
+    return "Issue";
+  }
+  if (status === "pending") {
+    return "Pending";
+  }
+  return String(value).trim() || "Pending";
 };
 
 const getDueText = (value?: string | number | null) => {
@@ -164,12 +193,24 @@ const buildTaskRecord = (row: any, details: any = {}): any => ({
   ...details,
   assigned_to:
     row?.assigned_to ??
-    row?.employee_id ??
     row?.assigned_employee_id ??
+    row?.employee_id ??
+    row?.assigned_to_id ??
     row?.employeeId ??
-    details?.assigned_to,
+    row?.user_id ??
+    details?.assigned_to ??
+    details?.assigned_employee_id ??
+    details?.employee_id ??
+    details?.assigned_to_id ??
+    details?.employeeId ??
+    details?.user_id,
   assigned_to_name:
-    row?.assigned_to_name ?? row?.assigned_to_name ?? details?.assigned_to_name,
+    row?.assigned_to_name ??
+    details?.assigned_to_name ??
+    row?.employee_name ??
+    details?.employee_name ??
+    row?.name ??
+    details?.name,
   assigned_by: row?.assigned_by ?? details?.assigned_by ?? row?.assigned_by,
   assignment_date:
     row?.assignment_date ?? details?.assignment_date ?? row?.assignment_date,
@@ -262,14 +303,24 @@ const normalizeTask = (row: any): ApiTask => {
       row?.status ??
       taskDetails?.status ??
       row?.task_status ??
-      row?.current_status,
+      row?.current_status ??
+      taskDetails?.task_status ??
+      taskDetails?.current_status,
     priority: row?.priority ?? taskDetails?.priority ?? row?.task_priority,
+    uuid: String(row?.uuid ?? row?.task_uuid ?? row?.id ?? row?.task_id ?? ""),
     assigned_to:
       row?.assigned_to ??
-      row?.employee_id ??
       row?.assigned_employee_id ??
+      row?.employee_id ??
+      row?.assigned_to_id ??
       row?.employeeId ??
-      taskDetails?.assigned_to,
+      row?.user_id ??
+      taskDetails?.assigned_to ??
+      taskDetails?.assigned_employee_id ??
+      taskDetails?.employee_id ??
+      taskDetails?.assigned_to_id ??
+      taskDetails?.employeeId ??
+      taskDetails?.user_id,
   };
 };
 
@@ -352,14 +403,17 @@ export default function EmployeeTasksScreen() {
         const filtered = rows.filter((task) => {
           const assignedEmployeeId = String(
             task.assigned_to ??
-              task.employee_id ??
               task.assigned_employee_id ??
+              task.employee_id ??
               task.employeeId ??
+              task.user_id ??
               "",
           );
-          const matchesEmployee =
-            !assignedEmployeeId || assignedEmployeeId === String(employeeId);
-          return matchesEmployee;
+          return (
+            assignedEmployeeId &&
+            employeeId &&
+            assignedEmployeeId === String(employeeId)
+          );
         });
 
         const summary = filtered.reduce(
@@ -498,8 +552,12 @@ export default function EmployeeTasksScreen() {
 
               return (
                 <Pressable
-                  key={`${title}-${index}`}
-                  onPress={() => router.push(`/employee/task/${task.id || task.task_id}`)}
+                  key={`${task.uuid || task.id || task.task_id || index}`}
+                  onPress={() =>
+                    router.push(
+                      `/employee/task/${task.uuid || task.id || task.task_id}`,
+                    )
+                  }
                   className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm shadow-slate-200 active:bg-slate-50"
                 >
                   <View className="flex-row items-start">

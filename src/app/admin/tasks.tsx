@@ -3,18 +3,18 @@ import DateTimePicker from "@react-native-community/datetimepicker";
 import * as DocumentPicker from "expo-document-picker";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import {
-    ActivityIndicator,
-    Image,
-    KeyboardAvoidingView,
-    Modal,
-    Platform,
-    Pressable,
-    RefreshControl,
-    ScrollView,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View,
+  ActivityIndicator,
+  Image,
+  KeyboardAvoidingView,
+  Modal,
+  Platform,
+  Pressable,
+  RefreshControl,
+  ScrollView,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
 } from "react-native";
 
 import api, { API_BASE_URL } from "../../api";
@@ -36,20 +36,42 @@ type Task = {
 
 type ProjectOption = { id: string; name: string; code: string };
 type EmployeeOption = { id: string; name: string; role?: string };
-type PlanModule = { title: string; duration?: string; description?: string; documentName?: string };
+type PlanModule = {
+  title: string;
+  duration?: string;
+  description?: string;
+  documentName?: string;
+};
 
-const statusFilters = ["All", "In Progress", "Completed", "Pending"];
+const statusOptions = [
+  "Pending",
+  "Accepted",
+  "In Progress",
+  "Review",
+  "Testing",
+  "Completed",
+  "On Hold",
+  "Cancelled",
+  "Issue",
+];
+const statusFilters = ["All", ...statusOptions];
 const statusColors: Record<
   string,
   { text: string; background: string; progress: string }
 > = {
-  Completed: { text: "#16a34a", background: "#dcfce7", progress: "#10b981" },
+  Pending: { text: "#f97316", background: "#fef3c7", progress: "#f59e0b" },
+  Accepted: { text: "#0f766e", background: "#ccfbf1", progress: "#14b8a6" },
   "In Progress": {
     text: "#2563eb",
     background: "#dbeafe",
     progress: "#3b82f6",
   },
-  Pending: { text: "#9333ea", background: "#f3e8ff", progress: "#a855f7" },
+  Review: { text: "#7c3aed", background: "#ede9fe", progress: "#8b5cf6" },
+  Testing: { text: "#7c3aed", background: "#ede9fe", progress: "#8b5cf6" },
+  Completed: { text: "#16a34a", background: "#dcfce7", progress: "#10b981" },
+  "On Hold": { text: "#92400e", background: "#fef3c7", progress: "#ea580c" },
+  Cancelled: { text: "#b91c1c", background: "#fee2e2", progress: "#ef4444" },
+  Issue: { text: "#c2410c", background: "#ffedd5", progress: "#f97316" },
 };
 
 const valueOf = (value: unknown) => {
@@ -67,11 +89,18 @@ const displayStatus = (value: unknown) => {
   const status = String(value || "Pending")
     .trim()
     .toLowerCase()
-    .replace(/[_-]+/g, " ");
+    .replace(/[_-]+/g, " ")
+    .replace(/\s+/g, " ");
   if (["done", "complete", "completed", "finished"].includes(status))
     return "Completed";
   if (["in progress", "inprogress", "ongoing", "started"].includes(status))
     return "In Progress";
+  if (["accepted", "approved"].includes(status)) return "Accepted";
+  if (["review", "in review", "under review"].includes(status)) return "Review";
+  if (["testing", "test"].includes(status)) return "Testing";
+  if (["on hold", "hold"].includes(status)) return "On Hold";
+  if (["cancelled", "canceled"].includes(status)) return "Cancelled";
+  if (["issue", "problem", "blocked"].includes(status)) return "Issue";
   return "Pending";
 };
 
@@ -191,7 +220,13 @@ export default function TasksScreen() {
   const [taskAttachment, setTaskAttachment] = useState<any>(null);
   const [sheetVisible, setSheetVisible] = useState(false);
   const [saving, setSaving] = useState(false);
-  const [datePickerField, setDatePickerField] = useState<"startDate" | "dueDate" | null>(null);
+  const [activeTask, setActiveTask] = useState<Task | null>(null);
+  const [statusSheetVisible, setStatusSheetVisible] = useState(false);
+  const [updatingStatus, setUpdatingStatus] = useState(false);
+  const [statusUpdateError, setStatusUpdateError] = useState("");
+  const [datePickerField, setDatePickerField] = useState<
+    "startDate" | "dueDate" | null
+  >(null);
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [taskForm, setTaskForm] = useState({
     projectId: "",
@@ -221,6 +256,59 @@ export default function TasksScreen() {
       setRefreshing(false);
     }
   }, []);
+
+  const openStatusSheet = (task: Task) => {
+    setActiveTask(task);
+    setStatusSheetVisible(true);
+    setStatusUpdateError("");
+  };
+
+  const closeStatusSheet = () => {
+    if (updatingStatus) return;
+    setStatusSheetVisible(false);
+    setActiveTask(null);
+    setStatusUpdateError("");
+  };
+
+  const updateTaskStatus = async (task: Task, status: string) => {
+    if (!task?.id) {
+      setStatusUpdateError("Unable to identify this task.");
+      return;
+    }
+
+    setUpdatingStatus(true);
+    setStatusUpdateError("");
+    const taskId = task.id;
+
+    try {
+      await api.put(`/tasks/${taskId}`, { status });
+      setStatusSheetVisible(false);
+      setActiveTask(null);
+      await fetchTasks(true);
+    } catch (error: any) {
+      if (
+        error?.status === 404 ||
+        String(error?.message).toLowerCase().includes("not found")
+      ) {
+        try {
+          await api.put(`/tasks/${taskId}/status`, { status });
+          setStatusSheetVisible(false);
+          setActiveTask(null);
+          await fetchTasks(true);
+          return;
+        } catch (secondError: any) {
+          setStatusUpdateError(
+            secondError?.message || "Unable to update task status.",
+          );
+          return;
+        }
+      }
+
+      setStatusUpdateError(error?.message || "Unable to update task status.");
+    } finally {
+      setUpdatingStatus(false);
+    }
+  };
 
   useEffect(() => {
     fetchTasks();
@@ -280,7 +368,8 @@ export default function TasksScreen() {
             String(plan.project_id ?? plan.projectId) ===
             String(taskForm.projectId),
         );
-        const rawModules = matchedPlan?.modules ?? matchedPlan?.taskmodule ?? [];
+        const rawModules =
+          matchedPlan?.modules ?? matchedPlan?.taskmodule ?? [];
         const parsedModules =
           typeof rawModules === "string" ? JSON.parse(rawModules) : rawModules;
         setModules(
@@ -293,8 +382,7 @@ export default function TasksScreen() {
                   "Untitled module",
                 duration: module.duration,
                 description: module.description,
-                documentName:
-                  module.documentName || module.document,
+                documentName: module.documentName || module.document,
               }))
             : [],
         );
@@ -329,7 +417,8 @@ export default function TasksScreen() {
       type: "*/*",
       copyToCacheDirectory: true,
     });
-    if (!result.canceled && result.assets?.[0]) setTaskAttachment(result.assets[0]);
+    if (!result.canceled && result.assets?.[0])
+      setTaskAttachment(result.assets[0]);
   };
 
   const closeTaskSheet = () => {
@@ -366,7 +455,12 @@ export default function TasksScreen() {
   };
 
   const createTask = async () => {
-    if (!taskForm.projectId || !taskForm.assignedTo || taskForm.selectedModules.length === 0) return;
+    if (
+      !taskForm.projectId ||
+      !taskForm.assignedTo ||
+      taskForm.selectedModules.length === 0
+    )
+      return;
     setSaving(true);
     try {
       for (const moduleTitle of taskForm.selectedModules) {
@@ -388,12 +482,27 @@ export default function TasksScreen() {
         let taskBody: FormData | typeof taskFields = taskFields;
         if (taskAttachment) {
           const multipart = new FormData();
-          Object.entries(taskFields).forEach(([key, value]) => multipart.append(key, value == null ? "" : String(value)));
-          multipart.append("attachment", { uri: taskAttachment.uri, name: taskAttachment.name || "attachment", type: taskAttachment.mimeType || "application/octet-stream" } as any);
+          Object.entries(taskFields).forEach(([key, value]) =>
+            multipart.append(key, value == null ? "" : String(value)),
+          );
+          multipart.append("attachment", {
+            uri: taskAttachment.uri,
+            name: taskAttachment.name || "attachment",
+            type: taskAttachment.mimeType || "application/octet-stream",
+          } as any);
           taskBody = multipart;
         }
-        const taskResponse = await api.post("/tasks", taskBody, taskAttachment ? { headers: { "Content-Type": "multipart/form-data" } } : undefined);
-        const taskId = taskResponse.data?.data?.uuid || taskResponse.data?.data?.id || taskResponse.data?.uuid;
+        const taskResponse = await api.post(
+          "/tasks",
+          taskBody,
+          taskAttachment
+            ? { headers: { "Content-Type": "multipart/form-data" } }
+            : undefined,
+        );
+        const taskId =
+          taskResponse.data?.data?.uuid ||
+          taskResponse.data?.data?.id ||
+          taskResponse.data?.uuid;
         if (!taskId) throw new Error(`Could not create task: ${moduleTitle}`);
         await api.post("/tasks/assign", {
           project_id: taskForm.projectId,
@@ -629,7 +738,9 @@ export default function TasksScreen() {
                       </View>
                     </View>
                     <View className="ml-2 items-end justify-between">
-                      <View
+                      <TouchableOpacity
+                        onPress={() => openStatusSheet(task)}
+                        activeOpacity={0.75}
                         className="rounded-md px-2 py-1"
                         style={{ backgroundColor: colors.background }}
                       >
@@ -639,7 +750,7 @@ export default function TasksScreen() {
                         >
                           {task.status}
                         </Text>
-                      </View>
+                      </TouchableOpacity>
                       {task.avatar ? (
                         <Image
                           source={{ uri: task.avatar }}
@@ -784,7 +895,9 @@ export default function TasksScreen() {
               ) : (
                 <View className="mb-4 gap-2">
                   {modules.map((module) => {
-                    const selected = taskForm.selectedModules.includes(module.title);
+                    const selected = taskForm.selectedModules.includes(
+                      module.title,
+                    );
                     return (
                       <TouchableOpacity
                         key={module.title}
@@ -865,7 +978,7 @@ export default function TasksScreen() {
                   </Text>
                   <ScrollView horizontal showsHorizontalScrollIndicator={false}>
                     <View className="flex-row gap-2">
-                      {['Low', 'Medium', 'High'].map((value) => (
+                      {["Low", "Medium", "High"].map((value) => (
                         <TouchableOpacity
                           key={value}
                           onPress={() =>
@@ -896,7 +1009,11 @@ export default function TasksScreen() {
                 <Text className="ml-3 flex-1 text-sm font-semibold text-slate-700">
                   {taskAttachment?.name || "Choose a document"}
                 </Text>
-                <Ionicons name="cloud-upload-outline" size={20} color="#94a3b8" />
+                <Ionicons
+                  name="cloud-upload-outline"
+                  size={20}
+                  color="#94a3b8"
+                />
               </TouchableOpacity>
               <Text className="mb-2 mt-4 text-xs font-bold text-slate-500">
                 Status
@@ -907,7 +1024,13 @@ export default function TasksScreen() {
                 className="mb-5"
               >
                 <View className="flex-row gap-2">
-                  {['Pending', 'In Progress', 'Review', 'Testing', 'Completed'].map((value) => (
+                  {[
+                    "Pending",
+                    "In Progress",
+                    "Review",
+                    "Testing",
+                    "Completed",
+                  ].map((value) => (
                     <TouchableOpacity
                       key={value}
                       onPress={() =>
@@ -926,7 +1049,12 @@ export default function TasksScreen() {
                 </View>
               </ScrollView>
               <TouchableOpacity
-                disabled={saving || !taskForm.projectId || !taskForm.assignedTo || taskForm.selectedModules.length === 0}
+                disabled={
+                  saving ||
+                  !taskForm.projectId ||
+                  !taskForm.assignedTo ||
+                  taskForm.selectedModules.length === 0
+                }
                 onPress={createTask}
                 className="items-center rounded-2xl bg-orange-500 py-4 disabled:opacity-50"
               >
@@ -954,6 +1082,86 @@ export default function TasksScreen() {
                 onChange={handleDatePickerChange}
               />
             ) : null}
+          </View>
+        </KeyboardAvoidingView>
+      </Modal>
+
+      <Modal
+        visible={statusSheetVisible}
+        transparent
+        animationType="slide"
+        onRequestClose={closeStatusSheet}
+      >
+        <KeyboardAvoidingView
+          className="flex-1 justify-end"
+          behavior={Platform.OS === "ios" ? "padding" : "height"}
+        >
+          <Pressable
+            className="absolute inset-0 bg-black/40"
+            onPress={closeStatusSheet}
+          />
+          <View className="max-h-[70%] rounded-t-[28px] bg-white px-5 pb-8 pt-5">
+            <View className="mb-5 flex-row items-center justify-between">
+              <View>
+                <Text className="text-xl font-black text-slate-900">
+                  Update Status
+                </Text>
+                <Text className="mt-1 text-xs text-slate-500">
+                  {activeTask?.title || "Select a status"}
+                </Text>
+              </View>
+              <Pressable
+                accessibilityLabel="Close"
+                onPress={closeStatusSheet}
+                className="h-9 w-9 items-center justify-center rounded-full bg-slate-100"
+              >
+                <Ionicons name="close" size={20} color="#64748b" />
+              </Pressable>
+            </View>
+
+            <ScrollView
+              keyboardShouldPersistTaps="handled"
+              showsVerticalScrollIndicator={false}
+            >
+              {statusUpdateError ? (
+                <View className="mb-4 rounded-2xl border border-rose-200 bg-rose-50 p-4">
+                  <Text className="text-sm font-semibold text-rose-700">
+                    {statusUpdateError}
+                  </Text>
+                </View>
+              ) : null}
+              <Text className="mb-3 text-sm font-bold text-slate-600">
+                Pick a new status
+              </Text>
+              <View className="flex-row flex-wrap gap-3">
+                {statusOptions.map((value) => {
+                  const isActive = activeTask?.status === value;
+                  return (
+                    <TouchableOpacity
+                      key={value}
+                      onPress={() =>
+                        activeTask && updateTaskStatus(activeTask, value)
+                      }
+                      disabled={updatingStatus}
+                      className={`rounded-2xl border px-4 py-3 ${isActive ? "border-orange-500 bg-orange-50" : "border-slate-200 bg-white"}`}
+                    >
+                      <Text
+                        className={`text-xs font-bold ${isActive ? "text-orange-600" : "text-slate-700"}`}
+                      >
+                        {value}
+                      </Text>
+                    </TouchableOpacity>
+                  );
+                })}
+              </View>
+              <TouchableOpacity
+                onPress={closeStatusSheet}
+                disabled={updatingStatus}
+                className="mt-6 items-center rounded-2xl border border-slate-200 bg-white py-4"
+              >
+                <Text className="font-bold text-slate-700">Cancel</Text>
+              </TouchableOpacity>
+            </ScrollView>
           </View>
         </KeyboardAvoidingView>
       </Modal>

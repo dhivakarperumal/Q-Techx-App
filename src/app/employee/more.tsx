@@ -46,14 +46,7 @@ const routeOptions: RouteOption[] = [
     color: "#2563eb",
     bg: "#eff6ff",
   },
-  {
-    label: "Trainee & Internship",
-    icon: "school-outline",
-    subtitle: "Training programs & internship info",
-    href: "/employee/trainee",
-    color: "#ea580c",
-    bg: "#fff7ed",
-  },
+ 
 ];
 
 const accountOptions = [
