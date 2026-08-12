@@ -1,7 +1,9 @@
 import { Ionicons } from "@expo/vector-icons";
+import { useRouter } from "expo-router";
 import { useCallback, useEffect, useState } from "react";
 import {
   ActivityIndicator,
+  Pressable,
   RefreshControl,
   ScrollView,
   Text,
@@ -322,6 +324,7 @@ const collectRows = (payload: any): any[] => {
 };
 
 export default function EmployeeTasksScreen() {
+  const router = useRouter();
   const { user } = useAuth();
   const [tasks, setTasks] = useState<ApiTask[]>([]);
   const [loading, setLoading] = useState(true);
@@ -494,9 +497,10 @@ export default function EmployeeTasksScreen() {
               );
 
               return (
-                <View
+                <Pressable
                   key={`${title}-${index}`}
-                  className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm shadow-slate-200"
+                  onPress={() => router.push(`/employee/task/${task.id || task.task_id}`)}
+                  className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm shadow-slate-200 active:bg-slate-50"
                 >
                   <View className="flex-row items-start">
                     <View className="h-11 w-11 items-center justify-center rounded-xl bg-slate-100">
@@ -561,7 +565,7 @@ export default function EmployeeTasksScreen() {
                       </Text>
                     </View>
                   </View>
-                </View>
+                </Pressable>
               );
             })}
           </View>
