@@ -23,36 +23,36 @@ const menuItems = [
   {
     label: "Settings",
     icon: "settings-outline" as const,
-    color: "#3b82f6",
-    bg: "bg-blue-50",
+    color: "#f97316",
+    bg: "bg-orange-50",
     route: null,
   },
   {
     label: "Notifications",
     icon: "notifications-outline" as const,
-    color: "#10b981",
-    bg: "bg-green-50",
+    color: "#f97316",
+    bg: "bg-orange-50",
     route: null,
   },
   {
     label: "Help & Support",
     icon: "help-circle-outline" as const,
-    color: "#a855f7",
-    bg: "bg-purple-50",
+    color: "#f97316",
+    bg: "bg-orange-50",
     route: null,
   },
   {
     label: "Privacy Policy",
     icon: "shield-checkmark-outline" as const,
-    color: "#64748b",
-    bg: "bg-slate-50",
+    color: "#f97316",
+    bg: "bg-orange-50",
     route: null,
   },
   {
     label: "About App",
     icon: "information-circle-outline" as const,
-    color: "#0ea5e9",
-    bg: "bg-sky-50",
+    color: "#f97316",
+    bg: "bg-orange-50",
     route: null,
   },
 ];
@@ -97,7 +97,7 @@ export default function MoreScreen() {
           onPress={() => router.push("/admin/profile")}
           className="mx-5 mb-6 bg-white rounded-[24px] p-5 border border-slate-100 shadow-sm flex-row items-center"
         >
-          <View className="w-16 h-16 rounded-full bg-slate-800 items-center justify-center mr-4 shadow-sm">
+          <View className="w-16 h-16 rounded-full bg-orange-500 items-center justify-center mr-4 shadow-sm">
             <Text className="text-2xl font-black text-white">
               {avatarLetter}
             </Text>
@@ -133,413 +133,166 @@ export default function MoreScreen() {
             Features
           </Text>
 
-          <View style={{ gap: 12 }}>
+          <View className="gap-3">
             {/* PayRole */}
             <TouchableOpacity
               activeOpacity={0.85}
               onPress={() => router.push("/admin/payroll" as any)}
-              style={{
-                borderRadius: 20,
-                backgroundColor: "#16a34a",
-                padding: 18,
-                flexDirection: "row",
-                alignItems: "center",
-                shadowColor: "#16a34a",
-                shadowOpacity: 0.3,
-                shadowRadius: 10,
-                shadowOffset: { width: 0, height: 5 },
-                elevation: 5,
-              }}
+              className="bg-white rounded-[20px] p-[18px] flex-row items-center border border-slate-100 shadow-sm"
             >
-              <View
-                style={{
-                  width: 52,
-                  height: 52,
-                  borderRadius: 16,
-                  backgroundColor: "rgba(255,255,255,0.22)",
-                  alignItems: "center",
-                  justifyContent: "center",
-                }}
-              >
-                <Ionicons name="cash-outline" size={26} color="#fff" />
+              <View className="w-[52px] h-[52px] rounded-2xl bg-orange-50 items-center justify-center">
+                <Ionicons name="cash-outline" size={26} color="#f97316" />
               </View>
-              <View style={{ flex: 1, marginLeft: 16 }}>
-                <Text
-                  style={{
-                    color: "rgba(255,255,255,0.65)",
-                    fontSize: 10,
-                    fontWeight: "700",
-                    letterSpacing: 1,
-                    textTransform: "uppercase",
-                  }}
-                >
+              <View className="flex-1 ml-4">
+                <Text className="text-orange-500 text-[10px] font-bold tracking-[1px] uppercase">
                   Payroll
                 </Text>
-                <Text
-                  style={{
-                    color: "#fff",
-                    fontSize: 17,
-                    fontWeight: "800",
-                    marginTop: 2,
-                  }}
-                >
+                <Text className="text-slate-900 text-[17px] font-extrabold mt-0.5">
                   PayRole
                 </Text>
-                <Text
-                  style={{
-                    color: "rgba(255,255,255,0.7)",
-                    fontSize: 12,
-                    marginTop: 2,
-                  }}
-                >
+                <Text className="text-slate-500 text-[12px] mt-0.5">
                   Salary slips & payment history
                 </Text>
               </View>
-              <Ionicons
-                name="chevron-forward"
-                size={20}
-                color="rgba(255,255,255,0.6)"
-              />
+              <Ionicons name="chevron-forward" size={20} color="#cbd5e1" />
             </TouchableOpacity>
 
             {/* Calendar */}
             <TouchableOpacity
               activeOpacity={0.85}
               onPress={() => router.push("/admin/calendar" as any)}
-              style={{
-                borderRadius: 20,
-                backgroundColor: "#7c3aed",
-                padding: 18,
-                flexDirection: "row",
-                alignItems: "center",
-                shadowColor: "#7c3aed",
-                shadowOpacity: 0.3,
-                shadowRadius: 10,
-                shadowOffset: { width: 0, height: 5 },
-                elevation: 5,
-              }}
+              className="bg-white rounded-[20px] p-[18px] flex-row items-center border border-slate-100 shadow-sm"
             >
-              <View
-                style={{
-                  width: 52,
-                  height: 52,
-                  borderRadius: 16,
-                  backgroundColor: "rgba(255,255,255,0.22)",
-                  alignItems: "center",
-                  justifyContent: "center",
-                }}
-              >
-                <Ionicons
-                  name="calendar-number-outline"
-                  size={26}
-                  color="#fff"
-                />
+              <View className="w-[52px] h-[52px] rounded-2xl bg-orange-50 items-center justify-center">
+                <Ionicons name="calendar-number-outline" size={26} color="#f97316" />
               </View>
-              <View style={{ flex: 1, marginLeft: 16 }}>
-                <Text
-                  style={{
-                    color: "rgba(255,255,255,0.65)",
-                    fontSize: 10,
-                    fontWeight: "700",
-                    letterSpacing: 1,
-                    textTransform: "uppercase",
-                  }}
-                >
+              <View className="flex-1 ml-4">
+                <Text className="text-orange-500 text-[10px] font-bold tracking-[1px] uppercase">
                   Schedule
                 </Text>
-                <Text
-                  style={{
-                    color: "#fff",
-                    fontSize: 17,
-                    fontWeight: "800",
-                    marginTop: 2,
-                  }}
-                >
+                <Text className="text-slate-900 text-[17px] font-extrabold mt-0.5">
                   Calendar
                 </Text>
-                <Text
-                  style={{
-                    color: "rgba(255,255,255,0.7)",
-                    fontSize: 12,
-                    marginTop: 2,
-                  }}
-                >
+                <Text className="text-slate-500 text-[12px] mt-0.5">
                   Holidays, events & schedules
                 </Text>
               </View>
-              <Ionicons
-                name="chevron-forward"
-                size={20}
-                color="rgba(255,255,255,0.6)"
-              />
+              <Ionicons name="chevron-forward" size={20} color="#cbd5e1" />
             </TouchableOpacity>
 
             {/* My Calendar */}
             <TouchableOpacity
               activeOpacity={0.85}
               onPress={() => router.push("/admin/my-calendar" as any)}
-              style={{
-                borderRadius: 20,
-                backgroundColor: "#2563eb",
-                padding: 18,
-                flexDirection: "row",
-                alignItems: "center",
-                shadowColor: "#2563eb",
-                shadowOpacity: 0.3,
-                shadowRadius: 10,
-                shadowOffset: { width: 0, height: 5 },
-                elevation: 5,
-              }}
+              className="bg-white rounded-[20px] p-[18px] flex-row items-center border border-slate-100 shadow-sm"
             >
-              <View
-                style={{
-                  width: 52,
-                  height: 52,
-                  borderRadius: 16,
-                  backgroundColor: "rgba(255,255,255,0.22)",
-                  alignItems: "center",
-                  justifyContent: "center",
-                }}
-              >
-                <Ionicons
-                  name="calendar-outline"
-                  size={26}
-                  color="#fff"
-                />
+              <View className="w-[52px] h-[52px] rounded-2xl bg-orange-50 items-center justify-center">
+                <Ionicons name="calendar-outline" size={26} color="#f97316" />
               </View>
-              <View style={{ flex: 1, marginLeft: 16 }}>
-                <Text
-                  style={{
-                    color: "rgba(255,255,255,0.65)",
-                    fontSize: 10,
-                    fontWeight: "700",
-                    letterSpacing: 1,
-                    textTransform: "uppercase",
-                  }}
-                >
+              <View className="flex-1 ml-4">
+                <Text className="text-orange-500 text-[10px] font-bold tracking-[1px] uppercase">
                   Personal
                 </Text>
-                <Text
-                  style={{
-                    color: "#fff",
-                    fontSize: 17,
-                    fontWeight: "800",
-                    marginTop: 2,
-                  }}
-                >
+                <Text className="text-slate-900 text-[17px] font-extrabold mt-0.5">
                   My Calendar
                 </Text>
-                <Text
-                  style={{
-                    color: "rgba(255,255,255,0.7)",
-                    fontSize: 12,
-                    marginTop: 2,
-                  }}
-                >
+                <Text className="text-slate-500 text-[12px] mt-0.5">
                   Your personal plans and tasks
                 </Text>
               </View>
-              <Ionicons
-                name="chevron-forward"
-                size={20}
-                color="rgba(255,255,255,0.6)"
-              />
+              <Ionicons name="chevron-forward" size={20} color="#cbd5e1" />
             </TouchableOpacity>
 
             {/* Attendance */}
             <TouchableOpacity
               activeOpacity={0.85}
               onPress={() => router.push("/admin/attendance" as any)}
-              style={{
-                borderRadius: 20,
-                backgroundColor: "#0f766e",
-                padding: 18,
-                flexDirection: "row",
-                alignItems: "center",
-                shadowColor: "#0f766e",
-                shadowOpacity: 0.3,
-                shadowRadius: 10,
-                shadowOffset: { width: 0, height: 5 },
-                elevation: 5,
-              }}
+              className="bg-white rounded-[20px] p-[18px] flex-row items-center border border-slate-100 shadow-sm"
             >
-              <View
-                style={{
-                  width: 52,
-                  height: 52,
-                  borderRadius: 16,
-                  backgroundColor: "rgba(255,255,255,0.22)",
-                  alignItems: "center",
-                  justifyContent: "center",
-                }}
-              >
-                <Ionicons
-                  name="checkmark-done-outline"
-                  size={26}
-                  color="#fff"
-                />
+              <View className="w-[52px] h-[52px] rounded-2xl bg-orange-50 items-center justify-center">
+                <Ionicons name="checkmark-done-outline" size={26} color="#f97316" />
               </View>
-              <View style={{ flex: 1, marginLeft: 16 }}>
-                <Text
-                  style={{
-                    color: "rgba(255,255,255,0.65)",
-                    fontSize: 10,
-                    fontWeight: "700",
-                    letterSpacing: 1,
-                    textTransform: "uppercase",
-                  }}
-                >
+              <View className="flex-1 ml-4">
+                <Text className="text-orange-500 text-[10px] font-bold tracking-[1px] uppercase">
                   People
                 </Text>
-                <Text
-                  style={{
-                    color: "#fff",
-                    fontSize: 17,
-                    fontWeight: "800",
-                    marginTop: 2,
-                  }}
-                >
+                <Text className="text-slate-900 text-[17px] font-extrabold mt-0.5">
                   Attendance
                 </Text>
-                <Text
-                  style={{
-                    color: "rgba(255,255,255,0.7)",
-                    fontSize: 12,
-                    marginTop: 2,
-                  }}
-                >
+                <Text className="text-slate-500 text-[12px] mt-0.5">
                   Track presence, timesheets & leave
                 </Text>
               </View>
-              <Ionicons
-                name="chevron-forward"
-                size={20}
-                color="rgba(255,255,255,0.6)"
-              />
+              <Ionicons name="chevron-forward" size={20} color="#cbd5e1" />
             </TouchableOpacity>
 
             {/* Project Plans */}
             <TouchableOpacity
               activeOpacity={0.85}
               onPress={() => router.push("/admin/project-plans" as any)}
-              style={{
-                borderRadius: 20,
-                backgroundColor: "#2563eb",
-                padding: 18,
-                flexDirection: "row",
-                alignItems: "center",
-                shadowColor: "#2563eb",
-                shadowOpacity: 0.3,
-                shadowRadius: 10,
-                shadowOffset: { width: 0, height: 5 },
-                elevation: 5,
-              }}
+              className="bg-white rounded-[20px] p-[18px] flex-row items-center border border-slate-100 shadow-sm"
             >
-              <View
-                style={{
-                  width: 52,
-                  height: 52,
-                  borderRadius: 16,
-                  backgroundColor: "rgba(255,255,255,0.22)",
-                  alignItems: "center",
-                  justifyContent: "center",
-                }}
-              >
-                <Ionicons name="layers-outline" size={26} color="#fff" />
+              <View className="w-[52px] h-[52px] rounded-2xl bg-orange-50 items-center justify-center">
+                <Ionicons name="layers-outline" size={26} color="#f97316" />
               </View>
-              <View style={{ flex: 1, marginLeft: 16 }}>
-                <Text
-                  style={{
-                    color: "rgba(255,255,255,0.65)",
-                    fontSize: 10,
-                    fontWeight: "700",
-                    letterSpacing: 1,
-                    textTransform: "uppercase",
-                  }}
-                >
+              <View className="flex-1 ml-4">
+                <Text className="text-orange-500 text-[10px] font-bold tracking-[1px] uppercase">
                   Projects
                 </Text>
-                <Text
-                  style={{
-                    color: "#fff",
-                    fontSize: 17,
-                    fontWeight: "800",
-                    marginTop: 2,
-                  }}
-                >
+                <Text className="text-slate-900 text-[17px] font-extrabold mt-0.5">
                   Project Plans
                 </Text>
-                <Text
-                  style={{
-                    color: "rgba(255,255,255,0.7)",
-                    fontSize: 12,
-                    marginTop: 2,
-                  }}
-                >
+                <Text className="text-slate-500 text-[12px] mt-0.5">
                   View and create project plans
                 </Text>
               </View>
-              <Ionicons
-                name="chevron-forward"
-                size={20}
-                color="rgba(255,255,255,0.6)"
-              />
+              <Ionicons name="chevron-forward" size={20} color="#cbd5e1" />
             </TouchableOpacity>
 
             {/* Employee Leave Management */}
             <TouchableOpacity
               activeOpacity={0.85}
               onPress={() => router.push("/admin/leaves" as any)}
-              style={{
-                borderRadius: 20,
-                backgroundColor: "#be123c",
-                padding: 18,
-                flexDirection: "row",
-                alignItems: "center",
-                shadowColor: "#be123c",
-                shadowOpacity: 0.3,
-                shadowRadius: 10,
-                shadowOffset: { width: 0, height: 5 },
-                elevation: 5,
-              }}
+              className="bg-white rounded-[20px] p-[18px] flex-row items-center border border-slate-100 shadow-sm"
             >
-              <View style={{ width: 52, height: 52, borderRadius: 16, backgroundColor: "rgba(255,255,255,0.22)", alignItems: "center", justifyContent: "center" }}>
-                <Ionicons name="calendar-clear-outline" size={26} color="#fff" />
+              <View className="w-[52px] h-[52px] rounded-2xl bg-orange-50 items-center justify-center">
+                <Ionicons name="calendar-clear-outline" size={26} color="#f97316" />
               </View>
-              <View style={{ flex: 1, marginLeft: 16 }}>
-                <Text style={{ color: "rgba(255,255,255,0.65)", fontSize: 10, fontWeight: "700", letterSpacing: 1, textTransform: "uppercase" }}>People</Text>
-                <Text style={{ color: "#fff", fontSize: 17, fontWeight: "800", marginTop: 2 }}>Leave Management</Text>
-                <Text style={{ color: "rgba(255,255,255,0.7)", fontSize: 12, marginTop: 2 }}>Review, approve & track leave requests</Text>
+              <View className="flex-1 ml-4">
+                <Text className="text-orange-500 text-[10px] font-bold tracking-[1px] uppercase">
+                  People
+                </Text>
+                <Text className="text-slate-900 text-[17px] font-extrabold mt-0.5">
+                  Leave Management
+                </Text>
+                <Text className="text-slate-500 text-[12px] mt-0.5">
+                  Review, approve & track leave requests
+                </Text>
               </View>
-              <Ionicons name="chevron-forward" size={20} color="rgba(255,255,255,0.6)" />
+              <Ionicons name="chevron-forward" size={20} color="#cbd5e1" />
             </TouchableOpacity>
 
             {/* Trainee & Internship */}
             <TouchableOpacity
               activeOpacity={0.85}
               onPress={() => router.push("/admin/trainee" as any)}
-              style={{
-                borderRadius: 20,
-                backgroundColor: "#ea580c",
-                padding: 18,
-                flexDirection: "row",
-                alignItems: "center",
-                shadowColor: "#ea580c",
-                shadowOpacity: 0.3,
-                shadowRadius: 10,
-                shadowOffset: { width: 0, height: 5 },
-                elevation: 5,
-              }}
+              className="bg-white rounded-[20px] p-[18px] flex-row items-center border border-slate-100 shadow-sm"
             >
-              <View style={{ width: 52, height: 52, borderRadius: 16, backgroundColor: "rgba(255,255,255,0.22)", alignItems: "center", justifyContent: "center" }}>
-                <Ionicons name="school-outline" size={26} color="#fff" />
+              <View className="w-[52px] h-[52px] rounded-2xl bg-orange-50 items-center justify-center">
+                <Ionicons name="school-outline" size={26} color="#f97316" />
               </View>
-              <View style={{ flex: 1, marginLeft: 16 }}>
-                <Text style={{ color: "rgba(255,255,255,0.65)", fontSize: 10, fontWeight: "700", letterSpacing: 1, textTransform: "uppercase" }}>Learning</Text>
-                <Text style={{ color: "#fff", fontSize: 17, fontWeight: "800", marginTop: 2 }}>Trainee & Internship</Text>
-                <Text style={{ color: "rgba(255,255,255,0.7)", fontSize: 12, marginTop: 2 }}>Training programs & internship info</Text>
+              <View className="flex-1 ml-4">
+                <Text className="text-orange-500 text-[10px] font-bold tracking-[1px] uppercase">
+                  Learning
+                </Text>
+                <Text className="text-slate-900 text-[17px] font-extrabold mt-0.5">
+                  Trainee & Internship
+                </Text>
+                <Text className="text-slate-500 text-[12px] mt-0.5">
+                  Training programs & internship info
+                </Text>
               </View>
-              <Ionicons name="chevron-forward" size={20} color="rgba(255,255,255,0.6)" />
+              <Ionicons name="chevron-forward" size={20} color="#cbd5e1" />
             </TouchableOpacity>
           </View>
         </View>
