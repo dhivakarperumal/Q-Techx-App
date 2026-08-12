@@ -158,52 +158,7 @@ export default function MoreScreen() {
               <Ionicons name="chevron-forward" size={20} color="#cbd5e1" />
             </TouchableOpacity>
 
-            {/* Calendar */}
-            <TouchableOpacity
-              activeOpacity={0.85}
-              onPress={() => router.push("/admin/calendar" as any)}
-              className="bg-white rounded-[20px] p-[18px] flex-row items-center border border-slate-100 shadow-sm"
-            >
-              <View className="w-[52px] h-[52px] rounded-2xl bg-orange-50 items-center justify-center">
-                <Ionicons name="calendar-number-outline" size={26} color="#f97316" />
-              </View>
-              <View className="flex-1 ml-4">
-                <Text className="text-orange-500 text-[10px] font-bold tracking-[1px] uppercase">
-                  Schedule
-                </Text>
-                <Text className="text-slate-900 text-[17px] font-extrabold mt-0.5">
-                  Calendar
-                </Text>
-                <Text className="text-slate-500 text-[12px] mt-0.5">
-                  Holidays, events & schedules
-                </Text>
-              </View>
-              <Ionicons name="chevron-forward" size={20} color="#cbd5e1" />
-            </TouchableOpacity>
-
-            {/* My Calendar */}
-            <TouchableOpacity
-              activeOpacity={0.85}
-              onPress={() => router.push("/admin/my-calendar" as any)}
-              className="bg-white rounded-[20px] p-[18px] flex-row items-center border border-slate-100 shadow-sm"
-            >
-              <View className="w-[52px] h-[52px] rounded-2xl bg-orange-50 items-center justify-center">
-                <Ionicons name="calendar-outline" size={26} color="#f97316" />
-              </View>
-              <View className="flex-1 ml-4">
-                <Text className="text-orange-500 text-[10px] font-bold tracking-[1px] uppercase">
-                  Personal
-                </Text>
-                <Text className="text-slate-900 text-[17px] font-extrabold mt-0.5">
-                  My Calendar
-                </Text>
-                <Text className="text-slate-500 text-[12px] mt-0.5">
-                  Your personal plans and tasks
-                </Text>
-              </View>
-              <Ionicons name="chevron-forward" size={20} color="#cbd5e1" />
-            </TouchableOpacity>
-
+           
             {/* Attendance */}
             <TouchableOpacity
               activeOpacity={0.85}
@@ -295,6 +250,53 @@ export default function MoreScreen() {
               </View>
               <Ionicons name="chevron-forward" size={20} color="#cbd5e1" />
             </TouchableOpacity>
+
+             {/* Calendar */}
+            <TouchableOpacity
+              activeOpacity={0.85}
+              onPress={() => router.push("/admin/calendar" as any)}
+              className="bg-white rounded-[20px] p-[18px] flex-row items-center border border-slate-100 shadow-sm"
+            >
+              <View className="w-[52px] h-[52px] rounded-2xl bg-orange-50 items-center justify-center">
+                <Ionicons name="calendar-number-outline" size={26} color="#f97316" />
+              </View>
+              <View className="flex-1 ml-4">
+                <Text className="text-orange-500 text-[10px] font-bold tracking-[1px] uppercase">
+                  Schedule
+                </Text>
+                <Text className="text-slate-900 text-[17px] font-extrabold mt-0.5">
+                  Calendar
+                </Text>
+                <Text className="text-slate-500 text-[12px] mt-0.5">
+                  Holidays, events & schedules
+                </Text>
+              </View>
+              <Ionicons name="chevron-forward" size={20} color="#cbd5e1" />
+            </TouchableOpacity>
+
+            {/* My Calendar */}
+            <TouchableOpacity
+              activeOpacity={0.85}
+              onPress={() => router.push("/admin/my-calendar" as any)}
+              className="bg-white rounded-[20px] p-[18px] flex-row items-center border border-slate-100 shadow-sm"
+            >
+              <View className="w-[52px] h-[52px] rounded-2xl bg-orange-50 items-center justify-center">
+                <Ionicons name="calendar-outline" size={26} color="#f97316" />
+              </View>
+              <View className="flex-1 ml-4">
+                <Text className="text-orange-500 text-[10px] font-bold tracking-[1px] uppercase">
+                  Personal
+                </Text>
+                <Text className="text-slate-900 text-[17px] font-extrabold mt-0.5">
+                  My Calendar
+                </Text>
+                <Text className="text-slate-500 text-[12px] mt-0.5">
+                  Your personal plans and tasks
+                </Text>
+              </View>
+              <Ionicons name="chevron-forward" size={20} color="#cbd5e1" />
+            </TouchableOpacity>
+
           </View>
         </View>
 
