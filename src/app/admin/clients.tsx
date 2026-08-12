@@ -130,7 +130,7 @@ export default function ClientsScreen() {
         {/* ── CLIENT STATS SECTION ── */}
         <View className="mt-5 mb-2 flex-row flex-wrap justify-between">
           {/* Total Clients */}
-          <View className="mb-3 w-[48%] overflow-hidden rounded-2xl bg-white shadow-sm border-t-4 border-orange-500">
+          <View className="mb-3 w-[48%] overflow-hidden rounded-2xl bg-white border border-orange-100" style={{ shadowColor: "#f97316", shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.12, shadowRadius: 10, elevation: 4 }}>
             <LinearGradient
               colors={["#ffffff", "#fff7ed"]}
               start={{ x: 0, y: 0 }}
@@ -165,7 +165,7 @@ export default function ClientsScreen() {
           </View>
 
           {/* Active Clients */}
-          <View className="mb-3 w-[48%] overflow-hidden rounded-2xl bg-white shadow-sm border-t-4 border-orange-500">
+          <View className="mb-3 w-[48%] overflow-hidden rounded-2xl bg-white border border-orange-100" style={{ shadowColor: "#f97316", shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.12, shadowRadius: 10, elevation: 4 }}>
             <LinearGradient
               colors={["#ffffff", "#fff7ed"]}
               start={{ x: 0, y: 0 }}
@@ -200,7 +200,7 @@ export default function ClientsScreen() {
           </View>
 
           {/* Leads */}
-          <View className="mb-3 w-[48%] overflow-hidden rounded-2xl bg-white shadow-sm border-t-4 border-orange-500">
+          <View className="mb-3 w-[48%] overflow-hidden rounded-2xl bg-white border border-orange-100" style={{ shadowColor: "#f97316", shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.12, shadowRadius: 10, elevation: 4 }}>
             <LinearGradient
               colors={["#ffffff", "#fff7ed"]}
               start={{ x: 0, y: 0 }}
@@ -235,7 +235,7 @@ export default function ClientsScreen() {
           </View>
 
           {/* Pending */}
-          <View className="mb-3 w-[48%] overflow-hidden rounded-2xl bg-white shadow-sm border-t-4 border-orange-500">
+          <View className="mb-3 w-[48%] overflow-hidden rounded-2xl bg-white border border-orange-100" style={{ shadowColor: "#f97316", shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.12, shadowRadius: 10, elevation: 4 }}>
             <LinearGradient
               colors={["#ffffff", "#fff7ed"]}
               start={{ x: 0, y: 0 }}

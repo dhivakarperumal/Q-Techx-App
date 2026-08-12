@@ -38,49 +38,41 @@ function MetricCard({
   icon: keyof typeof Ionicons.glyphMap;
   label: string;
   value: string;
+  color?: string;
+  background?: string;
 }) {
   return (
-    <View className="mb-3 w-[48%] overflow-hidden rounded-2xl bg-white shadow-md">
-      {/* Orange top accent */}
-      <LinearGradient
-        colors={["#fb923c", "#f97316"]}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 0 }}
-        className="h-1 w-full"
-      />
-
-      {/* Overall card content - very light orange */}
+    <View
+      className="mb-3 w-[48%] overflow-hidden rounded-2xl bg-white border border-orange-100"
+      style={{
+        shadowColor: "#f97316",
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.12,
+        shadowRadius: 10,
+        elevation: 4,
+      }}
+    >
       <LinearGradient
         colors={["#ffffff", "#fff7ed"]}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
-        className="p-3"
+        className="px-4 py-4"
       >
-        {/* Icon + Label */}
-        <View className="flex-row items-center">
-          {/* Black icon background */}
+        <View className="flex-row items-center mb-3">
           <View className="h-10 w-10 items-center justify-center rounded-xl bg-black">
-            <Ionicons
-              name={icon}
-              size={20}
-              color="#f97316"
-            />
+            <Ionicons name={icon} size={20} color="#f97316" />
           </View>
-
-          <View className="ml-2.5 flex-1">
-            <Text
-              className="text-[9px] font-bold uppercase tracking-[0.8px] text-gray-500"
-              numberOfLines={2}
-            >
+          <View className="ml-2 flex-1">
+            <Text className="text-[10px] font-bold uppercase tracking-[0.5px] text-gray-500" numberOfLines={2}>
               {label}
             </Text>
           </View>
         </View>
-
-        {/* Value */}
-        <Text className="mt-3 text-[23px] font-black text-black">
-          {value}
-        </Text>
+        <View className="flex-row items-baseline justify-between">
+          <Text className="text-[22px] font-black text-black">
+            {value}
+          </Text>
+        </View>
       </LinearGradient>
     </View>
   );
