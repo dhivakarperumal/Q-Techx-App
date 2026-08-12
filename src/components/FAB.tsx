@@ -31,7 +31,7 @@ export function FAB({ onPress }: FABProps) {
         zIndex: 100,
       }}
     >
-      <Ionicons name="person-add-outline" size={28} color="#fff" />
+      <Ionicons name="add" size={28} color="#fff" />
     </TouchableOpacity>
   );
 }

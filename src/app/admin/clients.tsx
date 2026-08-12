@@ -382,93 +382,182 @@ export default function ClientsScreen() {
           </Pressable>
         </Modal>
 
-        {/* ── Client List ── */}
-        <Text className="mb-3 mt-6 text-lg font-black text-slate-900">
-          Client Directory
-        </Text>
+        {/* ── CLIENT LIST ── */}
+        <View className="mb-4 mt-6 flex-row items-center justify-between">
+          <Text className="text-slate-800 font-bold text-sm">
+            Client Directory ({displayedClients.length})
+          </Text>
+        </View>
 
-        {loading ? (
-          <View className="items-center py-12">
-            <Text className="text-sm text-slate-500">Loading clients...</Text>
-          </View>
-        ) : displayedClients.length ? (
-          displayedClients.map((client, index) => {
-            const initials = (client.client_name || "?")
-              .split(" ")
-              .map((w: string) => w[0] ?? "")
-              .join("")
-              .toUpperCase()
-              .slice(0, 2);
-            const avatarColor = getAvatarColor(client.client_name || "");
-            return (
-              <Pressable
-                key={client.uuid || index}
-                onPress={() =>
-                  router.push(`/admin/client-detail/${client.uuid}`)
-                }
-                className="mb-3 rounded-[24px] border border-slate-100 bg-white p-4 shadow-sm"
-              >
-                <View className="flex-row items-start justify-between gap-3">
-                  <View className="flex-row flex-1 items-start gap-4">
-                    <View className="h-14 w-14 rounded-3xl items-center justify-center" style={{ backgroundColor: avatarColor }}>
-                      <Text style={{ fontSize: 17, fontWeight: "800", color: "#fff" }}>
-                        {initials}
-                      </Text>
+        <View className="">
+          {loading ? (
+            <Text className="text-center text-slate-500 mt-4">
+              Loading clients...
+            </Text>
+          ) : displayedClients.length === 0 ? (
+            <View className="items-center py-10">
+              <Ionicons
+                name="people-outline"
+                size={36}
+                color="#cbd5e1"
+              />
+              <Text className="mt-3 font-bold text-slate-500">
+                No clients found
+              </Text>
+            </View>
+          ) : (
+            displayedClients.map((client, index) => {
+              const initials = (client.client_name || "?")
+                .split(" ")
+                .map((w: string) => w[0] ?? "")
+                .join("")
+                .toUpperCase()
+                .slice(0, 2);
+
+              const avatarColor = getAvatarColor(
+                client.client_name || ""
+              );
+
+              return (
+                <Pressable
+                  key={client.uuid || index}
+                  onPress={() =>
+                    router.push(
+                      `/admin/client-detail/${client.uuid}`
+                    )
+                  }
+                  className="bg-white rounded-[24px] p-4 mb-4 border border-slate-100 shadow-sm flex-row items-start justify-between"
+                >
+                  {/* ── LEFT SIDE: AVATAR + INFO ── */}
+                  <View className="flex-row flex-1">
+                    {/* Avatar */}
+                    {/* Avatar / Client Icon */}
+                    <View className="mr-4 relative h-14 w-14 rounded-full items-center justify-center bg-orange-50 border border-orange-100">
+                      <Ionicons
+                        name="person"
+                        size={25}
+                        color="#f97316"
+                      />
                     </View>
-                    <View className="flex-1">
-                      <Text className="text-base font-bold text-slate-900">
-                        {client.client_name || "Unnamed client"}
-                      </Text>
-                      <View className="mt-2 flex-row flex-wrap items-center gap-2">
+
+                    {/* Info Block */}
+                    <View className="flex-1 justify-center">
+                      {/* Name + Service */}
+                      <View className="flex-row items-center mb-1.5 flex-wrap">
+                        <Text
+                          className="text-slate-900 font-bold text-[15px] mr-2"
+                          numberOfLines={1}
+                        >
+                          {client.client_name || "Unnamed client"}
+                        </Text>
+
                         {client.service_type ? (
-                          <View className="rounded-full bg-orange-50 px-3 py-1">
-                            <Text className="text-[11px] font-bold text-orange-600">{client.service_type}</Text>
-                          </View>
-                        ) : null}
-                        {client.follow_up_status ? (
-                          <View className="rounded-full bg-slate-100 px-3 py-1">
-                            <Text className="text-[11px] font-semibold text-slate-600">{client.follow_up_status}</Text>
+                          <View className="px-2 py-0.5 rounded-full bg-orange-50">
+                            <Text className="text-[9px] font-bold text-orange-600">
+                              {client.service_type}
+                            </Text>
                           </View>
                         ) : null}
                       </View>
-                      <Text className="mt-2 text-xs text-slate-500">
-                        {client.company_name || "No company details"}
-                      </Text>
+
+                      {/* Company */}
+                      <View className="flex-row items-center mb-1.5">
+                        <Ionicons
+                          name="business-outline"
+                          size={12}
+                          color="#94a3b8"
+                        />
+
+                        <Text
+                          className="text-slate-500 text-xs ml-1"
+                          numberOfLines={1}
+                        >
+                          {client.company_name || "No company details"}
+                        </Text>
+                      </View>
+
+                      {/* Email + Phone */}
+                      {/* <View className="flex-row items-center flex-wrap">
+                        {client.email ? (
+                          <View className="flex-row items-center mr-3 mb-1">
+                            <Ionicons
+                              name="mail-outline"
+                              size={12}
+                              color="#94a3b8"
+                            />
+
+                            <Text
+                              className="text-slate-500 text-[10px] ml-1"
+                              numberOfLines={1}
+                            >
+                              {client.email}
+                            </Text>
+                          </View>
+                        ) : null}
+
+                        {client.phone_number ? (
+                          <View className="flex-row items-center mb-1">
+                            <Ionicons
+                              name="call-outline"
+                              size={12}
+                              color="#94a3b8"
+                            />
+
+                            <Text
+                              className="text-slate-500 text-[10px] ml-1"
+                              numberOfLines={1}
+                            >
+                              {client.phone_number}
+                            </Text>
+                          </View>
+                        ) : null}
+                      </View> */}
+
+                      {/* Follow-up Status */}
+                      {client.follow_up_status ? (
+                        <View className="flex-row items-center mt-1">
+                          <View className="px-2 py-0.5 rounded-full bg-slate-100">
+                            <Text className="text-[9px] font-bold text-slate-600">
+                              {client.follow_up_status}
+                            </Text>
+                          </View>
+                        </View>
+                      ) : null}
                     </View>
                   </View>
-                  <View className="items-end justify-between pt-1">
-                    <View className="rounded-full border px-3 py-1" style={{ backgroundColor: statusBg[client.client_status] || "#f1f5f9" }}>
-                      <Text style={{ fontSize: 10, fontWeight: "700", color: statusColor[client.client_status] || "#64748b" }}>
+
+                  {/* ── RIGHT SIDE: STATUS + ARROW ── */}
+                  <View className="justify-between items-end h-[60px]">
+                    <View
+                      className="px-2 py-1 rounded-md"
+                      style={{
+                        backgroundColor:
+                          statusBg[client.client_status] || "#f1f5f9",
+                      }}
+                    >
+                      <Text
+                        style={{
+                          fontSize: 9,
+                          fontWeight: "700",
+                          color:
+                            statusColor[client.client_status] || "#64748b",
+                        }}
+                      >
                         {client.client_status || "-"}
                       </Text>
                     </View>
-                    <Ionicons name="chevron-forward" size={16} color="#cbd5e1" />
-                  </View>
-                </View>
 
-                <View className="mt-4 flex-row flex-wrap gap-3">
-                  {client.email ? (
-                    <View className="flex-row items-center gap-2 rounded-2xl bg-slate-50 px-3 py-2">
-                      <Ionicons name="mail-outline" size={14} color="#94a3b8" />
-                      <Text className="text-[11px] text-slate-500">{client.email}</Text>
-                    </View>
-                  ) : null}
-                  {client.phone_number ? (
-                    <View className="flex-row items-center gap-2 rounded-2xl bg-slate-50 px-3 py-2">
-                      <Ionicons name="call-outline" size={14} color="#94a3b8" />
-                      <Text className="text-[11px] text-slate-500">{client.phone_number}</Text>
-                    </View>
-                  ) : null}
-                </View>
-              </Pressable>
-            );
-          })
-        ) : (
-          <View className="items-center rounded-3xl bg-white p-8">
-            <Ionicons name="people-outline" size={36} color="#cbd5e1" />
-            <Text className="mt-3 font-bold text-slate-500">No clients found</Text>
-          </View>
-        )}
+                    <Ionicons
+                      name="chevron-forward"
+                      size={18}
+                      color="#94a3b8"
+                    />
+                  </View>
+                </Pressable>
+              );
+            })
+          )}
+        </View>
       </ScrollView>
 
       <AdminBottomBar />

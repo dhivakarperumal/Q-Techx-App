@@ -286,8 +286,8 @@ export default function TeamScreen() {
                 >
                   <Text
                     className={`text-sm ${statusFilter === status
-                        ? "font-bold text-orange-500"
-                        : "text-slate-700"
+                      ? "font-bold text-orange-500"
+                      : "text-slate-700"
                       }`}
                   >
                     {status || "All Status"}
@@ -299,52 +299,51 @@ export default function TeamScreen() {
         </Modal>
 
         <Modal
-  visible={roleDropdownOpen}
-  transparent
-  animationType="fade"
-  onRequestClose={() => setRoleDropdownOpen(false)}
->
-  <Pressable
-    className="flex-1 bg-black/40 justify-center px-8"
-    onPress={() => setRoleDropdownOpen(false)}
-  >
-    <Pressable
-      className="bg-white rounded-2xl overflow-hidden"
-      onPress={(e) => e.stopPropagation()}
-    >
-      <Text className="px-5 py-4 text-base font-bold text-slate-900 border-b border-slate-100">
-        Select Role
-      </Text>
-
-      {[
-        "",
-        "Employee",
-        "Manager",
-        "HR",
-        "Admin",
-      ].map((role) => (
-        <TouchableOpacity
-          key={role || "all"}
-          onPress={() => {
-            setRoleFilter(role);
-            setRoleDropdownOpen(false);
-          }}
-          className="px-5 py-4 border-b border-slate-100"
+          visible={roleDropdownOpen}
+          transparent
+          animationType="fade"
+          onRequestClose={() => setRoleDropdownOpen(false)}
         >
-          <Text
-            className={`text-sm ${
-              roleFilter === role
-                ? "font-bold text-orange-500"
-                : "text-slate-700"
-            }`}
+          <Pressable
+            className="flex-1 bg-black/40 justify-center px-8"
+            onPress={() => setRoleDropdownOpen(false)}
           >
-            {role || "All Roles"}
-          </Text>
-        </TouchableOpacity>
-      ))}
-    </Pressable>
-  </Pressable>
-</Modal>
+            <Pressable
+              className="bg-white rounded-2xl overflow-hidden"
+              onPress={(e) => e.stopPropagation()}
+            >
+              <Text className="px-5 py-4 text-base font-bold text-slate-900 border-b border-slate-100">
+                Select Role
+              </Text>
+
+              {[
+                "",
+                "Employee",
+                "Manager",
+                "HR",
+                "Admin",
+              ].map((role) => (
+                <TouchableOpacity
+                  key={role || "all"}
+                  onPress={() => {
+                    setRoleFilter(role);
+                    setRoleDropdownOpen(false);
+                  }}
+                  className="px-5 py-4 border-b border-slate-100"
+                >
+                  <Text
+                    className={`text-sm ${roleFilter === role
+                        ? "font-bold text-orange-500"
+                        : "text-slate-700"
+                      }`}
+                  >
+                    {role || "All Roles"}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </Pressable>
+          </Pressable>
+        </Modal>
 
         {/* ── LIST HEADER ── */}
         <View className="px-5 mb-4 flex-row items-center justify-between">
