@@ -160,6 +160,25 @@ export default function EmployeeProjectsScreen() {
 
   const currentProjects = assignedProjects;
 
+  const projectSummary = useMemo(() => {
+    return currentProjects.reduce(
+      (acc, project) => {
+        const status = String(project.current_status || "").trim();
+        acc.total += 1;
+        if (status === "In Progress") acc.inProgress += 1;
+        else if (status === "Completed") acc.completed += 1;
+        else if (status === "On Hold") acc.onHold += 1;
+        return acc;
+      },
+      {
+        total: 0,
+        inProgress: 0,
+        completed: 0,
+        onHold: 0,
+      },
+    );
+  }, [currentProjects]);
+
   const filteredProjects = useMemo(
     () =>
       currentProjects.filter((project) => {
@@ -194,7 +213,46 @@ export default function EmployeeProjectsScreen() {
           />
         }
       >
-        
+        <View className="mb-5 rounded-2xl bg-white p-4 shadow-sm shadow-slate-200">
+          <Text className="text-base font-bold text-slate-900">
+            Assigned project summary
+          </Text>
+          <View className="mt-4 flex-row flex-wrap gap-3">
+            <View className="min-w-[140px] flex-1 rounded-2xl border border-slate-200 bg-slate-50 p-4">
+              <Text className="text-3xl font-black text-slate-900">
+                {projectSummary.total}
+              </Text>
+              <Text className="mt-1 text-xs uppercase text-slate-500">
+                Total Assigned
+              </Text>
+            </View>
+            <View className="min-w-[140px] flex-1 rounded-2xl border border-slate-200 bg-slate-50 p-4">
+              <Text className="text-3xl font-black text-blue-700">
+                {projectSummary.inProgress}
+              </Text>
+              <Text className="mt-1 text-xs uppercase text-slate-500">
+                In Progress
+              </Text>
+            </View>
+            <View className="min-w-[140px] flex-1 rounded-2xl border border-slate-200 bg-slate-50 p-4">
+              <Text className="text-3xl font-black text-emerald-700">
+                {projectSummary.completed}
+              </Text>
+              <Text className="mt-1 text-xs uppercase text-slate-500">
+                Completed
+              </Text>
+            </View>
+            <View className="min-w-[140px] flex-1 rounded-2xl border border-slate-200 bg-slate-50 p-4">
+              <Text className="text-3xl font-black text-orange-700">
+                {projectSummary.onHold}
+              </Text>
+              <Text className="mt-1 text-xs uppercase text-slate-500">
+                On Hold
+              </Text>
+            </View>
+          </View>
+        </View>
+
         <View className="mt-5 flex-row items-center rounded-2xl border border-slate-200 bg-white px-4 py-3">
           <Ionicons name="search-outline" size={19} color="#94a3b8" />
           <TextInput
