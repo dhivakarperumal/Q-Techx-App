@@ -150,14 +150,24 @@ export default function TeamScreen() {
   });
 
   return (
-    <View className="flex-1 bg-[#F9FAFB]">
+    <View className="flex-1 bg-white">
       <TopHeader />
 
       <ScrollView className="flex-1" contentContainerClassName="pb-32 pt-2">
         {/* ── STATS SECTION ── */}
         <View className="px-5 mb-6 flex-row flex-wrap justify-between">
           {dynamicStats.map((stat, idx) => (
-            <View key={idx} className="mb-3 w-[48%] overflow-hidden rounded-2xl bg-white shadow-sm border-t-4 border-orange-500">
+            <View
+              key={idx}
+              className="mb-3 w-[48%] overflow-hidden rounded-2xl bg-white border border-orange-100"
+              style={{
+                shadowColor: "#f97316",
+                shadowOffset: { width: 0, height: 4 },
+                shadowOpacity: 0.12,
+                shadowRadius: 10,
+                elevation: 4,
+              }}
+            >
               <LinearGradient
                 colors={["#ffffff", "#fff7ed"]}
                 start={{ x: 0, y: 0 }}
@@ -333,8 +343,8 @@ export default function TeamScreen() {
                 >
                   <Text
                     className={`text-sm ${roleFilter === role
-                        ? "font-bold text-orange-500"
-                        : "text-slate-700"
+                      ? "font-bold text-orange-500"
+                      : "text-slate-700"
                       }`}
                   >
                     {role || "All Roles"}
