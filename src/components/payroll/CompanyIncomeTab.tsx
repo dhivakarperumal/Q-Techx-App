@@ -1,7 +1,10 @@
 import React, { useState, useEffect } from "react";
-import { View, Text, ScrollView, TouchableOpacity, TextInput, Modal, ActivityIndicator, Alert } from "react-native";
-import { DollarSign, Plus, X, Search, History, Edit, Trash2, Briefcase, Eye } from "lucide-react-native";
+import { View, Text, ScrollView, TouchableOpacity, TextInput, Modal, ActivityIndicator, Alert, RefreshControl, Pressable } from "react-native";
+import { X, History, Edit, Trash2, Briefcase, Eye } from "lucide-react-native";
+import { Ionicons } from "@expo/vector-icons";
+import { LinearGradient } from "expo-linear-gradient";
 import api from "../../api";
+import { FAB } from "../FAB";
 
 export default function CompanyIncomeTab() {
   const [interns, setInterns] = useState([]);
@@ -12,6 +15,15 @@ export default function CompanyIncomeTab() {
   const [showForm, setShowForm] = useState(false);
   const [editId, setEditId] = useState(null);
   const [viewRecord, setViewRecord] = useState(null);
+
+  const [searchQuery, setSearchQuery] = useState("");
+  const [typeFilter, setTypeFilter] = useState("");
+  const [modeFilter, setModeFilter] = useState("");
+  const [monthFilter, setMonthFilter] = useState("");
+  
+  const [typeDropdownOpen, setTypeDropdownOpen] = useState(false);
+  const [modeDropdownOpen, setModeDropdownOpen] = useState(false);
+  const [monthDropdownOpen, setMonthDropdownOpen] = useState(false);
   
   const [nextInvoiceNumber, setNextInvoiceNumber] = useState("");
   
@@ -30,6 +42,14 @@ export default function CompanyIncomeTab() {
   useEffect(() => {
     fetchInterns();
     fetchHistory();
+  }, []);
+
+  const [refreshing, setRefreshing] = useState(false);
+  const onRefresh = React.useCallback(async () => {
+    setRefreshing(true);
+    await fetchInterns();
+    await fetchHistory();
+    setRefreshing(false);
   }, []);
 
   const fetchInterns = async () => {
@@ -159,65 +179,260 @@ export default function CompanyIncomeTab() {
     ]);
   };
 
-  return (
-    <ScrollView className="flex-1 bg-[#F9FAFB] p-4">
-      {/* Header */}
-      <View className="flex-row justify-between items-center mb-6 mt-2">
-        <View>
-          <Text className="text-xl font-bold text-slate-900">Company Income</Text>
-          <Text className="text-sm text-slate-500">Record and track company incomes</Text>
-        </View>
-        <TouchableOpacity
-          onPress={openForm}
-          className="flex-row items-center gap-2 bg-[#f97316] px-4 py-2.5 rounded-xl shadow-sm"
-        >
-          <Plus size={18} color="#fff" />
-          <Text className="text-white font-semibold text-sm">New Income</Text>
-        </TouchableOpacity>
-      </View>
+  const filteredHistory = history.filter(record => {
+    const matchesSearch = !searchQuery || (
+      record.intern_name?.toLowerCase().includes(searchQuery.toLowerCase()) || 
+      record.income_reason?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      record.invoice_number?.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+    const dateStr = record.date_of_payment ? new Date(record.date_of_payment).toISOString().substring(5,7) : "";
+    const matchesMonth = !monthFilter || dateStr === monthFilter;
+    const matchesType = !typeFilter || record.income_type === typeFilter;
+    const matchesMode = !modeFilter || record.payment_type === modeFilter;
+    
+    return matchesSearch && matchesMonth && matchesType && matchesMode;
+  });
 
-      {/* History List */}
-      <View className="bg-white border border-slate-100 rounded-2xl overflow-hidden shadow-sm mb-10">
-        <View className="p-4 border-b border-slate-100 bg-slate-50 flex-row items-center gap-2">
-          <History size={18} color="#64748b" />
+  const totalInterns = interns.length;
+  const totalReceived = filteredHistory.reduce((acc, curr) => acc + parseFloat(curr.amount || 0), 0);
+  const receivedCount = filteredHistory.length;
+  const avgReceived = receivedCount > 0 ? totalReceived / receivedCount : 0;
+
+  const dynamicStats = [
+    {
+      label: "Total Interns",
+      value: String(totalInterns),
+      sub: "Active Interns",
+      icon: "people",
+      subColor: "text-blue-500",
+    },
+    {
+      label: "Total Income",
+      value: `₹ ${totalReceived.toFixed(2)}`,
+      sub: monthFilter ? `Month: ${monthFilter}` : "All Time",
+      icon: "cash",
+      subColor: "text-green-500",
+    },
+    {
+      label: "Income Records",
+      value: String(receivedCount),
+      sub: "Processed",
+      icon: "document-text",
+      subColor: "text-orange-500",
+    },
+    {
+      label: "Average Income",
+      value: `₹ ${avgReceived.toFixed(2)}`,
+      sub: "Per Record",
+      icon: "pie-chart",
+      subColor: "text-violet-500",
+    },
+  ];
+
+  const MONTHS = [
+    { v: "01", l: "January" }, { v: "02", l: "February" }, { v: "03", l: "March" },
+    { v: "04", l: "April" }, { v: "05", l: "May" }, { v: "06", l: "June" },
+    { v: "07", l: "July" }, { v: "08", l: "August" }, { v: "09", l: "September" },
+    { v: "10", l: "October" }, { v: "11", l: "November" }, { v: "12", l: "December" }
+  ];
+  const TYPES = ["Internship Payment", "Other"];
+  const MODES = ["Bank Transfer", "UPI", "Cash", "Cheque"];
+
+  return (
+    <View className="flex-1">
+      <ScrollView className="flex-1 bg-[#F9FAFB] p-4" refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#f97316" />}>
+        {/* ── STATS SECTION ── */}
+        <View className="mb-6 flex-row flex-wrap justify-between pt-2">
+          {dynamicStats.map((stat, idx) => (
+            <View
+              key={idx}
+              className="mb-3 w-[48%] overflow-hidden rounded-2xl bg-white border border-orange-100"
+              style={{
+                shadowColor: "#f97316",
+                shadowOffset: { width: 0, height: 4 },
+                shadowOpacity: 0.12,
+                shadowRadius: 10,
+                elevation: 4,
+              }}
+            >
+              <LinearGradient
+                colors={["#ffffff", "#fff7ed"]}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+                className="px-4 py-4"
+              >
+                <View className="flex-row items-center mb-3">
+                  <View className="h-10 w-10 items-center justify-center rounded-xl bg-black">
+                    <Ionicons name={stat.icon as any} size={20} color="#f97316" />
+                  </View>
+                  <View className="ml-2 flex-1">
+                    <Text className="text-[10px] font-bold uppercase tracking-[0.5px] text-gray-500" numberOfLines={2}>
+                      {stat.label}
+                    </Text>
+                  </View>
+                </View>
+                <View className="mt-1 flex-col">
+                  <Text className="text-[22px] font-black text-black" numberOfLines={1} adjustsFontSizeToFit>
+                    {stat.value}
+                  </Text>
+                  <Text className={`text-[10px] font-bold mt-0.5 ${stat.subColor || "text-gray-400"}`}>
+                    {stat.sub}
+                  </Text>
+                </View>
+              </LinearGradient>
+            </View>
+          ))}
+        </View>
+
+        {/* ── SEARCH & FILTER ── */}
+        <View className="mb-6">
+          {/* Search */}
+          <View className="bg-white border border-slate-200 rounded-2xl flex-row items-center px-4 py-2 shadow-sm mb-3">
+            <Ionicons name="search" size={16} color="#94a3b8" />
+            <TextInput
+              placeholder="Search history..."
+              placeholderTextColor="#94a3b8"
+              value={searchQuery}
+              onChangeText={setSearchQuery}
+              className="flex-1 ml-2 text-sm font-medium text-slate-800 h-10"
+            />
+          </View>
+
+          {/* Dropdown Filters */}
+          <View className="flex-row gap-2 flex-wrap">
+            <TouchableOpacity
+              onPress={() => { setTypeDropdownOpen(true); setModeDropdownOpen(false); setMonthDropdownOpen(false); }}
+              className="h-11 flex-1 bg-white border border-slate-200 rounded-xl px-3 flex-row items-center justify-between min-w-[30%]"
+            >
+              <Text className="text-[11px] font-medium text-slate-700" numberOfLines={1}>
+                {typeFilter || "All Types"}
+              </Text>
+              <Ionicons name="chevron-down" size={12} color="#64748b" />
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              onPress={() => { setModeDropdownOpen(true); setTypeDropdownOpen(false); setMonthDropdownOpen(false); }}
+              className="h-11 flex-1 bg-white border border-slate-200 rounded-xl px-3 flex-row items-center justify-between min-w-[30%]"
+            >
+              <Text className="text-[11px] font-medium text-slate-700" numberOfLines={1}>
+                {modeFilter || "All Modes"}
+              </Text>
+              <Ionicons name="chevron-down" size={12} color="#64748b" />
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              onPress={() => { setMonthDropdownOpen(true); setTypeDropdownOpen(false); setModeDropdownOpen(false); }}
+              className="h-11 flex-1 bg-white border border-slate-200 rounded-xl px-3 flex-row items-center justify-between min-w-[30%]"
+            >
+              <Text className="text-[11px] font-medium text-slate-700" numberOfLines={1}>
+                {monthFilter ? `Month: ${MONTHS.find(m => m.v === monthFilter)?.l || monthFilter}` : "All Dates"}
+              </Text>
+              <Ionicons name="chevron-down" size={12} color="#64748b" />
+            </TouchableOpacity>
+          </View>
+        </View>
+
+        {/* Dropdown Modals */}
+        <Modal visible={typeDropdownOpen} transparent animationType="fade" onRequestClose={() => setTypeDropdownOpen(false)}>
+          <Pressable className="flex-1 bg-black/40 justify-center px-8" onPress={() => setTypeDropdownOpen(false)}>
+            <Pressable className="bg-white rounded-2xl overflow-hidden" onPress={(e) => e.stopPropagation()}>
+              <Text className="px-5 py-4 text-base font-bold text-slate-900 border-b border-slate-100">Select Income Type</Text>
+              <ScrollView style={{maxHeight: 400}}>
+                <TouchableOpacity onPress={() => { setTypeFilter(""); setTypeDropdownOpen(false); }} className="px-5 py-4 border-b border-slate-100">
+                  <Text className={`text-sm ${!typeFilter ? "font-bold text-orange-500" : "text-slate-700"}`}>All Types</Text>
+                </TouchableOpacity>
+                {TYPES.map((t) => (
+                  <TouchableOpacity key={t} onPress={() => { setTypeFilter(t); setTypeDropdownOpen(false); }} className="px-5 py-4 border-b border-slate-100">
+                    <Text className={`text-sm ${typeFilter === t ? "font-bold text-orange-500" : "text-slate-700"}`}>{t}</Text>
+                  </TouchableOpacity>
+                ))}
+              </ScrollView>
+            </Pressable>
+          </Pressable>
+        </Modal>
+
+        <Modal visible={modeDropdownOpen} transparent animationType="fade" onRequestClose={() => setModeDropdownOpen(false)}>
+          <Pressable className="flex-1 bg-black/40 justify-center px-8" onPress={() => setModeDropdownOpen(false)}>
+            <Pressable className="bg-white rounded-2xl overflow-hidden" onPress={(e) => e.stopPropagation()}>
+              <Text className="px-5 py-4 text-base font-bold text-slate-900 border-b border-slate-100">Select Payment Mode</Text>
+              <ScrollView style={{maxHeight: 400}}>
+                <TouchableOpacity onPress={() => { setModeFilter(""); setModeDropdownOpen(false); }} className="px-5 py-4 border-b border-slate-100">
+                  <Text className={`text-sm ${!modeFilter ? "font-bold text-orange-500" : "text-slate-700"}`}>All Modes</Text>
+                </TouchableOpacity>
+                {MODES.map((m) => (
+                  <TouchableOpacity key={m} onPress={() => { setModeFilter(m); setModeDropdownOpen(false); }} className="px-5 py-4 border-b border-slate-100">
+                    <Text className={`text-sm ${modeFilter === m ? "font-bold text-orange-500" : "text-slate-700"}`}>{m}</Text>
+                  </TouchableOpacity>
+                ))}
+              </ScrollView>
+            </Pressable>
+          </Pressable>
+        </Modal>
+
+        <Modal visible={monthDropdownOpen} transparent animationType="fade" onRequestClose={() => setMonthDropdownOpen(false)}>
+          <Pressable className="flex-1 bg-black/40 justify-center px-8" onPress={() => setMonthDropdownOpen(false)}>
+            <Pressable className="bg-white rounded-2xl overflow-hidden" onPress={(e) => e.stopPropagation()}>
+              <Text className="px-5 py-4 text-base font-bold text-slate-900 border-b border-slate-100">Select Month</Text>
+              <ScrollView style={{maxHeight: 400}}>
+                <TouchableOpacity onPress={() => { setMonthFilter(""); setMonthDropdownOpen(false); }} className="px-5 py-4 border-b border-slate-100">
+                  <Text className={`text-sm ${!monthFilter ? "font-bold text-orange-500" : "text-slate-700"}`}>All Dates</Text>
+                </TouchableOpacity>
+                {MONTHS.map((m) => (
+                  <TouchableOpacity key={m.v} onPress={() => { setMonthFilter(m.v); setMonthDropdownOpen(false); }} className="px-5 py-4 border-b border-slate-100">
+                    <Text className={`text-sm ${monthFilter === m.v ? "font-bold text-orange-500" : "text-slate-700"}`}>{m.l}</Text>
+                  </TouchableOpacity>
+                ))}
+              </ScrollView>
+            </Pressable>
+          </Pressable>
+        </Modal>
+
+      <View className="mb-10">
+        <View className="flex-row items-center gap-2 mb-4 px-1">
+          <History size={18} color="#f97316" />
           <Text className="font-semibold text-slate-700">Income History</Text>
         </View>
         
         {historyLoading ? (
-          <View className="items-center justify-center py-10">
+          <View className="items-center justify-center py-10 bg-white rounded-2xl shadow-sm" style={{ shadowColor: "#cbd5e1", shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.1, shadowRadius: 4, elevation: 2 }}>
             <ActivityIndicator size="large" color="#f97316" />
           </View>
-        ) : history.length === 0 ? (
-          <View className="items-center justify-center py-10">
+        ) : filteredHistory.length === 0 ? (
+          <View className="items-center justify-center py-10 bg-white rounded-2xl shadow-sm" style={{ shadowColor: "#cbd5e1", shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.1, shadowRadius: 4, elevation: 2 }}>
             <Text className="text-slate-400">No income records found</Text>
           </View>
         ) : (
           <View>
-            {history.map((record, index) => (
-              <View key={record.income_id || index} className="p-4 border-b border-slate-100 flex-row items-center justify-between">
-                <View className="flex-1 mr-4">
-                  <View className="flex-row items-center gap-2 mb-1">
-                    <Text className="font-bold text-slate-900">{record.income_type}</Text>
-                    {record.invoice_number && (
-                      <Text className="text-[10px] bg-slate-100 text-slate-500 px-1.5 py-0.5 rounded font-mono">{record.invoice_number}</Text>
-                    )}
+            {filteredHistory.map((record, index) => (
+              <View key={record.income_id || index} className="flex-row items-center justify-between p-4 mb-3 bg-white rounded-2xl shadow-sm" style={{ shadowColor: "#f97316", shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.08, shadowRadius: 8, elevation: 3 }}>
+                <View className="flex-1 mr-3 flex-row items-center gap-3">
+                  <View className="w-10 h-10 rounded-full items-center justify-center bg-orange-50">
+                    <Ionicons name="cash" size={18} color="#f97316" />
                   </View>
-                  <Text className="text-xs text-slate-500">{record.intern_name || record.income_reason || '—'}</Text>
-                  <Text className="text-[10px] text-slate-400 mt-1">
-                    {new Date(record.date_of_payment).toLocaleDateString()} • {record.payment_type}
-                  </Text>
+                  <View className="flex-1">
+                    <View className="flex-row items-center gap-2 mb-0.5">
+                      <Text className="font-bold text-slate-900" numberOfLines={1}>{record.income_type}</Text>
+                      {record.invoice_number && (
+                        <Text className="text-[9px] bg-slate-100 text-slate-500 px-1.5 py-0.5 rounded font-mono">{record.invoice_number}</Text>
+                      )}
+                    </View>
+                    <Text className="text-xs text-slate-500" numberOfLines={1}>{record.intern_name || record.income_reason || '—'}</Text>
+                    <Text className="text-[10px] text-slate-400 mt-1">
+                      {new Date(record.date_of_payment).toLocaleDateString()} • {record.payment_type}
+                    </Text>
+                  </View>
                 </View>
                 <View className="items-end gap-2">
-                  <Text className="font-bold text-emerald-600 text-base">₹{parseFloat(record.amount).toFixed(2)}</Text>
-                  <View className="flex-row gap-2 mt-1">
-                    <TouchableOpacity onPress={() => setViewRecord(record)} className="bg-slate-100 p-1.5 rounded-lg">
-                      <Eye size={14} color="#64748b" />
+                  <Text className="font-black text-orange-600 text-base">₹{parseFloat(record.amount).toFixed(2)}</Text>
+                  <View className="flex-row gap-1">
+                    <TouchableOpacity onPress={() => setViewRecord(record)} className="bg-slate-100 p-1.5 rounded-md">
+                      <Eye size={12} color="#64748b" />
                     </TouchableOpacity>
-                    <TouchableOpacity onPress={() => handleEdit(record)} className="bg-blue-50 p-1.5 rounded-lg">
-                      <Edit size={14} color="#3b82f6" />
+                    <TouchableOpacity onPress={() => handleEdit(record)} className="bg-orange-50 p-1.5 rounded-md">
+                      <Edit size={12} color="#f97316" />
                     </TouchableOpacity>
-                    <TouchableOpacity onPress={() => handleDelete(record.income_id)} className="bg-rose-50 p-1.5 rounded-lg">
-                      <Trash2 size={14} color="#f43f5e" />
+                    <TouchableOpacity onPress={() => handleDelete(record.income_id)} className="bg-orange-50 p-1.5 rounded-md">
+                      <Trash2 size={12} color="#f97316" />
                     </TouchableOpacity>
                   </View>
                 </View>
@@ -230,15 +445,20 @@ export default function CompanyIncomeTab() {
       {/* Record/Edit Income Modal */}
       <Modal visible={showForm} animationType="slide" transparent={true}>
         <View className="flex-1 bg-black/50 justify-end">
-          <View className="bg-white rounded-t-3xl p-6 h-[85%] shadow-2xl">
-            <View className="flex-row justify-between items-center mb-6">
-              <Text className="text-slate-900 text-lg font-bold">{editId ? 'Edit Income' : 'Record Income'}</Text>
-              <TouchableOpacity onPress={resetForm}>
-                <X size={24} color="#64748b" />
-              </TouchableOpacity>
+          <View className="bg-white rounded-t-3xl h-[85%] shadow-2xl overflow-hidden">
+            <View className="bg-black pt-4 px-6 pb-6">
+              <View className="w-12 h-1.5 bg-slate-700 rounded-full mx-auto mb-4" />
+              <View className="flex-row justify-between items-center">
+                <View>
+                  <Text className="text-orange-500 text-lg font-bold">{editId ? 'Edit Income' : 'Record Income'}</Text>
+                  <Text className="text-white text-xs mt-1">Add a company income record</Text>
+                </View>
+                <TouchableOpacity onPress={resetForm} className="bg-orange-100 p-2 rounded-full">
+                  <X size={20} color="#f97316" />
+                </TouchableOpacity>
+              </View>
             </View>
-
-            <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ gap: 16, paddingBottom: 40 }}>
+            <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ padding: 24, paddingBottom: 40, gap: 16 }}>
               
               <View>
                 <Text className="text-slate-500 text-xs font-bold uppercase mb-1">Invoice Number</Text>
@@ -412,5 +632,9 @@ export default function CompanyIncomeTab() {
         </Modal>
       )}
     </ScrollView>
+    {/* FAB */}
+    {/* FAB */}
+    <FAB onPress={openForm} style={{ bottom: 32 }} />
+  </View>
   );
 }

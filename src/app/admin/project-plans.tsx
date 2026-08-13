@@ -3,18 +3,19 @@ import * as DocumentPicker from "expo-document-picker";
 import { useRouter } from "expo-router";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
-  ActivityIndicator,
-  Alert,
-  Image,
-  Modal,
-  Pressable,
-  RefreshControl,
-  ScrollView,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  View,
+    ActivityIndicator,
+    Alert,
+    Image,
+    Modal,
+    Pressable,
+    RefreshControl,
+    ScrollView,
+    Text,
+    TextInput,
+    TouchableOpacity,
+    View,
 } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 import api from "../../api";
 
@@ -687,25 +688,25 @@ export default function ProjectPlansScreen() {
   };
 
   return (
-    <View className="flex-1 bg-[#F9FAFB]">
-      <View className="flex-row items-center justify-between border-b border-slate-100 bg-white px-5 pb-4 pt-12">
-        <View className="flex-row items-center">
-          <Pressable
-            accessibilityLabel="Go back"
-            onPress={() => router.back()}
-            className="mr-3 h-10 w-10 items-center justify-center rounded-full bg-slate-100"
-          >
-            <Ionicons name="arrow-back" size={20} color="#334155" />
-          </Pressable>
-          <View>
-            <Text className="text-xl font-black text-slate-900">
-              Project Plans
-            </Text>
-            <Text className="mt-0.5 text-xs text-slate-500">
-              {plans.length} plans, {activeCount} active
-            </Text>
-          </View>
-        </View>
+    <SafeAreaView edges={["top"]} style={{ flex: 1, backgroundColor: "#F9FAFB" }}>
+      <View style={{
+        flexDirection: "row", alignItems: "center",
+        paddingHorizontal: 16, paddingVertical: 14,
+        backgroundColor: "#fff",
+        borderBottomWidth: 1, borderBottomColor: "#f1f5f9",
+      }}>
+        <Pressable
+          onPress={() => router.back()}
+          style={{
+            width: 38, height: 38, borderRadius: 12,
+            backgroundColor: "#f1f5f9",
+            alignItems: "center", justifyContent: "center",
+            marginRight: 12,
+          }}
+        >
+          <Ionicons name="arrow-back" size={20} color="#0f172a" />
+        </Pressable>
+        <Text style={{ fontSize: 18, fontWeight: "800", color: "#0f172a" }}>Project Plans</Text>
       </View>
 
       <ScrollView
@@ -905,13 +906,13 @@ export default function ProjectPlansScreen() {
         onRequestClose={closeModal}
       >
         <View className="flex-1 justify-end bg-black/40">
-          <View className="max-h-[92%] rounded-t-[28px] bg-white px-5 pb-8 pt-5">
-            <View className="mb-4 flex-row items-center justify-between">
+          <View className="max-h-[92%] rounded-t-[28px] bg-white overflow-hidden">
+            <View className="bg-black px-5 pb-6 pt-4 flex-row items-center justify-between">
               <View>
-                <Text className="text-xl font-black text-slate-900">
+                <Text className="text-lg font-black text-orange-500">
                   {editPlanId ? "Edit Project Plan" : "Add Project Plan"}
                 </Text>
-                <Text className="mt-1 text-xs text-slate-500">
+                <Text className="mt-1 text-xs text-white">
                   {editPlanId
                     ? "Update project delivery details"
                     : "Configure project delivery details"}
@@ -920,14 +921,15 @@ export default function ProjectPlansScreen() {
               <Pressable
                 accessibilityLabel="Close"
                 onPress={closeModal}
-                className="h-9 w-9 items-center justify-center rounded-full bg-slate-100"
+                className="h-9 w-9 items-center justify-center rounded-full bg-orange-100"
               >
-                <Ionicons name="close" size={20} color="#64748b" />
+                <Ionicons name="close" size={20} color="#f97316" />
               </Pressable>
             </View>
             <ScrollView
               keyboardShouldPersistTaps="handled"
               showsVerticalScrollIndicator={false}
+              contentContainerStyle={{ padding: 20, paddingBottom: 40 }}
             >
               <Text className="mb-3 text-sm font-black text-slate-900">
                 Basic information
@@ -1290,7 +1292,7 @@ export default function ProjectPlansScreen() {
             </ScrollView>
           </View>
         </View>
-      </Modal>
-    </View>
+        </Modal>
+      </SafeAreaView>
   );
 }

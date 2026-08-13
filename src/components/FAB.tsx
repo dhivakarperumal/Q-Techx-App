@@ -4,16 +4,18 @@ import { TouchableOpacity } from "react-native";
 
 type FABProps = {
   onPress: () => void;
+  style?: any;
 };
 
-export function FAB({ onPress }: FABProps) {
+export function FAB({ onPress, style }: FABProps) {
   return (
     <TouchableOpacity
       onPress={onPress}
       activeOpacity={0.85}
       accessibilityRole="button"
       accessibilityLabel="Create project"
-      style={{
+      style={[
+        {
         position: "absolute",
         bottom: 120,
         right: 22,
@@ -28,8 +30,9 @@ export function FAB({ onPress }: FABProps) {
         shadowOpacity: 0.45,
         shadowRadius: 16,
         elevation: 10,
-        zIndex: 100,
-      }}
+        },
+        style,
+      ]}
     >
       <Ionicons name="add" size={28} color="#fff" />
     </TouchableOpacity>
