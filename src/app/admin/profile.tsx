@@ -6,14 +6,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from '../../auth/AuthContext';
 import { AdminBottomBar } from '../../components/admin-bottom-bar';
 
-const infoRows = [
-  { label: 'Full Name', value: 'Admin User', icon: 'person-outline' },
-  { label: 'Email', value: 'admin@company.com', icon: 'mail-outline' },
-  { label: 'Phone', value: '+91 98765 43210', icon: 'call-outline' },
-  { label: 'Department', value: 'Administration', icon: 'briefcase-outline' },
-  { label: 'Member Since', value: 'Jan 10, 2024', icon: 'calendar-outline' },
-  { label: 'Location', value: 'Chennai, India', icon: 'location-outline' },
-];
+
 
 const quickStats = [
   { label: 'Projects', value: '12', icon: 'folder', color: '#3b82f6', bg: 'bg-blue-50' },
@@ -28,9 +21,27 @@ export default function ProfileScreen() {
   const rawName = (user?.name as string) || (user?.full_name as string) || 'Admin User';
   const userEmail = (user?.email as string) || 'admin@company.com';
   const userRole = (user?.role as string)?.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase()) || 'Super Administrator';
+  const userPhone = (user?.phone as string) || 'Not provided';
+  const userDepartment = (user?.department as string) || (user?.team as string) || (user?.department_name as string) || 'Administration';
+  const userJoinDate = user?.created_at
+    ? new Date(user.created_at).toLocaleDateString()
+    : user?.joined_at
+      ? new Date(user.joined_at).toLocaleDateString()
+      : 'Jan 10, 2024';
+  const userLocation = (user?.location as string) || 'Chennai, India';
+
   const capitalise = (str: string) => str.replace(/\b\w/g, c => c.toUpperCase());
   const displayName = capitalise(rawName);
   const avatarLetter = displayName.charAt(0).toUpperCase();
+
+  const infoRows = [
+    { label: 'Full Name', value: displayName, icon: 'person-outline' },
+    { label: 'Email', value: userEmail, icon: 'mail-outline' },
+    { label: 'Phone', value: userPhone, icon: 'call-outline' },
+    { label: 'Department', value: userDepartment, icon: 'briefcase-outline' },
+    { label: 'Member Since', value: userJoinDate, icon: 'calendar-outline' },
+    { label: 'Location', value: userLocation, icon: 'location-outline' },
+  ];
 
   return (
     <View className="flex-1 bg-[#F9FAFB]">
@@ -96,18 +107,7 @@ export default function ProfileScreen() {
           </View>
         </View>
 
-        {/* ── QUICK STATS ROW ── */}
-        <View className="flex-row justify-center gap-4 mx-5 mt-6 mb-6">
-          {quickStats.map((s, idx) => (
-            <View key={idx} className="flex-1 bg-white rounded-[20px] p-4 items-center border border-slate-100 shadow-sm">
-              <View className={`w-10 h-10 rounded-[12px] ${s.bg} items-center justify-center mb-2`}>
-                <Ionicons name={s.icon as any} size={20} color={s.color} />
-              </View>
-              <Text className="text-slate-900 font-black text-xl">{s.value}</Text>
-              <Text className="text-slate-500 text-[10px] font-medium mt-0.5">{s.label}</Text>
-            </View>
-          ))}
-        </View>
+    
 
         {/* ── PERSONAL INFORMATION CARD ── */}
         <View className="mx-5 mb-5 bg-white rounded-[24px] border border-slate-100 shadow-sm overflow-hidden">
