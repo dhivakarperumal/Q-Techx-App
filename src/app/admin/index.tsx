@@ -56,7 +56,7 @@ function MetricCard({
         colors={["#ffffff", "#fff7ed"]}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
-        className="px-4 py-4"
+        style={{ paddingHorizontal: 16, paddingVertical: 16 }}
       >
         <View className="flex-row items-center mb-3">
           <View className="h-10 w-10 items-center justify-center rounded-xl bg-black">
@@ -105,7 +105,7 @@ export default function AdminDashboard() {
 
   return <View className="flex-1 bg-white"><TopHeader /><ScrollView className="flex-1" contentContainerStyle={{ paddingHorizontal: 20, paddingTop: 12, paddingBottom: 120 }} refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => fetchDashboard(true)} tintColor="#f97316" />}>
     <View className="mb-5 flex-row items-end justify-between"><View className="flex-1 pr-3"><Text className="text-xs font-bold uppercase tracking-[2px] text-orange-500">{new Date().toLocaleDateString("en-IN", { weekday: "long", month: "short", day: "numeric" })}</Text><Text className="mt-1 text-3xl font-black text-black">Good {new Date().getHours() < 12 ? "Morning" : new Date().getHours() < 17 ? "Afternoon" : "Evening"}, {displayName}</Text><Text className="mt-1 text-sm text-gray-500">Your command center at a glance.</Text></View><View className="h-14 w-14 items-center justify-center rounded-2xl bg-black shadow-lg"><Ionicons name="pulse" size={28} color="#f97316" /></View></View>
-    <LinearGradient colors={["#ea580c", "#171717"]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} className="mb-5 overflow-hidden rounded-[28px] p-5 shadow-lg shadow-black/30 border border-white/10"><View className="flex-row items-start justify-between"><View className="flex-1 pr-4"><Text className="text-xs font-bold uppercase tracking-[2px] text-orange-200">Financial Overview</Text><Text className="mt-2 text-2xl font-black text-white">Revenue Insights</Text><Text className="mt-1 text-sm text-gray-300">Live income and payroll snapshot.</Text></View><View className="h-10 w-10 items-center justify-center rounded-2xl bg-white/10"><Ionicons name="trending-up" size={22} color="#ffffff" /></View></View><View className="mt-5 flex-row gap-3"><View className="flex-1 rounded-2xl bg-white/10 p-3 border border-white/5"><Text className="text-[10px] font-bold uppercase text-orange-200/80">Income</Text><Text className="mt-1 text-xl font-black text-white">{money(income)}</Text></View><View className="flex-1 rounded-2xl bg-white/10 p-3 border border-white/5"><Text className="text-[10px] font-bold uppercase text-orange-200/80">Payroll</Text><Text className="mt-1 text-xl font-black text-white">{money(dashboard?.monthlyPayroll)}</Text></View></View><View className="mt-4"><View className="mb-1 flex-row justify-between"><Text className="text-[10px] font-bold text-gray-400">Monthly target: Rs 5.0L</Text><Text className="text-[10px] font-black text-orange-400">{targetPercentage}%</Text></View><View className="h-2 overflow-hidden rounded-full bg-black/40"><View className="h-full rounded-full bg-orange-500" style={{ width: `${targetPercentage}%` }} /></View></View></LinearGradient>
+    <LinearGradient colors={["#ea580c", "#171717"]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ marginBottom: 20, overflow: 'hidden', borderRadius: 28, padding: 20, shadowColor: 'rgba(0,0,0,0.3)', shadowOffset: { width: 0, height: 10 }, shadowOpacity: 1, shadowRadius: 15, elevation: 10, borderWidth: 1, borderColor: 'rgba(255,255,255,0.1)' }}><View className="flex-row items-start justify-between"><View className="flex-1 pr-4"><Text className="text-xs font-bold uppercase tracking-[2px] text-orange-200">Financial Overview</Text><Text className="mt-2 text-2xl font-black text-white">Revenue Insights</Text><Text className="mt-1 text-sm text-gray-300">Live income and payroll snapshot.</Text></View><View className="h-10 w-10 items-center justify-center rounded-2xl bg-white/10"><Ionicons name="trending-up" size={22} color="#ffffff" /></View></View><View className="mt-5 flex-row gap-3"><View className="flex-1 rounded-2xl bg-white/10 p-3 border border-white/5"><Text className="text-[10px] font-bold uppercase text-orange-200/80">Income</Text><Text className="mt-1 text-xl font-black text-white">{money(income)}</Text></View><View className="flex-1 rounded-2xl bg-white/10 p-3 border border-white/5"><Text className="text-[10px] font-bold uppercase text-orange-200/80">Payroll</Text><Text className="mt-1 text-xl font-black text-white">{money(dashboard?.monthlyPayroll)}</Text></View></View><View className="mt-4"><View className="mb-1 flex-row justify-between"><Text className="text-[10px] font-bold text-gray-400">Monthly target: Rs 5.0L</Text><Text className="text-[10px] font-black text-orange-400">{targetPercentage}%</Text></View><View className="h-2 overflow-hidden rounded-full bg-black/40"><View className="h-full rounded-full bg-orange-500" style={{ width: `${targetPercentage}%` }} /></View></View></LinearGradient>
     {loading ? <View className="items-center py-12"><ActivityIndicator size="large" color="#f97316" /><Text className="mt-3 text-sm text-gray-500">Loading dashboard...</Text></View> : error ? <View className="mb-5 rounded-2xl border border-rose-200 bg-rose-50 p-4"><Text className="font-semibold text-rose-700">{error}</Text><Pressable onPress={() => fetchDashboard()} className="mt-3 self-start rounded-xl bg-rose-600 px-4 py-2"><Text className="font-bold text-white">Try again</Text></Pressable></View> : null}
     <View className="mb-3 flex-row flex-wrap justify-between">{stats.map(([icon, label, value, color, background]) => <MetricCard key={label} icon={icon} label={label} value={loading ? "-" : value} color={color} background={background} />)}</View>
     <View className="mb-5 overflow-hidden rounded-3xl bg-white shadow-md">
@@ -114,7 +114,7 @@ export default function AdminDashboard() {
         colors={["#fb923c", "#f97316"]}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 0 }}
-        className="h-0.5 w-full"
+        style={{ height: 2, width: '100%' }}
       />
 
       {/* Header */}
@@ -155,8 +155,10 @@ export default function AdminDashboard() {
                   colors={["#fb923c", "#f97316"]}
                   start={{ x: 0, y: 0 }}
                   end={{ x: 0, y: 1 }}
-                  className="w-full rounded-t-xl"
                   style={{
+                    width: '100%',
+                    borderTopLeftRadius: 12,
+                    borderTopRightRadius: 12,
                     height: Math.max(
                       8,
                       (valueOf(entry.income) / maxIncome) * 105
@@ -202,14 +204,14 @@ export default function AdminDashboard() {
       colors={["#ffffff", "#fff7ed"]}
       start={{ x: 0, y: 0 }}
       end={{ x: 1, y: 1 }}
-      className="mb-5 overflow-hidden rounded-3xl shadow-md"
+      style={{ marginBottom: 20, overflow: 'hidden', borderRadius: 24, shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.1, shadowRadius: 6, elevation: 4 }}
     >
       {/* Orange top accent */}
       <LinearGradient
         colors={["#fb923c", "#f97316"]}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 0 }}
-        className="h-0.5 w-full"
+        style={{ height: 2, width: '100%' }}
       />
 
       <View className="p-5">
@@ -310,7 +312,7 @@ export default function AdminDashboard() {
       colors={["#ffffff", "#fff7ed"]}
       start={{ x: 0, y: 0 }}
       end={{ x: 1, y: 1 }}
-      className="mb-5 overflow-hidden rounded-3xl shadow-md"
+      style={{ marginBottom: 20, overflow: 'hidden', borderRadius: 24, shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.1, shadowRadius: 6, elevation: 4 }}
     >
       {/* Orange top accent */}
       <View className="h-0.5 w-full bg-orange-500" />

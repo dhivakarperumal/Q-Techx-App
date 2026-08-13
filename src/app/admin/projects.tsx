@@ -27,11 +27,24 @@ const filters = [
 
 const ROLES = ["Project Manager", "Developer", "QA", "UI/UX", "Support"];
 
+const formatDate = (value?: string) => {
+  if (!value) return "";
+  const date = new Date(value);
+  return Number.isNaN(date.getTime())
+    ? value
+    : date.toLocaleDateString(undefined, {
+        month: "short",
+        day: "numeric",
+        year: "numeric",
+      });
+};
+
 export default function ProjectsScreen() {
   const router = useRouter();
   const [projects, setProjects] = useState<any[]>([]);
   const [assignedProjects, setAssignedProjects] = useState<any[]>([]);
   const [unassignedProjects, setUnassignedProjects] = useState<any[]>([]);
+  const [progressMap, setProgressMap] = useState<Record<string, number>>({});
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<"assigned" | "unassigned">(
     "assigned",
@@ -77,8 +90,12 @@ export default function ProjectsScreen() {
       proj.projectStartDate;
     const endDate =
       proj.end_date || proj.estimated_completion_date || proj.project_end_date;
-    const fromDate = dateValue
-      ? `${dateValue}${endDate ? ` – ${endDate}` : ""}`
+    
+    const formattedStart = formatDate(dateValue);
+    const formattedEnd = formatDate(endDate);
+    
+    const fromDate = formattedStart
+      ? `${formattedStart}${formattedEnd ? ` – ${formattedEnd}` : ""}`
       : "No Date Provided";
 
     return {
@@ -242,6 +259,44 @@ export default function ProjectsScreen() {
       setProjects(mappedProjects);
       setAssignedProjects(assigned);
       setUnassignedProjects(unassigned);
+
+      // Compute progress from tasks (completed / total per project)
+      try {
+        const tasksRes = await api.get("/tasks?limit=1000&page=1");
+        const tPayload = tasksRes.data;
+        const extractRows = (p: any): any[] => {
+          if (Array.isArray(p)) return p;
+          if (p && typeof p === "object") {
+            for (const key of ["data", "tasks", "rows", "results", "list"]) {
+              if (Array.isArray(p[key])) return p[key];
+            }
+          }
+          return [];
+        };
+        const allTasks = extractRows(tPayload);
+        const newProgressMap: Record<string, number> = {};
+        mappedProjects.forEach((p: any) => {
+          const projectTasks = allTasks.filter((t: any) => {
+            const tProjId = String(t.project_id ?? t.projectId ?? t.project?.id ?? "");
+            const tProjUuid = String(t.project_uuid ?? t.project?.uuid ?? t.project ?? "");
+            const tProjName = String(t.project_name ?? t.projectName ?? t.project?.name ?? "").toLowerCase();
+            return (
+              tProjId === String(p.projectId) ||
+              tProjUuid === p.uuid ||
+              (p.title && tProjName === p.title.toLowerCase())
+            );
+          });
+          if (projectTasks.length > 0) {
+            const done = projectTasks.filter(
+              (t: any) => (t.status ?? t.task_status ?? "").toLowerCase() === "completed"
+            ).length;
+            newProgressMap[p.uuid] = Math.round((done / projectTasks.length) * 100);
+          } else {
+            newProgressMap[p.uuid] = 0;
+          }
+        });
+        setProgressMap(newProgressMap);
+      } catch (_) {}
     } catch (error) {
       console.error("Failed to fetch projects:", error);
       setProjects([]);
@@ -462,7 +517,7 @@ export default function ProjectsScreen() {
                 colors={["#ffffff", "#fff7ed"]}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 1 }}
-                className="px-4 py-4"
+                style={{ paddingHorizontal: 16, paddingVertical: 16 }}
               >
                 <View className="flex-row items-center mb-3">
                   <View className="h-10 w-10 items-center justify-center rounded-xl bg-black">
@@ -677,34 +732,27 @@ export default function ProjectsScreen() {
                 </View>
 
                 <View>
-                  <View className="mb-3 flex-row items-center justify-between">
-                    <View className="flex-row items-center">
-                      <Ionicons
-                        name="pulse-outline"
-                        size={13}
-                        color="#64748b"
-                      />
-                      <Text className="ml-1 text-xs font-semibold text-slate-500">
-                        Progress
-                      </Text>
-                    </View>
-                    <Text
-                      className="text-xs font-black"
-                      style={{ color: project.progressColor }}
-                    >
-                      {project.progress}%
-                    </Text>
-                  </View>
-
-                  <View className="mb-3 h-2.5 overflow-hidden rounded-full bg-slate-100">
-                    <View
-                      className="h-full rounded-full"
-                      style={{
-                        width: `${Math.max(project.progress, 8)}%`,
-                        backgroundColor: project.progressColor,
-                      }}
-                    />
-                  </View>
+                  {(() => {
+                    const pct = progressMap[project.uuid] ?? project.progress ?? 0;
+                    const barColor = pct >= 100 ? "#10b981" : pct >= 50 ? "#3b82f6" : "#f97316";
+                    return (
+                      <>
+                        <View className="mb-3 flex-row items-center justify-between">
+                          <View className="flex-row items-center">
+                            <Ionicons name="pulse-outline" size={13} color="#64748b" />
+                            <Text className="ml-1 text-xs font-semibold text-slate-500">Progress</Text>
+                          </View>
+                          <Text className="text-xs font-black" style={{ color: barColor }}>{pct}%</Text>
+                        </View>
+                        <View className="mb-3 h-2.5 overflow-hidden rounded-full bg-slate-100">
+                          <View
+                            className="h-full rounded-full"
+                            style={{ width: pct > 0 ? `${pct}%` : "3%", backgroundColor: barColor }}
+                          />
+                        </View>
+                      </>
+                    );
+                  })()}
 
                   <View className="mb-3 flex-row items-start rounded-2xl bg-slate-50 p-3">
                     <Ionicons name="people-outline" size={14} color="#64748b" />
