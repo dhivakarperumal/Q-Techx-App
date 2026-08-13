@@ -117,7 +117,8 @@ function DetailModal({ member, onClose, onEdit, onDelete }: { member: Member; on
   return <Modal visible animationType="slide" onRequestClose={onClose}><View className="flex-1 bg-[#f8fafc]"><View className="bg-black pt-4 px-6 pb-6"><View className="w-12 h-1.5 bg-slate-700 rounded-full mx-auto mb-4" /><View className="flex-row justify-between items-center"><View><Text className="text-lg font-black text-orange-500">{nameOf(member)}</Text><Text className="mt-1 text-xs text-white/70">{member.person_id || "Trainee / Intern"}</Text></View><Pressable onPress={onClose}><Ionicons name="close-circle" size={28} color="#f97316" /></Pressable></View></View><ScrollView contentContainerStyle={{ padding: 20, paddingBottom: 40, paddingTop: 10 }}><View className="items-center rounded-3xl bg-white p-5 shadow-sm"><View className="h-20 w-20 items-center justify-center rounded-3xl bg-orange-100"><Text className="text-2xl font-black text-orange-600">{initials(nameOf(member))}</Text></View><Text className="mt-3 text-xl font-black text-slate-900">{nameOf(member)}</Text><Text className="mt-1 text-sm text-slate-500">{member.type} - {member.status}</Text></View><View className="mt-4 rounded-3xl bg-white p-4 shadow-sm">{[["Department", member.department], ["Designation", member.designation], ["Reporting Manager", member.reporting_manager], ["Mobile", member.mobile_number], ["Email", member.email_address], ["Joining Date", dateText(joiningDateOf(member))], ["End Date", dateText(member.end_date)], ["College", member.college_university], ["Course", member.course], ["Academic Department", member.academic_department], ["Year / Semester", member.year_semester], ["Guide", member.guide_name]].map(([label, value]) => value ? <View key={label} className="border-b border-slate-100 py-3"><Text className="text-[10px] font-bold uppercase tracking-wide text-slate-400">{label}</Text><Text className="mt-1 text-sm text-slate-700">{String(value)}</Text></View> : null)}</View><View className="mt-4 flex-row gap-3"><Pressable onPress={onEdit} className="flex-1 items-center rounded-xl border border-orange-500 py-3"><Text className="font-bold text-orange-600">Edit</Text></Pressable><Pressable onPress={onDelete} className="flex-1 items-center rounded-xl bg-rose-600 py-3"><Text className="font-bold text-white">Delete</Text></Pressable></View></ScrollView></View></Modal>;
 }
 
-type AttendanceRow = { trainee_intern_id?: string; trainee_name?: string; person_id?: string; type?: string; present_days?: number; absent_days?: number };
+type AttendanceRow = { trainee_intern_id?: string; trainee_name?: string; person_id?: string; type?: string; status?: string; present_days?: number; absent_days?: number };
+type AttendanceDetail = { id?: string; attendance_date?: string; date?: string; check_in_time?: string; check_out_time?: string; attendance_status?: string; location?: string };
 const attendanceDate = () => { const date = new Date(); return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`; };
 
 function AttendanceModal({ visible, members, onClose, onSaved }: { visible: boolean; members: Member[]; onClose: () => void; onSaved: () => void }) {
@@ -139,6 +140,10 @@ function AttendanceModal({ visible, members, onClose, onSaved }: { visible: bool
     } finally { setSaving(false); }
   };
   return <Modal visible={visible} animationType="slide" onRequestClose={onClose}><View className="flex-1 bg-[#f8fafc]"><View className="bg-black pt-4 px-6 pb-6"><View className="w-12 h-1.5 bg-slate-700 rounded-full mx-auto mb-4" /><View className="flex-row justify-between items-center"><View><Text className="text-lg font-black text-orange-500">Mark Attendance</Text><Text className="mt-1 text-xs text-white/70">Create or update a trainee/intern record.</Text></View><Pressable onPress={onClose}><Ionicons name="close-circle" size={28} color="#f97316" /></Pressable></View></View><ScrollView contentContainerStyle={{ padding: 20, paddingBottom: 40, paddingTop: 10 }}><View className="rounded-3xl border border-slate-100 bg-white p-4 shadow-sm"><Text className="mb-3 text-xs font-bold text-slate-500">Trainee / Intern</Text><ScrollView horizontal showsHorizontalScrollIndicator={false} className="mb-4">{members.map((member) => <Pressable key={String(member.uuid)} onPress={() => set("trainee_intern_id", String(member.uuid))} className={`mr-2 rounded-full border px-3 py-2 ${form.trainee_intern_id === String(member.uuid) ? "border-orange-500 bg-orange-50" : "border-slate-200 bg-white"}`}><Text className={`text-xs font-bold ${form.trainee_intern_id === String(member.uuid) ? "text-orange-600" : "text-slate-500"}`}>{nameOf(member)}</Text></Pressable>)}</ScrollView><Field label="Date (YYYY-MM-DD)" value={form.date} onChange={(value) => set("date", value)} /><Text className="mb-2 text-xs font-bold text-slate-500">Attendance Status</Text><View className="mb-3 flex-row flex-wrap gap-2">{["Present", "Absent"].map((status) => <Pressable key={status} onPress={() => set("attendance_status", status)} className={`rounded-full border px-3 py-2 ${form.attendance_status === status ? "border-orange-500 bg-orange-50" : "border-slate-200"}`}><Text className={`text-xs font-bold ${form.attendance_status === status ? "text-orange-600" : "text-slate-500"}`}>{status}</Text></Pressable>)}</View><Field label="Check-in Time (HH:MM)" value={form.check_in_time} onChange={(value) => set("check_in_time", value)} placeholder="09:30" /><Field label="Check-out Time (HH:MM)" value={form.check_out_time} onChange={(value) => set("check_out_time", value)} placeholder="18:00" /><Field label="Location" value={form.location} onChange={(value) => set("location", value)} placeholder="Optional location" /><Pressable disabled={saving} onPress={save} className="mt-2 items-center rounded-xl bg-orange-500 py-3 disabled:opacity-50"><Text className="font-bold text-white">{saving ? "Saving..." : "Save / Update"}</Text></Pressable></View></ScrollView></View></Modal>;
+}
+
+function AttendanceDetailModal({ visible, member, attendanceRecords, onClose }: { visible: boolean; member: AttendanceRow | null; attendanceRecords: AttendanceDetail[]; onClose: () => void }) {
+  return <Modal visible={visible} animationType="slide" onRequestClose={onClose}><View className="flex-1 bg-[#f8fafc]"><View className="bg-black pt-4 px-6 pb-6"><View className="w-12 h-1.5 bg-slate-700 rounded-full mx-auto mb-4" /><View className="flex-row justify-between items-center"><View><Text className="text-lg font-black text-orange-500">{member?.trainee_name || "Attendance Details"}</Text><Text className="mt-1 text-xs text-white/70">{member?.person_id || "ID"} • {member?.type || "Type"}</Text></View><Pressable onPress={onClose}><Ionicons name="close-circle" size={28} color="#f97316" /></Pressable></View></View><ScrollView contentContainerStyle={{ padding: 20, paddingBottom: 40, paddingTop: 10 }}>{attendanceRecords.length === 0 ? (<View className="items-center justify-center rounded-2xl border border-dashed border-slate-200 bg-white p-12"><Ionicons name="calendar-outline" size={34} color="#cbd5e1" /><Text className="mt-3 font-bold text-slate-500">No detailed records found.</Text></View>) : attendanceRecords.map((record, idx) => (<View key={record.id || idx} className="mb-3 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm"><View className="mb-3 flex-row items-center justify-between"><View><Text className="font-bold text-slate-900">{record.attendance_date || record.date || "Date"}</Text><Text className="mt-1 text-xs text-slate-500">{record.attendance_status || "Status"}</Text></View><View className={`rounded-full px-2 py-1 ${record.attendance_status?.toLowerCase() === "present" ? "bg-emerald-50" : "bg-rose-50"}`}><Text className={`text-xs font-bold ${record.attendance_status?.toLowerCase() === "present" ? "text-emerald-700" : "text-rose-700"}`}>{record.attendance_status || "Unknown"}</Text></View></View>{record.check_in_time && record.check_out_time && (<View className="flex-row gap-3"><View className="flex-1"><Text className="text-xs text-slate-500">Check In</Text><Text className="mt-1 font-bold text-slate-900">{record.check_in_time}</Text></View><View className="flex-1"><Text className="text-xs text-slate-500">Check Out</Text><Text className="mt-1 font-bold text-slate-900">{record.check_out_time}</Text></View></View>)}{record.location && (<View className="mt-3"><Text className="text-xs text-slate-500">Location</Text><Text className="mt-1 font-bold text-slate-900">{record.location}</Text></View>)}</View>))}</ScrollView></View></Modal>;
 }
 
 type TraineeTask = { uuid: string; task_name?: string; description?: string };
@@ -197,10 +202,40 @@ function TaskAssignmentModal({ visible, members, tasks, onClose, onSaved }: { vi
 
 export default function AdminTraineeScreen() {
   const router = useRouter();
-  const [members, setMembers] = useState<Member[]>([]); const [employees, setEmployees] = useState<Employee[]>([]); const [attendance, setAttendance] = useState<AttendanceRow[]>([]); const [tasks, setTasks] = useState<TraineeTask[]>([]); const [taskAssignments, setTaskAssignments] = useState<TaskAssignment[]>([]); const [loading, setLoading] = useState(true); const [attendanceLoading, setAttendanceLoading] = useState(false); const [taskLoading, setTaskLoading] = useState(false); const [refreshing, setRefreshing] = useState(false); const [search, setSearch] = useState(""); const [type, setType] = useState("All"); const [status, setStatus] = useState("All"); const [tab, setTab] = useState("Members"); const [attendanceVisible, setAttendanceVisible] = useState(false); const [taskVisible, setTaskVisible] = useState(false); const [taskAssignmentVisible, setTaskAssignmentVisible] = useState(false); const [formVisible, setFormVisible] = useState(false); const [assignmentVisible, setAssignmentVisible] = useState(false); const [editing, setEditing] = useState<Member | null>(null); const [selected, setSelected] = useState<Member | null>(null); const [assignmentMember, setAssignmentMember] = useState<Member | null>(null); const [typeDropdownOpen, setTypeDropdownOpen] = useState(false); const [statusDropdownOpen, setStatusDropdownOpen] = useState(false);
+  const [members, setMembers] = useState<Member[]>([]); 
+  const [employees, setEmployees] = useState<Employee[]>([]); 
+  const [attendance, setAttendance] = useState<AttendanceRow[]>([]); 
+  const [attendanceDetails, setAttendanceDetails] = useState<AttendanceDetail[]>([]);
+  const [tasks, setTasks] = useState<TraineeTask[]>([]); 
+  const [taskAssignments, setTaskAssignments] = useState<TaskAssignment[]>([]); 
+  const [loading, setLoading] = useState(true); 
+  const [attendanceLoading, setAttendanceLoading] = useState(false); 
+  const [taskLoading, setTaskLoading] = useState(false); 
+  const [refreshing, setRefreshing] = useState(false); 
+  const [search, setSearch] = useState(""); 
+  const [type, setType] = useState("All"); 
+  const [status, setStatus] = useState("All");
+  const [attendanceType, setAttendanceType] = useState("All");
+  const [attendanceStatus, setAttendanceStatus] = useState("All");
+  const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth() + 1);
+  const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
+  const [tab, setTab] = useState("Members"); 
+  const [attendanceVisible, setAttendanceVisible] = useState(false); 
+  const [attendanceDetailVisible, setAttendanceDetailVisible] = useState(false);
+  const [selectedAttendanceMember, setSelectedAttendanceMember] = useState<AttendanceRow | null>(null);
+  const [taskVisible, setTaskVisible] = useState(false); 
+  const [taskAssignmentVisible, setTaskAssignmentVisible] = useState(false); 
+  const [formVisible, setFormVisible] = useState(false); 
+  const [assignmentVisible, setAssignmentVisible] = useState(false); 
+  const [editing, setEditing] = useState<Member | null>(null); 
+  const [selected, setSelected] = useState<Member | null>(null); 
+  const [assignmentMember, setAssignmentMember] = useState<Member | null>(null); 
+  const [typeDropdownOpen, setTypeDropdownOpen] = useState(false); 
+  const [statusDropdownOpen, setStatusDropdownOpen] = useState(false);
   const loadMembers = useCallback(async (refresh = false) => { if (refresh) setRefreshing(true); else setLoading(true); try { const query = new URLSearchParams({ page: "1", limit: "100" }); if (search) query.set("search", search); if (type !== "All") query.set("type", type); if (status !== "All") query.set("status", status); const membersResponse = await api.get(`/trainee-intern?${query.toString()}`); setMembers(membersResponse.data?.data || []); try { const employeesResponse = await api.get("/trainee-assignments/available-employees"); setEmployees(employeesResponse.data?.data || []); } catch { const employeesResponse = await api.get("/employees?limit=200"); setEmployees(employeesResponse.data?.data || employeesResponse.data?.employees || []); } } catch (error: any) { Alert.alert("Unable to load members", error?.message || "Please try again."); } finally { setLoading(false); setRefreshing(false); } }, [search, type, status]);
   useEffect(() => { loadMembers(); }, [loadMembers]);
-  const loadAttendance = useCallback(async () => { setAttendanceLoading(true); try { const now = new Date(); const response = await api.get(`/trainee-intern-attendance/summary?month=${now.getMonth() + 1}&year=${now.getFullYear()}`); setAttendance(response.data?.data || []); } catch (error: any) { Alert.alert("Unable to load attendance", error?.message || "Please try again."); } finally { setAttendanceLoading(false); } }, []);
+  const loadAttendance = useCallback(async () => { setAttendanceLoading(true); try { const response = await api.get(`/trainee-intern-attendance/summary?month=${selectedMonth}&year=${selectedYear}`); setAttendance(response.data?.data || []); } catch (error: any) { Alert.alert("Unable to load attendance", error?.message || "Please try again."); } finally { setAttendanceLoading(false); } }, [selectedMonth, selectedYear]);
+  const loadAttendanceDetails = useCallback(async (memberId: string) => { setAttendanceLoading(true); try { const response = await api.get(`/trainee-intern-attendance?trainee_intern_id=${memberId}&month=${selectedMonth}&year=${selectedYear}`); setAttendanceDetails(response.data?.data || []); } catch (error: any) { Alert.alert("Unable to load records", error?.message || "Please try again."); } finally { setAttendanceLoading(false); } }, [selectedMonth, selectedYear]);
   useEffect(() => { if (tab === "Attendance") loadAttendance(); }, [tab, loadAttendance]);
   const loadTasks = useCallback(async () => { setTaskLoading(true); try { const [tasksResponse, assignmentsResponse] = await Promise.all([api.get("/trainee-tasks"), api.get("/trainee-task-assignments")]); const taskData = tasksResponse.data?.data ?? tasksResponse.data; setTasks(Array.isArray(taskData) ? taskData : taskData?.tasks || []); const assignmentData = assignmentsResponse.data?.data ?? assignmentsResponse.data; setTaskAssignments(Array.isArray(assignmentData) ? assignmentData : assignmentData?.assignments || []); } catch (error: any) { Alert.alert("Unable to load tasks", error?.message || "Please try again."); } finally { setTaskLoading(false); } }, []);
   useEffect(() => { if (tab === "Tasks" || tab === "Assign Task") loadTasks(); }, [tab, loadTasks]);
@@ -336,14 +371,13 @@ export default function AdminTraineeScreen() {
   );
   const renderAttendance = () => {
     const filteredAttendance = attendance.filter(row => {
-      if (!search) return true;
-      const searchLower = search.toLowerCase();
-      return (
-        (row.trainee_name || '').toLowerCase().includes(searchLower) ||
-        (row.person_id || '').toLowerCase().includes(searchLower) ||
-        (row.type || '').toLowerCase().includes(searchLower)
-      );
+      const query = search.trim().toLowerCase();
+      const matchesSearch = !query || [row.trainee_name, row.person_id, row.type].some((v) => String(v || "").toLowerCase().includes(query));
+      const matchesType = attendanceType === "All" || row.type === attendanceType;
+      const matchesStatus = attendanceStatus === "All" || row.status === attendanceStatus;
+      return matchesSearch && matchesType && matchesStatus;
     });
+
     return (
       <>
         <View className="mb-6 flex-row flex-wrap justify-between">
@@ -375,7 +409,41 @@ export default function AdminTraineeScreen() {
             </TouchableOpacity>
           ))}
         </View>
-        <View className="mb-6">
+
+        <View className="mb-4 rounded-2xl border border-slate-200 bg-white p-3 shadow-sm">
+          <View className="mb-3 flex-row gap-2">
+            <View className="flex-1">
+              <Text className="text-xs font-bold text-slate-500 mb-1">Month</Text>
+              <ScrollView horizontal showsHorizontalScrollIndicator={false} className="flex-row gap-1">
+                {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].map((month) => (
+                  <Pressable
+                    key={month}
+                    onPress={() => setSelectedMonth(month)}
+                    className={`px-3 py-1.5 rounded-full border ${selectedMonth === month ? 'border-orange-500 bg-orange-50' : 'border-slate-200 bg-white'}`}
+                  >
+                    <Text className={`text-xs font-bold ${selectedMonth === month ? 'text-orange-600' : 'text-slate-500'}`}>
+                      {new Date(2024, month - 1).toLocaleString("en", { month: "short" })}
+                    </Text>
+                  </Pressable>
+                ))}
+              </ScrollView>
+            </View>
+            <View className="flex-1">
+              <Text className="text-xs font-bold text-slate-500 mb-1">Year</Text>
+              <ScrollView horizontal showsHorizontalScrollIndicator={false} className="flex-row gap-1">
+                {[selectedYear - 1, selectedYear, selectedYear + 1].map((year) => (
+                  <Pressable
+                    key={year}
+                    onPress={() => setSelectedYear(year)}
+                    className={`px-3 py-1.5 rounded-full border ${selectedYear === year ? 'border-orange-500 bg-orange-50' : 'border-slate-200 bg-white'}`}
+                  >
+                    <Text className={`text-xs font-bold ${selectedYear === year ? 'text-orange-600' : 'text-slate-500'}`}>{year}</Text>
+                  </Pressable>
+                ))}
+              </ScrollView>
+            </View>
+          </View>
+
           <View className="bg-white border border-slate-200 rounded-2xl flex-row items-center px-4 py-2 shadow-sm mb-3">
             <Ionicons name="search" size={16} color="#94a3b8" />
             <TextInput
@@ -386,13 +454,38 @@ export default function AdminTraineeScreen() {
               className="flex-1 ml-2 text-sm font-medium text-slate-800 h-10"
             />
           </View>
+
+          <View className="mt-2 flex-row flex-wrap gap-1.5">
+            {['All', 'Trainee', 'Intern'].map((option) => (
+              <Pressable
+                key={option}
+                onPress={() => setAttendanceType(option)}
+                className={`rounded-full border px-2.5 py-1 ${attendanceType === option ? 'border-orange-500 bg-orange-50' : 'border-slate-200 bg-white'}`}
+              >
+                <Text className={`text-[10px] font-bold ${attendanceType === option ? 'text-orange-600' : 'text-slate-500'}`}>{option}</Text>
+              </Pressable>
+            ))}
+          </View>
+          <View className="mt-2 flex-row flex-wrap gap-1.5">
+            {['All', 'Active', 'On Leave', 'Inactive'].map((option) => (
+              <Pressable
+                key={option}
+                onPress={() => setAttendanceStatus(option)}
+                className={`rounded-full border px-2.5 py-1 ${attendanceStatus === option ? 'border-orange-500 bg-orange-50' : 'border-slate-200 bg-white'}`}
+              >
+                <Text className={`text-[10px] font-bold ${attendanceStatus === option ? 'text-orange-600' : 'text-slate-500'}`}>{option}</Text>
+              </Pressable>
+            ))}
+          </View>
         </View>
+
         <View className="mt-5 flex-row items-center justify-between">
           <View>
             <Text className="text-xl font-black text-slate-900">Attendance</Text>
-            <Text className="mt-1 text-sm text-slate-500">This month's trainee and intern summary.</Text>
+            <Text className="mt-1 text-sm text-slate-500">{new Date(selectedYear, selectedMonth - 1).toLocaleString("en", { month: "long", year: "numeric" })}</Text>
           </View>
         </View>
+        
         {attendanceLoading ? (
           <View className="items-center py-12">
             <ActivityIndicator color="#f97316" />
@@ -404,23 +497,35 @@ export default function AdminTraineeScreen() {
               className="p-4 mb-3 bg-white rounded-2xl shadow-sm"
               style={{ shadowColor: "#cbd5e1", shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.1, shadowRadius: 4, elevation: 2 }}
             >
-              <View className="flex-row items-center">
-                <View className="h-11 w-11 items-center justify-center rounded-2xl bg-orange-50">
-                  <Text className="font-black text-orange-600">{initials(row.trainee_name || "Trainee")}</Text>
+              <View className="flex-row items-center justify-between">
+                <View className="flex-row items-center flex-1">
+                  <View className="h-11 w-11 items-center justify-center rounded-2xl bg-orange-50">
+                    <Text className="font-black text-orange-600">{initials(row.trainee_name || "Trainee")}</Text>
+                  </View>
+                  <View className="ml-3 flex-1">
+                    <Text className="font-bold text-slate-900">{row.trainee_name || "Unnamed member"}</Text>
+                    <Text className="mt-1 text-xs text-slate-500">{row.person_id || "No person ID"} • {row.type || "Trainee / Intern"}</Text>
+                  </View>
                 </View>
-                <View className="ml-3 flex-1">
-                  <Text className="font-bold text-slate-900">{row.trainee_name || "Unnamed member"}</Text>
-                  <Text className="mt-1 text-xs text-slate-500">{row.person_id || "No person ID"} - {row.type || "Trainee / Intern"}</Text>
-                </View>
+                <Pressable
+                  onPress={() => {
+                    setSelectedAttendanceMember(row);
+                    loadAttendanceDetails(String(row.trainee_intern_id));
+                    setAttendanceDetailVisible(true);
+                  }}
+                  className="ml-2 h-8 w-8 items-center justify-center rounded-full border border-orange-200 bg-orange-50"
+                >
+                  <Ionicons name="arrow-forward" size={16} color="#f97316" />
+                </Pressable>
               </View>
-              <View className="mt-4 flex-row gap-3">
+              <View className="mt-3 flex-row gap-3">
                 <View className="flex-1 rounded-xl bg-emerald-50 p-3">
                   <Text className="text-xs text-emerald-700">Present</Text>
-                  <Text className="mt-1 text-xl font-black text-emerald-700">{row.present_days || 0}</Text>
+                  <Text className="mt-1 text-lg font-black text-emerald-700">{row.present_days || 0}</Text>
                 </View>
                 <View className="flex-1 rounded-xl bg-rose-50 p-3">
                   <Text className="text-xs text-rose-700">Absent</Text>
-                  <Text className="mt-1 text-xl font-black text-rose-700">{row.absent_days || 0}</Text>
+                  <Text className="mt-1 text-lg font-black text-rose-700">{row.absent_days || 0}</Text>
                 </View>
               </View>
             </View>
@@ -429,7 +534,7 @@ export default function AdminTraineeScreen() {
           <View className="mt-5 items-center rounded-3xl border border-dashed border-slate-200 bg-white p-8">
             <Ionicons name="calendar-outline" size={34} color="#cbd5e1" />
             <Text className="mt-3 font-bold text-slate-500">
-              {search ? 'No records match your search.' : 'No attendance records this month.'}
+              {search ? 'No records match your search.' : 'No attendance records found.'}
             </Text>
           </View>
         )}
@@ -614,5 +719,5 @@ export default function AdminTraineeScreen() {
             </Pressable>
           ))}
         </ScrollView>
-      </View>{tab === "Members" ? renderMembers() : tab === "Attendance" ? renderAttendance() : tab === "Tasks" ? renderTasks() : renderTaskAssignments()}</ScrollView><TraineeForm visible={formVisible} member={editing} onClose={() => setFormVisible(false)} onSaved={() => loadMembers(true)} /><AssignmentModal visible={assignmentVisible} member={assignmentMember} employees={employees} onClose={() => setAssignmentVisible(false)} onSaved={() => loadMembers(true)} /><AttendanceModal visible={attendanceVisible} members={members} onClose={() => setAttendanceVisible(false)} onSaved={loadAttendance} /><TaskMasterModal visible={taskVisible} onClose={() => setTaskVisible(false)} onSaved={loadTasks} /><TaskAssignmentModal visible={taskAssignmentVisible} members={members} tasks={tasks} onClose={() => setTaskAssignmentVisible(false)} onSaved={loadTasks} />{selected && <DetailModal member={selected} onClose={() => setSelected(null)} onEdit={() => { setEditing(selected); setSelected(null); setFormVisible(true); }} onDelete={() => remove(selected)} />}<FAB onPress={() => { if (tab === "Members") { setEditing(null); setFormVisible(true); } else if (tab === "Attendance") { setAttendanceVisible(true); } else if (tab === "Tasks") { setTaskVisible(true); } else if (tab === "Assign Task") { setTaskAssignmentVisible(true); } }} style={{ bottom: 32 }} /></SafeAreaView>;
+      </View>{tab === "Members" ? renderMembers() : tab === "Attendance" ? renderAttendance() : tab === "Tasks" ? renderTasks() : renderTaskAssignments()}</ScrollView><TraineeForm visible={formVisible} member={editing} onClose={() => setFormVisible(false)} onSaved={() => loadMembers(true)} /><AssignmentModal visible={assignmentVisible} member={assignmentMember} employees={employees} onClose={() => setAssignmentVisible(false)} onSaved={() => loadMembers(true)} /><AttendanceModal visible={attendanceVisible} members={members} onClose={() => setAttendanceVisible(false)} onSaved={loadAttendance} /><AttendanceDetailModal visible={attendanceDetailVisible} member={selectedAttendanceMember} attendanceRecords={attendanceDetails} onClose={() => setAttendanceDetailVisible(false)} /><TaskMasterModal visible={taskVisible} onClose={() => setTaskVisible(false)} onSaved={loadTasks} /><TaskAssignmentModal visible={taskAssignmentVisible} members={members} tasks={tasks} onClose={() => setTaskAssignmentVisible(false)} onSaved={loadTasks} />{selected && <DetailModal member={selected} onClose={() => setSelected(null)} onEdit={() => { setEditing(selected); setSelected(null); setFormVisible(true); }} onDelete={() => remove(selected)} />}<FAB onPress={() => { if (tab === "Members") { setEditing(null); setFormVisible(true); } else if (tab === "Attendance") { setAttendanceVisible(true); } else if (tab === "Tasks") { setTaskVisible(true); } else if (tab === "Assign Task") { setTaskAssignmentVisible(true); } }} style={{ bottom: 32 }} /></SafeAreaView>;
 }
