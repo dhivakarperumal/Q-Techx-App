@@ -1,178 +1,216 @@
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
-import { Pressable, ScrollView, Text, View, TouchableOpacity } from "react-native";
-import { BottomHome } from "../../components/BottomHome";
-import { TopHeader } from "../../components/TopHeader";
+import {
+  Alert,
+  Pressable,
+  ScrollView,
+  Text,
+  TouchableOpacity,
+  View,
+} from "react-native";
 import { useAuth } from "../../auth/AuthContext";
-import { useCustomAlert } from "../../context/CustomAlertContext";
+import { TopHeader } from "../../components/TopHeader";
 import { LinearGradient } from "expo-linear-gradient";
-
-type RouteOption = {
-  label: string;
-  icon: React.ComponentProps<typeof Ionicons>["name"];
-  subtitle: string;
-  href: string;
-  color: string;
-  bg: string;
-};
-
-const routeOptions: RouteOption[] = [
-  {
-    label: "PayRole",
-    icon: "cash-outline",
-    subtitle: "View salary slips & payroll details",
-    href: "/employee/payroll",
-    color: "#16a34a",
-    bg: "#f0fdf4",
-  },
-  {
-    label: "Meetings",
-    icon: "videocam-outline",
-    subtitle: "View your scheduled meetings",
-    href: "/employee/meetings",
-    color: "#0891b2",
-    bg: "#ecfeff",
-  },
-  {
-    label: "Office Calendar",
-    icon: "calendar-number-outline",
-    subtitle: "Company events, holidays & schedules",
-    href: "/employee/office-calendar",
-    color: "#7c3aed",
-    bg: "#f5f3ff",
-  },
-  {
-    label: "My Calendar",
-    icon: "calendar-outline",
-    subtitle: "Plan your day and track your events",
-    href: "/employee/my-calendar",
-    color: "#2563eb",
-    bg: "#eff6ff",
-  },
-  {
-    label: "Trainee & Internship",
-    icon: "school-outline",
-    subtitle: "Track your training programs and internship journey",
-    href: "/employee/trainee",
-    color: "#ea580c",
-    bg: "#fff7ed",
-  },
- 
-];
-
-const accountOptions = [
-  { label: "My Profile", icon: "person-circle-outline" as const },
-  { label: "Settings", icon: "settings-outline" as const },
-  { label: "Help & Support", icon: "help-circle-outline" as const },
-];
+import { useCustomAlert } from "../../context/CustomAlertContext";
+import { BottomHome } from "../../components/BottomHome";
 
 export default function EmployeeMoreScreen() {
   const router = useRouter();
-  const { logout } = useAuth();
+  const { user, logout } = useAuth();
   const { showAlert } = useCustomAlert();
 
-  return (
-    <View className="flex-1 bg-slate-50">
-      <TopHeader title="More" subtitle="Additional options" />
-      <ScrollView className="flex-1" contentContainerStyle={{ padding: 20, paddingBottom: 32 }}>
-        <Text className="text-3xl font-bold text-slate-950">More</Text>
-        <Text className="mt-2 text-base text-slate-500">
-          Access your account and workspace options.
-        </Text>
+  const rawName =
+    (user?.name as string) || (user?.full_name as string) || "Employee";
+  const userEmail = (user?.email as string) || "employee@company.com";
+  const userRole =
+    (user?.role as string)
+      ?.replace(/_/g, " ")
+      .replace(/\b\w/g, (c) => c.toUpperCase()) || "Employee";
+  const capitalise = (str: string) =>
+    str.replace(/\b\w/g, (c) => c.toUpperCase());
+  const displayName = capitalise(rawName);
+  const avatarLetter = displayName.charAt(0).toUpperCase();
 
-        {/* ── Feature Cards ─────────────────────────────── */}
-        <Text className="mt-8 mb-3 text-xs font-bold uppercase tracking-widest text-slate-400">
-          Features
-        </Text>
-        <View style={{ gap: 12 }}>
-          {routeOptions.map((opt) => (
-            <Pressable
-              key={opt.href}
-              style={({ pressed }) => ({
-                flexDirection: "row",
-                alignItems: "center",
-                borderRadius: 16,
-                borderWidth: 1,
-                borderColor: "#e2e8f0",
-                backgroundColor: pressed ? opt.bg : "#ffffff",
-                padding: 16,
-                shadowColor: "#000",
-                shadowOpacity: 0.04,
-                shadowRadius: 4,
-                shadowOffset: { width: 0, height: 2 },
-                elevation: 1,
-              })}
-              onPress={() => router.push(opt.href as any)}
-            >
-              <View
-                style={{
-                  width: 48,
-                  height: 48,
-                  borderRadius: 14,
-                  backgroundColor: opt.bg,
-                  alignItems: "center",
-                  justifyContent: "center",
-                }}
-              >
-                <Ionicons name={opt.icon} size={24} color={opt.color} />
-              </View>
-              <View style={{ flex: 1, marginLeft: 14 }}>
-                <Text
-                  style={{
-                    fontSize: 16,
-                    fontWeight: "700",
-                    color: "#0f172a",
-                  }}
-                >
-                  {opt.label}
-                </Text>
-                <Text
-                  style={{
-                    fontSize: 13,
-                    color: "#64748b",
-                    marginTop: 2,
-                  }}
-                >
-                  {opt.subtitle}
-                </Text>
-              </View>
-              <Ionicons name="chevron-forward" size={20} color="#94a3b8" />
-            </Pressable>
-          ))}
+  return (
+    <View className="flex-1 bg-[#F9FAFB]">
+      <TopHeader />
+
+      <ScrollView
+        className="flex-1"
+        contentContainerStyle={{ paddingBottom: 120, paddingTop: 8 }}
+      >
+        {/* ── HEADER ── */}
+        <View className="px-5 mb-6">
+          <Text className="text-slate-900 text-3xl font-black tracking-tight">
+            More
+          </Text>
+          <Text className="text-slate-500 text-xs mt-1">
+            Account settings and preferences
+          </Text>
         </View>
 
-        {/* ── Account Options ───────────────────────────── */}
-        <Text className="mt-8 mb-3 text-xs font-bold uppercase tracking-widest text-slate-400">
-          Account
-        </Text>
-        <View style={{ gap: 12 }}>
-          {accountOptions.map(({ label, icon }) => (
-            <Pressable
-              key={label}
-              className="flex-row items-center rounded-2xl border border-slate-200 bg-white p-4 active:bg-blue-50"
-            >
-              <View
-                style={{
-                  width: 44,
-                  height: 44,
-                  borderRadius: 12,
-                  backgroundColor: "#eff6ff",
-                  alignItems: "center",
-                  justifyContent: "center",
-                }}
-              >
-                <Ionicons name={icon} size={22} color="#2563eb" />
-              </View>
-              <Text className="ml-3 flex-1 text-base font-semibold text-slate-900">
-                {label}
+        {/* ── PROFILE CARD ── */}
+        <TouchableOpacity
+          activeOpacity={0.85}
+          onPress={() => router.push("/employee/profile")}
+          className="mx-5 mb-6 bg-white rounded-[24px] p-5 border border-slate-100 shadow-sm flex-row items-center"
+        >
+          <View className="w-16 h-16 rounded-full bg-orange-500 items-center justify-center mr-4 shadow-sm">
+            <Text className="text-2xl font-black text-white">
+              {avatarLetter}
+            </Text>
+          </View>
+          <View className="flex-1">
+            <Text className="text-slate-900 font-black text-base mb-0.5">
+              {displayName}
+            </Text>
+            <Text className="text-slate-500 text-xs mb-2">{userEmail}</Text>
+            <View className="bg-orange-50 self-start px-2.5 py-0.5 rounded-full">
+              <Text className="text-orange-600 font-bold text-[10px]">
+                {userRole}
               </Text>
-              <Ionicons name="chevron-forward" size={20} color="#94a3b8" />
-            </Pressable>
-          ))}
+            </View>
+          </View>
+          <View className="w-9 h-9 bg-slate-50 rounded-full items-center justify-center">
+            <Ionicons name="chevron-forward" size={18} color="#94a3b8" />
+          </View>
+        </TouchableOpacity>
+
+        {/* ── FEATURE CARDS — single column full width ── */}
+        <View style={{ paddingHorizontal: 20, marginBottom: 8 }}>
+          <Text
+            style={{
+              fontSize: 11,
+              fontWeight: "700",
+              letterSpacing: 1.4,
+              textTransform: "uppercase",
+              color: "#94a3b8",
+              marginBottom: 14,
+            }}
+          >
+            Features
+          </Text>
+
+          <View className="gap-3">
+            {/* PayRole */}
+            <TouchableOpacity
+              activeOpacity={0.85}
+              onPress={() => router.push("/employee/payroll" as any)}
+              className="bg-white rounded-[20px] p-[18px] flex-row items-center border border-slate-100 shadow-sm"
+            >
+              <View className="w-[52px] h-[52px] rounded-2xl bg-orange-50 items-center justify-center">
+                <Ionicons name="cash-outline" size={26} color="#f97316" />
+              </View>
+              <View className="flex-1 ml-4">
+                <Text className="text-orange-500 text-[10px] font-bold tracking-[1px] uppercase">
+                  Finance
+                </Text>
+                <Text className="text-slate-900 text-[17px] font-extrabold mt-0.5">
+                  PayRole
+                </Text>
+                <Text className="text-slate-500 text-[12px] mt-0.5">
+                  View salary slips & payroll details
+                </Text>
+              </View>
+              <Ionicons name="chevron-forward" size={20} color="#cbd5e1" />
+            </TouchableOpacity>
+
+            {/* Meetings */}
+            <TouchableOpacity
+              activeOpacity={0.85}
+              onPress={() => router.push("/employee/meetings" as any)}
+              className="bg-white rounded-[20px] p-[18px] flex-row items-center border border-slate-100 shadow-sm"
+            >
+              <View className="w-[52px] h-[52px] rounded-2xl bg-orange-50 items-center justify-center">
+                <Ionicons name="videocam-outline" size={26} color="#f97316" />
+              </View>
+              <View className="flex-1 ml-4">
+                <Text className="text-orange-500 text-[10px] font-bold tracking-[1px] uppercase">
+                  Collaboration
+                </Text>
+                <Text className="text-slate-900 text-[17px] font-extrabold mt-0.5">
+                  Meetings
+                </Text>
+                <Text className="text-slate-500 text-[12px] mt-0.5">
+                  View your scheduled meetings
+                </Text>
+              </View>
+              <Ionicons name="chevron-forward" size={20} color="#cbd5e1" />
+            </TouchableOpacity>
+
+            {/* Office Calendar */}
+            <TouchableOpacity
+              activeOpacity={0.85}
+              onPress={() => router.push("/employee/office-calendar" as any)}
+              className="bg-white rounded-[20px] p-[18px] flex-row items-center border border-slate-100 shadow-sm"
+            >
+              <View className="w-[52px] h-[52px] rounded-2xl bg-orange-50 items-center justify-center">
+                <Ionicons name="calendar-number-outline" size={26} color="#f97316" />
+              </View>
+              <View className="flex-1 ml-4">
+                <Text className="text-orange-500 text-[10px] font-bold tracking-[1px] uppercase">
+                  Company
+                </Text>
+                <Text className="text-slate-900 text-[17px] font-extrabold mt-0.5">
+                  Office Calendar
+                </Text>
+                <Text className="text-slate-500 text-[12px] mt-0.5">
+                  Company events, holidays & schedules
+                </Text>
+              </View>
+              <Ionicons name="chevron-forward" size={20} color="#cbd5e1" />
+            </TouchableOpacity>
+
+            {/* My Calendar */}
+            <TouchableOpacity
+              activeOpacity={0.85}
+              onPress={() => router.push("/employee/my-calendar" as any)}
+              className="bg-white rounded-[20px] p-[18px] flex-row items-center border border-slate-100 shadow-sm"
+            >
+              <View className="w-[52px] h-[52px] rounded-2xl bg-orange-50 items-center justify-center">
+                <Ionicons name="calendar-outline" size={26} color="#f97316" />
+              </View>
+              <View className="flex-1 ml-4">
+                <Text className="text-orange-500 text-[10px] font-bold tracking-[1px] uppercase">
+                  Personal
+                </Text>
+                <Text className="text-slate-900 text-[17px] font-extrabold mt-0.5">
+                  My Calendar
+                </Text>
+                <Text className="text-slate-500 text-[12px] mt-0.5">
+                  Plan your day and track your events
+                </Text>
+              </View>
+              <Ionicons name="chevron-forward" size={20} color="#cbd5e1" />
+            </TouchableOpacity>
+
+            {/* Trainee & Internship */}
+            <TouchableOpacity
+              activeOpacity={0.85}
+              onPress={() => router.push("/employee/trainee" as any)}
+              className="bg-white rounded-[20px] p-[18px] flex-row items-center border border-slate-100 shadow-sm"
+            >
+              <View className="w-[52px] h-[52px] rounded-2xl bg-orange-50 items-center justify-center">
+                <Ionicons name="school-outline" size={26} color="#f97316" />
+              </View>
+              <View className="flex-1 ml-4">
+                <Text className="text-orange-500 text-[10px] font-bold tracking-[1px] uppercase">
+                  Learning
+                </Text>
+                <Text className="text-slate-900 text-[17px] font-extrabold mt-0.5">
+                  Trainee & Internship
+                </Text>
+                <Text className="text-slate-500 text-[12px] mt-0.5">
+                  Track training and internship journey
+                </Text>
+              </View>
+              <Ionicons name="chevron-forward" size={20} color="#cbd5e1" />
+            </TouchableOpacity>
+          </View>
         </View>
 
         {/* ── LOG OUT ── */}
-        <View className="mt-10">
+        <View className="mx-5 mt-10">
           <TouchableOpacity
             activeOpacity={0.85}
             onPress={() =>
@@ -238,6 +276,7 @@ export default function EmployeeMoreScreen() {
           </TouchableOpacity>
         </View>
       </ScrollView>
+
       <BottomHome />
     </View>
   );
