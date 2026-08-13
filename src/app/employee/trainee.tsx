@@ -17,8 +17,6 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import api from "../../api";
 import { useAuth } from "../../auth/AuthContext";
-import { BottomHome } from "../../components/BottomHome";
-import { TopHeader } from "../../components/TopHeader";
 
 const attendanceDate = () => {
   const date = new Date();
@@ -149,6 +147,7 @@ function TaskMasterModal({
         >
           <View
             style={{
+              backgroundColor: "#111827",
               flexDirection: "row",
               alignItems: "center",
               justifyContent: "space-between",
@@ -176,178 +175,186 @@ function TaskMasterModal({
             </Pressable>
           </View>
 
-          <View style={{ marginBottom: 18, paddingHorizontal: 16 }}>
-            <Text
-              style={{
-                color: "#334155",
-                fontSize: 16,
-                fontWeight: "700",
-                marginBottom: 10,
-              }}
-            >
-              Task Name *
-            </Text>
-            <TextInput
-              value={taskName}
-              onChangeText={setTaskName}
-              placeholder="Enter task name"
-              placeholderTextColor="#9ca3af"
-              style={{
-                height: 50,
-                borderRadius: 14,
-                backgroundColor: "#f8fafc",
-                borderWidth: 1,
-                borderColor: "#dbe3ee",
-                color: "#0f172a",
-                paddingHorizontal: 16,
-                fontSize: 16,
-              }}
-            />
-          </View>
-
-          <View style={{ marginBottom: 18, paddingHorizontal: 16 }}>
-            <Text
-              style={{
-                color: "#334155",
-                fontSize: 16,
-                fontWeight: "700",
-                marginBottom: 10,
-              }}
-            >
-              Description
-            </Text>
-            <TextInput
-              value={description}
-              onChangeText={setDescription}
-              placeholder="Enter task description"
-              placeholderTextColor="#9ca3af"
-              multiline
-              numberOfLines={5}
-              style={{
-                minHeight: 110,
-                maxHeight: 170,
-                borderRadius: 14,
-                backgroundColor: "#f8fafc",
-                borderWidth: 1,
-                borderColor: "#dbe3ee",
-                color: "#0f172a",
-                paddingHorizontal: 16,
-                paddingVertical: 14,
-                textAlignVertical: "top",
-                fontSize: 16,
-              }}
-            />
-          </View>
-
-          <View style={{ marginBottom: 22, paddingHorizontal: 16 }}>
-            <Text
-              style={{
-                color: "#334155",
-                fontSize: 18,
-                fontWeight: "700",
-                marginBottom: 10,
-              }}
-            >
-              Upload Document
-            </Text>
-            <Pressable
-              onPress={pickDocument}
-              style={{
-                flexDirection: "row",
-                alignItems: "center",
-                justifyContent: "space-between",
-                borderRadius: 14,
-                borderWidth: 1,
-                borderStyle: "dashed",
-                borderColor: "#d1d5db",
-                backgroundColor: "#f8fafc",
-                paddingVertical: 14,
-                paddingHorizontal: 16,
-              }}
-            >
-              <Text
-                style={{
-                  flex: 1,
-                  color: documentFile ? "#0f172a" : "#9ca3af",
-                  fontSize: 16,
-                }}
-              >
-                {documentFile
-                  ? documentFile.name
-                  : "Choose PDF, DOC, image or ZIP"}
-              </Text>
-              <View
-                style={{
-                  backgroundColor: "#f1f5f9",
-                  borderRadius: 10,
-                  paddingVertical: 8,
-                  paddingHorizontal: 10,
-                }}
-              >
-                <Ionicons
-                  name="document-attach-outline"
-                  size={18}
-                  color="#334155"
-                />
-              </View>
-            </Pressable>
-          </View>
-
-          <View
-            style={{
-              flexDirection: "row",
-              justifyContent: "flex-end",
-              gap: 12,
-              paddingHorizontal: 16,
+          <ScrollView
+            contentContainerStyle={{
+              paddingHorizontal: 20,
+              paddingTop: 20,
+              paddingBottom: 20,
             }}
           >
-            <Pressable
-              onPress={closeModal}
-              style={{
-                minWidth: 120,
-                paddingVertical: 15,
-                paddingHorizontal: 24,
-                borderRadius: 14,
-                backgroundColor: "#fff",
-                borderWidth: 1,
-                borderColor: "#dbe3ee",
-              }}
-            >
+            <View style={{ marginBottom: 20 }}>
               <Text
                 style={{
-                  color: "#0f172a",
-                  textAlign: "center",
-                  fontSize: 16,
+                  color: "#334155",
+                  fontSize: 14,
                   fontWeight: "700",
+                  marginBottom: 8,
                 }}
               >
-                Cancel
+                Task Name *
               </Text>
-            </Pressable>
+              <TextInput
+                value={taskName}
+                onChangeText={setTaskName}
+                placeholder="Enter task name"
+                placeholderTextColor="#9ca3af"
+                style={{
+                  height: 50,
+                  borderRadius: 14,
+                  backgroundColor: "#f8fafc",
+                  borderWidth: 1,
+                  borderColor: "#dbe3ee",
+                  color: "#0f172a",
+                  paddingHorizontal: 16,
+                  fontSize: 16,
+                }}
+              />
+            </View>
 
-            <Pressable
-              onPress={save}
-              disabled={saving}
-              style={{
-                minWidth: 150,
-                paddingVertical: 15,
-                paddingHorizontal: 24,
-                borderRadius: 14,
-                backgroundColor: saving ? "#f59e0b" : "#f97316",
-              }}
-            >
+            <View style={{ marginBottom: 20 }}>
               <Text
                 style={{
-                  color: "#fff",
-                  textAlign: "center",
-                  fontSize: 16,
-                  fontWeight: "800",
+                  color: "#334155",
+                  fontSize: 14,
+                  fontWeight: "700",
+                  marginBottom: 8,
                 }}
               >
-                {saving ? "Saving..." : "Save Task"}
+                Description
               </Text>
-            </Pressable>
-          </View>
+              <TextInput
+                value={description}
+                onChangeText={setDescription}
+                placeholder="Enter task description"
+                placeholderTextColor="#9ca3af"
+                multiline
+                numberOfLines={5}
+                style={{
+                  minHeight: 110,
+                  maxHeight: 170,
+                  borderRadius: 14,
+                  backgroundColor: "#f8fafc",
+                  borderWidth: 1,
+                  borderColor: "#dbe3ee",
+                  color: "#0f172a",
+                  paddingHorizontal: 16,
+                  paddingVertical: 14,
+                  textAlignVertical: "top",
+                  fontSize: 16,
+                }}
+              />
+            </View>
+
+            <View style={{ marginBottom: 24 }}>
+              <Text
+                style={{
+                  color: "#334155",
+                  fontSize: 14,
+                  fontWeight: "700",
+                  marginBottom: 8,
+                }}
+              >
+                Upload Document
+              </Text>
+              <Pressable
+                onPress={pickDocument}
+                style={{
+                  flexDirection: "row",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  borderRadius: 14,
+                  borderWidth: 1,
+                  borderStyle: "dashed",
+                  borderColor: "#d1d5db",
+                  backgroundColor: "#f8fafc",
+                  paddingVertical: 14,
+                  paddingHorizontal: 16,
+                }}
+              >
+                <Text
+                  style={{
+                    flex: 1,
+                    color: documentFile ? "#0f172a" : "#9ca3af",
+                    fontSize: 16,
+                  }}
+                >
+                  {documentFile
+                    ? documentFile.name
+                    : "Choose PDF, DOC, image or ZIP"}
+                </Text>
+                <View
+                  style={{
+                    backgroundColor: "#f1f5f9",
+                    borderRadius: 10,
+                    paddingVertical: 8,
+                    paddingHorizontal: 10,
+                  }}
+                >
+                  <Ionicons
+                    name="document-attach-outline"
+                    size={18}
+                    color="#334155"
+                  />
+                </View>
+              </Pressable>
+            </View>
+
+            <View
+              style={{
+                flexDirection: "row",
+                justifyContent: "flex-end",
+                gap: 12,
+                marginTop: 8,
+              }}
+            >
+              <Pressable
+                onPress={closeModal}
+                style={{
+                  minWidth: 120,
+                  paddingVertical: 15,
+                  paddingHorizontal: 24,
+                  borderRadius: 14,
+                  backgroundColor: "#fff",
+                  borderWidth: 1,
+                  borderColor: "#dbe3ee",
+                }}
+              >
+                <Text
+                  style={{
+                    color: "#0f172a",
+                    textAlign: "center",
+                    fontSize: 16,
+                    fontWeight: "700",
+                  }}
+                >
+                  Cancel
+                </Text>
+              </Pressable>
+
+              <Pressable
+                onPress={save}
+                disabled={saving}
+                style={{
+                  minWidth: 150,
+                  paddingVertical: 15,
+                  paddingHorizontal: 24,
+                  borderRadius: 14,
+                  backgroundColor: saving ? "#f59e0b" : "#f97316",
+                }}
+              >
+                <Text
+                  style={{
+                    color: "#fff",
+                    textAlign: "center",
+                    fontSize: 16,
+                    fontWeight: "800",
+                  }}
+                >
+                  {saving ? "Saving..." : "Save Task"}
+                </Text>
+              </Pressable>
+            </View>
+          </ScrollView>
         </View>
       </View>
     </Modal>
@@ -399,7 +406,11 @@ function TaskAssignmentModal({
   };
 
   const save = async () => {
-    if (!taskUuid || !memberUuid || !assignedDate) return Alert.alert("Required fields", "Select a task, trainee/intern, and assigned date.");
+    if (!taskUuid || !memberUuid || !assignedDate)
+      return Alert.alert(
+        "Required fields",
+        "Select a task, trainee/intern, and assigned date.",
+      );
     setSaving(true);
     try {
       const body = new FormData();
@@ -409,7 +420,9 @@ function TaskAssignmentModal({
       body.append("assigned_time", assignedTime);
       body.append("due_date", dueDate);
       if (employeeId) body.append("employee_id", employeeId);
-      await api.post("/trainee-task-assignments", body, { headers: { "Content-Type": "multipart/form-data" } });
+      await api.post("/trainee-task-assignments", body, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
       Alert.alert("Assigned", "Task assigned successfully.");
       onSaved();
       onClose();
@@ -453,8 +466,8 @@ function TaskAssignmentModal({
         >
           <View
             style={{
+              backgroundColor: "#111827",
               flexDirection: "row",
-              justifyContent: "space-between",
               alignItems: "center",
               marginBottom: 12,
               paddingHorizontal: 20,
@@ -471,6 +484,9 @@ function TaskAssignmentModal({
                 }}
               >
                 Assign Task
+              </Text>
+              <Text style={{ fontSize: 14, color: "#cbd5e1", marginTop: 4 }}>
+                Assign work to trainees
               </Text>
             </View>
             <Pressable
@@ -490,7 +506,11 @@ function TaskAssignmentModal({
 
           <ScrollView
             showsVerticalScrollIndicator={false}
-            contentContainerStyle={{ paddingHorizontal: 16 }}
+            contentContainerStyle={{
+              paddingHorizontal: 20,
+              paddingTop: 20,
+              paddingBottom: 20,
+            }}
           >
             <View style={{ marginBottom: 18 }}>
               <Text
@@ -983,7 +1003,11 @@ export default function TraineeScreen() {
         : assignData?.assignments || [];
       // Strictly filter assignments for trainees that belong to this employee
       const filteredAssignments = employeeId
-        ? allAssignments.filter((a: any) => String(a.employee_id) === String(employeeId) || String(a.assigned_by) === String(employeeId))
+        ? allAssignments.filter(
+            (a: any) =>
+              String(a.employee_id) === String(employeeId) ||
+              String(a.assigned_by) === String(employeeId),
+          )
         : allAssignments;
       setTaskAssignments(filteredAssignments);
     } catch (err) {
@@ -1043,36 +1067,44 @@ export default function TraineeScreen() {
   ];
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: "#f8fafc" }} edges={["top"]}>
-      <View style={{
-        flexDirection: "row", alignItems: "center",
-        paddingHorizontal: 16, paddingVertical: 14,
-        backgroundColor: "#fff",
-        borderBottomWidth: 1, borderBottomColor: "#f1f5f9",
-      }}>
+    <SafeAreaView
+      style={{ flex: 1, backgroundColor: "#f8fafc" }}
+      edges={["top"]}
+    >
+      <View
+        style={{
+          flexDirection: "row",
+          alignItems: "center",
+          paddingHorizontal: 16,
+          paddingVertical: 14,
+          backgroundColor: "#fff",
+          borderBottomWidth: 1,
+          borderBottomColor: "#f1f5f9",
+        }}
+      >
         <Pressable
           onPress={() => router.back()}
           style={{
-            width: 38, height: 38, borderRadius: 12,
+            width: 38,
+            height: 38,
+            borderRadius: 12,
             backgroundColor: "#f8fafc",
-            alignItems: "center", justifyContent: "center",
+            alignItems: "center",
+            justifyContent: "center",
             marginRight: 12,
           }}
         >
           <Ionicons name="arrow-back" size={20} color="#0f172a" />
         </Pressable>
-        <Text style={{ fontSize: 18, fontWeight: "800", color: "#0f172a" }}>Trainee & Internship</Text>
+        <Text style={{ fontSize: 18, fontWeight: "800", color: "#0f172a" }}>
+          Trainee & Internship
+        </Text>
       </View>
       <ScrollView
         style={{ flex: 1 }}
         contentContainerStyle={{ padding: 20, paddingBottom: 32 }}
       >
-        <Text style={{ fontSize: 28, fontWeight: "800", color: "#0f172a" }}>
-          Assigned Trainees & Interns
-        </Text>
-        <Text style={{ marginTop: 6, fontSize: 15, color: "#64748b" }}>
-          View only the trainee and intern records assigned to you.
-        </Text>
+      
 
         {error ? (
           <View
@@ -1466,13 +1498,20 @@ export default function TraineeScreen() {
         onClose={() => setTaskVisible(false)}
         onSaved={loadTasks}
       />
-      <TaskAssignmentModal 
-        visible={taskAssignmentVisible} 
+      <TaskAssignmentModal
+        visible={taskAssignmentVisible}
         employeeId={employeeId}
-        members={members} 
-        tasks={tasks.filter(t => !taskAssignments.some(a => String(a.trainee_task_uuid || a.task_name) === String(t.uuid || t.task_name)))} 
-        onClose={() => setTaskAssignmentVisible(false)} 
-        onSaved={loadTasks} 
+        members={members}
+        tasks={tasks.filter(
+          (t) =>
+            !taskAssignments.some(
+              (a) =>
+                String(a.trainee_task_uuid || a.task_name) ===
+                String(t.uuid || t.task_name),
+            ),
+        )}
+        onClose={() => setTaskAssignmentVisible(false)}
+        onSaved={loadTasks}
       />
 
       {/* FAB Menu */}

@@ -1,6 +1,6 @@
 import { Ionicons } from "@expo/vector-icons";
-import { LinearGradient } from "expo-linear-gradient";
 import DateTimePicker from "@react-native-community/datetimepicker";
+import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 import { useCallback, useEffect, useState } from "react";
 import {
@@ -718,9 +718,33 @@ export default function EmployeeTasksScreen() {
         {/* ── STATS SECTION ── */}
         <View className="mb-6 flex-row justify-between">
           {[
-            { label: "Tasks", value: String(taskSummary.total), sub: "Total", icon: "checkbox", color: "#f97316", bg: "#fff7ed", subColor: "text-orange-500" },
-            { label: "Active", value: String(taskSummary.inProgress), sub: "Ongoing", icon: "time", color: "#f97316", bg: "#fff7ed", subColor: "text-blue-500" },
-            { label: "Done", value: String(taskSummary.completed), sub: "Completed", icon: "checkmark-circle", color: "#f97316", bg: "#fff7ed", subColor: "text-emerald-500" },
+            {
+              label: "Tasks",
+              value: String(taskSummary.total),
+              sub: "Total",
+              icon: "checkbox",
+              color: "#f97316",
+              bg: "#fff7ed",
+              subColor: "text-orange-500",
+            },
+            {
+              label: "Active",
+              value: String(taskSummary.inProgress),
+              sub: "Ongoing",
+              icon: "time",
+              color: "#f97316",
+              bg: "#fff7ed",
+              subColor: "text-orange-500",
+            },
+            {
+              label: "Done",
+              value: String(taskSummary.completed),
+              sub: "Completed",
+              icon: "checkmark-circle",
+              color: "#f97316",
+              bg: "#fff7ed",
+              subColor: "text-emerald-500",
+            },
           ].map((stat, idx) => (
             <View
               key={idx}
@@ -741,9 +765,16 @@ export default function EmployeeTasksScreen() {
               >
                 <View className="flex-col items-start mb-2">
                   <View className="h-8 w-8 items-center justify-center rounded-xl bg-black mb-2">
-                    <Ionicons name={stat.icon as any} size={16} color="#f97316" />
+                    <Ionicons
+                      name={stat.icon as any}
+                      size={16}
+                      color="#f97316"
+                    />
                   </View>
-                  <Text className="text-[10px] font-bold uppercase tracking-[0.5px] text-gray-500" numberOfLines={1}>
+                  <Text
+                    className="text-[10px] font-bold uppercase tracking-[0.5px] text-gray-500"
+                    numberOfLines={1}
+                  >
                     {stat.label}
                   </Text>
                 </View>
@@ -751,7 +782,9 @@ export default function EmployeeTasksScreen() {
                   <Text className="text-xl font-black text-black">
                     {stat.value}
                   </Text>
-                  <Text className={`text-[9px] font-bold ${stat.subColor || "text-gray-400"}`}>
+                  <Text
+                    className={`text-[9px] font-bold ${stat.subColor || "text-gray-400"}`}
+                  >
                     {stat.sub}
                   </Text>
                 </View>
@@ -857,77 +890,102 @@ export default function EmployeeTasksScreen() {
                       `/employee/task/${task.uuid || task.id || task.task_id}`,
                     )
                   }
-                  className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm shadow-slate-200 active:bg-slate-50"
+                  className="mb-4 overflow-hidden rounded-[24px] border border-orange-200 bg-white p-5 active:opacity-90"
+                  style={{
+                    shadowColor: "#f97316",
+                    shadowOffset: { width: 0, height: 6 },
+                    shadowOpacity: 0.15,
+                    shadowRadius: 16,
+                    elevation: 4,
+                  }}
                 >
-                  <View className="flex-row items-start">
-                    <View className="h-11 w-11 items-center justify-center rounded-xl bg-slate-100">
-                      <Ionicons
-                        name="checkmark-circle-outline"
-                        size={24}
-                        color={color}
-                      />
+                  <View className="mb-4 flex-row items-start justify-between">
+                    <View className="flex-row items-center flex-1 pr-3">
+                      <View className="h-12 w-12 items-center justify-center rounded-[18px] bg-slate-50 border border-slate-100">
+                        <Ionicons
+                          name="clipboard-outline"
+                          size={24}
+                          color={color}
+                        />
+                      </View>
+                      <View className="ml-3 flex-1">
+                        <Text className="text-base font-bold text-slate-800" numberOfLines={1}>
+                          {title}
+                        </Text>
+                        {moduleName ? (
+                          <Text className="mt-0.5 text-xs font-medium text-slate-500" numberOfLines={1}>
+                            {moduleName}
+                          </Text>
+                        ) : null}
+                      </View>
                     </View>
 
-                    <View className="ml-3 flex-1">
-                      <Text className="text-base font-bold text-slate-900">
-                        {title}
+                    <TouchableOpacity
+                      onPress={() => openStatusSheet(task)}
+                      activeOpacity={0.8}
+                      className="rounded-full px-3 py-1.5"
+                      style={{
+                        backgroundColor: `${color}15`,
+                      }}
+                    >
+                      <Text
+                        className="text-[11px] font-bold"
+                        style={{ color }}
+                      >
+                        {status}
                       </Text>
-                      {moduleName ? (
-                        <Text className="mt-1 text-sm text-slate-500">
-                          {moduleName}
-                        </Text>
-                      ) : null}
-                      <Text className="mt-1 text-sm text-slate-500">
-                        {project}
-                      </Text>
-                      {description ? (
-                        <Text
-                          numberOfLines={2}
-                          className="mt-1 text-sm text-slate-500"
-                        >
-                          {description}
-                        </Text>
-                      ) : null}
+                    </TouchableOpacity>
+                  </View>
 
-                      <View className="mt-3 flex-row flex-wrap gap-3">
-                        <Text className="text-[11px] text-slate-500">
-                          Start: {start}
-                        </Text>
-                        <Text className="text-[11px] text-slate-500">
-                          End: {due}
-                        </Text>
-                        <Text className="text-[11px] text-slate-500">
-                          {attachmentsLabel}
+                  <View className="mb-4 rounded-xl bg-slate-50 px-3 py-2.5 border border-slate-100">
+                    <Text className="text-xs font-medium text-slate-700">
+                      Project: <Text className="font-bold">{project}</Text>
+                    </Text>
+                  </View>
+
+                  {description ? (
+                    <Text
+                      numberOfLines={2}
+                      className="mb-4 text-sm leading-5 text-slate-600"
+                    >
+                      {description}
+                    </Text>
+                  ) : null}
+
+                  <View className="flex-row items-center justify-between pt-1">
+                    <View className="flex-row gap-2">
+                      <View className="flex-row items-center rounded-lg bg-slate-50 px-2.5 py-1.5 border border-slate-100">
+                        <Ionicons name="calendar-outline" size={12} color="#64748b" />
+                        <Text className="ml-1 text-[11px] font-medium text-slate-600">
+                          {due}
                         </Text>
                       </View>
-                      {comments ? (
-                        <Text className="mt-2 text-[11px] text-slate-500">
-                          Reason: {comments}
+                      <View className="flex-row items-center rounded-lg bg-slate-50 px-2.5 py-1.5 border border-slate-100">
+                        <Ionicons name="flag-outline" size={12} color={priority === "High" ? "#ef4444" : priority === "Medium" ? "#f97316" : "#3b82f6"} />
+                        <Text className="ml-1 text-[11px] font-medium" style={{ color: priority === "High" ? "#ef4444" : priority === "Medium" ? "#f97316" : "#3b82f6" }}>
+                          {priority}
                         </Text>
-                      ) : null}
-                    </View>
-
-                    <View className="items-end justify-between">
-                      <TouchableOpacity
-                        onPress={() => openStatusSheet(task)}
-                        activeOpacity={0.75}
-                        className="rounded-full px-2 py-1"
-                        style={{
-                          backgroundColor: `${color}15`,
-                        }}
-                      >
-                        <Text
-                          className="text-[10px] font-semibold uppercase tracking-wide"
-                          style={{ color }}
-                        >
-                          {status}
-                        </Text>
-                      </TouchableOpacity>
-                      <Text className="mt-2 text-[11px] text-slate-500">
-                        {priority}
-                      </Text>
+                      </View>
                     </View>
                   </View>
+
+                  {(comments || attachmentsLabel) && (
+                    <View className="mt-4 border-t border-slate-100 pt-3">
+                      {comments ? (
+                        <Text className="text-[11px] leading-4 text-slate-500">
+                          <Text className="font-semibold text-slate-700">Reason:</Text> {comments}
+                        </Text>
+                      ) : null}
+                      {attachmentsLabel ? (
+                        <View className="mt-2 flex-row items-center">
+                          <Ionicons name="attach" size={14} color="#64748b" />
+                          <Text className="ml-1 text-[11px] font-medium text-slate-600">
+                            {attachmentsLabel}
+                          </Text>
+                        </View>
+                      ) : null}
+                    </View>
+                  )}
                 </Pressable>
               );
             })}
@@ -964,7 +1022,7 @@ export default function EmployeeTasksScreen() {
                   className="px-5 py-4 border-b border-slate-100"
                 >
                   <Text
-                    className={`text-sm ${statusFilter === filter ? "font-bold text-blue-600" : "text-slate-700"}`}
+                    className={`text-sm ${statusFilter === filter ? "font-bold text-orange-600" : "text-slate-700"}`}
                   >
                     {filter === "All" ? "All Tasks" : filter}
                   </Text>
@@ -1014,7 +1072,7 @@ export default function EmployeeTasksScreen() {
                   className="px-5 py-4 border-b border-slate-100"
                 >
                   <Text
-                    className={`text-sm ${dateFilter === filter ? "font-bold text-blue-600" : "text-slate-700"}`}
+                    className={`text-sm ${dateFilter === filter ? "font-bold text-orange-600" : "text-slate-700"}`}
                   >
                     {filter === "All" ? "All Dates" : filter}
                   </Text>
@@ -1094,7 +1152,7 @@ export default function EmployeeTasksScreen() {
                 onPress={() => setCustomRangeVisible(false)}
                 disabled={!customStart || !customEnd}
                 className={`flex-1 h-12 items-center justify-center rounded-xl ${
-                  customStart && customEnd ? "bg-blue-600" : "bg-blue-300"
+                  customStart && customEnd ? "bg-orange-600" : "bg-orange-300"
                 }`}
               >
                 <Text className="font-bold text-white">Apply</Text>
@@ -1184,10 +1242,10 @@ export default function EmployeeTasksScreen() {
                         activeTask && updateTaskStatus(activeTask, value)
                       }
                       disabled={updatingStatus}
-                      className={`rounded-2xl border px-4 py-3 ${isActive ? "border-blue-500 bg-blue-50" : "border-slate-200 bg-white"}`}
+                      className={`rounded-2xl border px-4 py-3 ${isActive ? "border-orange-500 bg-orange-50" : "border-slate-200 bg-white"}`}
                     >
                       <Text
-                        className={`text-xs font-bold ${isActive ? "text-blue-600" : "text-slate-700"}`}
+                        className={`text-xs font-bold ${isActive ? "text-orange-600" : "text-slate-700"}`}
                       >
                         {value}
                       </Text>

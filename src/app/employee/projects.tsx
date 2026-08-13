@@ -1,6 +1,6 @@
 import { Ionicons } from "@expo/vector-icons";
-import { LinearGradient } from "expo-linear-gradient";
 import DateTimePicker from "@react-native-community/datetimepicker";
+import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
@@ -382,9 +382,33 @@ export default function EmployeeProjectsScreen() {
         {/* ── STATS SECTION ── */}
         <View className="mb-6 flex-row justify-between">
           {[
-            { label: "Assigned", value: String(projectSummary.total), sub: "Total", icon: "folder", color: "#f97316", bg: "#fff7ed", subColor: "text-orange-500" },
-            { label: "Active", value: String(projectSummary.inProgress), sub: "Ongoing", icon: "time", color: "#f97316", bg: "#fff7ed", subColor: "text-blue-500" },
-            { label: "Done", value: String(projectSummary.completed), sub: "Completed", icon: "checkmark-circle", color: "#f97316", bg: "#fff7ed", subColor: "text-emerald-500" },
+            {
+              label: "Assigned",
+              value: String(projectSummary.total),
+              sub: "Total",
+              icon: "folder",
+              color: "#f97316",
+              bg: "#fff7ed",
+              subColor: "text-orange-500",
+            },
+            {
+              label: "Active",
+              value: String(projectSummary.inProgress),
+              sub: "Ongoing",
+              icon: "time",
+              color: "#f97316",
+              bg: "#fff7ed",
+              subColor: "text-orange-500",
+            },
+            {
+              label: "Done",
+              value: String(projectSummary.completed),
+              sub: "Completed",
+              icon: "checkmark-circle",
+              color: "#f97316",
+              bg: "#fff7ed",
+              subColor: "text-emerald-500",
+            },
           ].map((stat, idx) => (
             <View
               key={idx}
@@ -405,9 +429,16 @@ export default function EmployeeProjectsScreen() {
               >
                 <View className="flex-col items-start mb-2">
                   <View className="h-8 w-8 items-center justify-center rounded-xl bg-black mb-2">
-                    <Ionicons name={stat.icon as any} size={16} color="#f97316" />
+                    <Ionicons
+                      name={stat.icon as any}
+                      size={16}
+                      color="#f97316"
+                    />
                   </View>
-                  <Text className="text-[10px] font-bold uppercase tracking-[0.5px] text-gray-500" numberOfLines={1}>
+                  <Text
+                    className="text-[10px] font-bold uppercase tracking-[0.5px] text-gray-500"
+                    numberOfLines={1}
+                  >
                     {stat.label}
                   </Text>
                 </View>
@@ -415,7 +446,9 @@ export default function EmployeeProjectsScreen() {
                   <Text className="text-xl font-black text-black">
                     {stat.value}
                   </Text>
-                  <Text className={`text-[9px] font-bold ${stat.subColor || "text-gray-400"}`}>
+                  <Text
+                    className={`text-[9px] font-bold ${stat.subColor || "text-gray-400"}`}
+                  >
                     {stat.sub}
                   </Text>
                 </View>
@@ -498,7 +531,14 @@ export default function EmployeeProjectsScreen() {
                 onPress={() =>
                   router.push(`/employee/projects/${project.uuid}` as any)
                 }
-                className="overflow-hidden rounded-[24px] border border-slate-200 bg-white p-0 shadow-sm active:bg-slate-50"
+                className="mb-4 overflow-hidden rounded-[24px] border border-orange-200 bg-white p-0 active:opacity-90"
+                style={{
+                  shadowColor: "#f97316",
+                  shadowOffset: { width: 0, height: 6 },
+                  shadowOpacity: 0.15,
+                  shadowRadius: 16,
+                  elevation: 4,
+                }}
               >
                 <View className="border-b border-slate-100 bg-slate-50/80 px-4 py-4">
                   <View className="flex-row items-start justify-between">
@@ -532,13 +572,13 @@ export default function EmployeeProjectsScreen() {
                       </Text>
                     </View>
                     <View className="flex-row items-center">
-                      <Text className="mr-1 text-xs font-black text-blue-600">
+                      <Text className="mr-1 text-xs font-black text-orange-600">
                         View details
                       </Text>
                       <Ionicons
                         name="chevron-forward"
                         size={16}
-                        color="#2563eb"
+                        color="#f97316"
                       />
                     </View>
                   </View>
@@ -650,7 +690,7 @@ export default function EmployeeProjectsScreen() {
                   className="px-5 py-4 border-b border-slate-100"
                 >
                   <Text
-                    className={`text-sm ${statusFilter === filter ? "font-bold text-blue-600" : "text-slate-700"}`}
+                    className={`text-sm ${statusFilter === filter ? "font-bold text-orange-600" : "text-slate-700"}`}
                   >
                     {filter === "All" ? "All Status" : filter}
                   </Text>
@@ -700,7 +740,7 @@ export default function EmployeeProjectsScreen() {
                   className="px-5 py-4 border-b border-slate-100"
                 >
                   <Text
-                    className={`text-sm ${dateFilter === filter ? "font-bold text-blue-600" : "text-slate-700"}`}
+                    className={`text-sm ${dateFilter === filter ? "font-bold text-orange-600" : "text-slate-700"}`}
                   >
                     {filter === "All" ? "All Dates" : filter}
                   </Text>
@@ -780,7 +820,7 @@ export default function EmployeeProjectsScreen() {
                 onPress={() => setCustomRangeVisible(false)}
                 disabled={!customStart || !customEnd}
                 className={`flex-1 h-12 items-center justify-center rounded-xl ${
-                  customStart && customEnd ? "bg-blue-600" : "bg-blue-300"
+                  customStart && customEnd ? "bg-orange-600" : "bg-orange-300"
                 }`}
               >
                 <Text className="font-bold text-white">Apply</Text>
