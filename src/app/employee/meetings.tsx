@@ -1,6 +1,6 @@
 import { Ionicons } from "@expo/vector-icons";
 import * as Linking from "expo-linking";
-import { useFocusEffect } from "expo-router";
+import { useFocusEffect, useRouter } from "expo-router";
 import { useCallback, useState } from "react";
 import {
     ActivityIndicator,
@@ -10,6 +10,7 @@ import {
     Text,
     View,
 } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import api from "../../api";
 import { useAuth } from "../../auth/AuthContext";
 import { BottomHome } from "../../components/BottomHome";
@@ -102,6 +103,7 @@ const matchesEmployee = (meeting: Meeting, ids: string[], name: string) => {
 };
 
 export default function EmployeeMeetingsScreen() {
+  const router = useRouter();
   const { user } = useAuth();
   const [meetings, setMeetings] = useState<Meeting[]>([]);
   const [loading, setLoading] = useState(true);
@@ -165,8 +167,26 @@ export default function EmployeeMeetingsScreen() {
   );
 
   return (
-    <View style={{ flex: 1, backgroundColor: "#f8fafc" }}>
-      <TopHeader title="Meetings" subtitle="Your scheduled meetings" />
+    <SafeAreaView style={{ flex: 1, backgroundColor: "#f8fafc" }} edges={["top"]}>
+      <View style={{
+        flexDirection: "row", alignItems: "center",
+        paddingHorizontal: 16, paddingVertical: 14,
+        backgroundColor: "#fff",
+        borderBottomWidth: 1, borderBottomColor: "#f1f5f9",
+      }}>
+        <Pressable
+          onPress={() => router.back()}
+          style={{
+            width: 38, height: 38, borderRadius: 12,
+            backgroundColor: "#f8fafc",
+            alignItems: "center", justifyContent: "center",
+            marginRight: 12,
+          }}
+        >
+          <Ionicons name="arrow-back" size={20} color="#0f172a" />
+        </Pressable>
+        <Text style={{ fontSize: 18, fontWeight: "800", color: "#0f172a" }}>Meetings</Text>
+      </View>
       <ScrollView
         style={{ flex: 1 }}
         contentContainerStyle={{ padding: 20, paddingBottom: 32 }}
@@ -239,7 +259,6 @@ export default function EmployeeMeetingsScreen() {
           </View>
         )}
       </ScrollView>
-      <BottomHome />
-    </View>
+    </SafeAreaView>
   );
 }

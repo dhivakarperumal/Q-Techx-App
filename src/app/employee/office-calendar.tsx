@@ -1,5 +1,5 @@
 import { Ionicons } from "@expo/vector-icons";
-import { useFocusEffect } from "expo-router";
+import { useFocusEffect, useRouter } from "expo-router";
 import { useCallback, useMemo, useState } from "react";
 import {
     ActivityIndicator,
@@ -10,6 +10,7 @@ import {
     Text,
     View,
 } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import api from "../../api";
 import { BottomHome } from "../../components/BottomHome";
 import { TopHeader } from "../../components/TopHeader";
@@ -167,6 +168,7 @@ function EventDetailsModal({ event, onClose }: { event: OfficeEvent | null; onCl
 }
 
 export default function OfficeCalendarScreen() {
+  const router = useRouter();
   const now = new Date();
   const [events, setEvents] = useState<OfficeEvent[]>([]);
   const [month, setMonth] = useState(() => new Date(now.getFullYear(), now.getMonth(), 1));
@@ -230,8 +232,26 @@ export default function OfficeCalendarScreen() {
   });
 
   return (
-    <View style={{ flex: 1, backgroundColor: "#f8fafc" }}>
-      <TopHeader title="Office Calendar" subtitle="Company events and schedules" />
+    <SafeAreaView style={{ flex: 1, backgroundColor: "#f8fafc" }} edges={["top"]}>
+      <View style={{
+        flexDirection: "row", alignItems: "center",
+        paddingHorizontal: 16, paddingVertical: 14,
+        backgroundColor: "#fff",
+        borderBottomWidth: 1, borderBottomColor: "#f1f5f9",
+      }}>
+        <Pressable
+          onPress={() => router.back()}
+          style={{
+            width: 38, height: 38, borderRadius: 12,
+            backgroundColor: "#f8fafc",
+            alignItems: "center", justifyContent: "center",
+            marginRight: 12,
+          }}
+        >
+          <Ionicons name="arrow-back" size={20} color="#0f172a" />
+        </Pressable>
+        <Text style={{ fontSize: 18, fontWeight: "800", color: "#0f172a" }}>Office Calendar</Text>
+      </View>
       <ScrollView
         style={{ flex: 1 }}
         contentContainerStyle={{ padding: 20, paddingBottom: 32 }}
@@ -304,8 +324,7 @@ export default function OfficeCalendarScreen() {
           </View>
         )}
       </ScrollView>
-      <BottomHome />
       <EventDetailsModal event={selectedEvent} onClose={() => setSelectedEvent(null)} />
-    </View>
+    </SafeAreaView>
   );
 }
