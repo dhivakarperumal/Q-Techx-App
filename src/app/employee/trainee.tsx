@@ -353,12 +353,14 @@ function TaskMasterModal({
 
 function TaskAssignmentModal({
   visible,
+  employeeId,
   members,
   tasks,
   onClose,
   onSaved,
 }: {
   visible: boolean;
+  employeeId: string | null;
   members: any[];
   tasks: TraineeTask[];
   onClose: () => void;
@@ -394,12 +396,7 @@ function TaskAssignmentModal({
   };
 
   const save = async () => {
-    if (!taskUuid || !memberUuid || !assignedDate)
-      return Alert.alert(
-        "Required fields",
-        "Select a task, trainee/intern, and assigned date.",
-      );
-
+    if (!taskUuid || !memberUuid || !assignedDate) return Alert.alert("Required fields", "Select a task, trainee/intern, and assigned date.");
     setSaving(true);
     try {
       const body = new FormData();
@@ -408,14 +405,11 @@ function TaskAssignmentModal({
       body.append("assigned_date", assignedDate);
       body.append("assigned_time", assignedTime);
       body.append("due_date", dueDate);
-
-      await api.post("/trainee-task-assignments", body, {
-        headers: { "Content-Type": "multipart/form-data" },
-      });
-
+      if (employeeId) body.append("employee_id", employeeId);
+      await api.post("/trainee-task-assignments", body, { headers: { "Content-Type": "multipart/form-data" } });
       Alert.alert("Assigned", "Task assigned successfully.");
-      closeModal();
       onSaved();
+      onClose();
     } catch (error: any) {
       Alert.alert(
         "Unable to assign task",
@@ -984,21 +978,10 @@ export default function TraineeScreen() {
         : assignData?.assignments || [];
       // Strictly filter assignments for trainees that belong to this employee
       const filteredAssignments = employeeId
-        ? allAssignments.filter((a: any) => {
-            const tId = String(
-              a.trainee_intern_uuid ||
-                a.trainee_uuid ||
-                a.trainee_id ||
-                a.trainee_intern_id,
-            );
-            return (
-              myTraineeIds.has(tId) ||
-              String(a.employee_id) === String(employeeId)
-            );
-          })
+        ? allAssignments.filter((a: any) => String(a.employee_id) === String(employeeId) || String(a.assigned_by) === String(employeeId))
         : allAssignments;
       setTaskAssignments(filteredAssignments);
-    } catch {
+    } catch (err) {
       // silent
     }
   }, [employeeId]);
@@ -1506,12 +1489,13 @@ export default function TraineeScreen() {
         onClose={() => setTaskVisible(false)}
         onSaved={loadTasks}
       />
-      <TaskAssignmentModal
-        visible={taskAssignmentVisible}
-        members={members}
-        tasks={tasks}
-        onClose={() => setTaskAssignmentVisible(false)}
-        onSaved={loadTasks}
+      <TaskAssignmentModal 
+        visible={taskAssignmentVisible} 
+        employeeId={employeeId}
+        members={members} 
+        tasks={tasks.filter(t => !taskAssignments.some(a => String(a.trainee_task_uuid || a.task_name) === String(t.uuid || t.task_name)))} 
+        onClose={() => setTaskAssignmentVisible(false)} 
+        onSaved={loadTasks} 
       />
     </View>
   );
