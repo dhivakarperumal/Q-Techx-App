@@ -368,8 +368,9 @@ function TaskAssignmentModal({
   const [memberUuid, setMemberUuid] = useState("");
   const [assignedDate, setAssignedDate] = useState(attendanceDate());
   const [assignedTime, setAssignedTime] = useState(currentTime());
-  const [dueDate, setDueDate] = useState("");
+  const [dueDate, setDueDate] = useState(attendanceDate());
   const [showAssignedDatePicker, setShowAssignedDatePicker] = useState(false);
+  const [showAssignedTimePicker, setShowAssignedTimePicker] = useState(false);
   const [showDueDatePicker, setShowDueDatePicker] = useState(false);
   const [saving, setSaving] = useState(false);
 
@@ -378,7 +379,7 @@ function TaskAssignmentModal({
     setMemberUuid("");
     setAssignedDate(attendanceDate());
     setAssignedTime(currentTime());
-    setDueDate("");
+    setDueDate(attendanceDate());
     setShowAssignedDatePicker(false);
     setShowDueDatePicker(false);
     onClose();
@@ -386,6 +387,10 @@ function TaskAssignmentModal({
 
   const formatDateValue = (date: Date) => {
     return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
+  };
+
+  const formatTimeValue = (date: Date) => {
+    return `${String(date.getHours()).padStart(2, "0")}:${String(date.getMinutes()).padStart(2, "0")}`;
   };
 
   const save = async () => {
@@ -597,7 +602,9 @@ function TaskAssignmentModal({
                     backgroundColor: "#f8fafc",
                     borderWidth: 1,
                     borderColor: "#dbe3ee",
-                    justifyContent: "center",
+                    flexDirection: "row",
+                    alignItems: "center",
+                    justifyContent: "space-between",
                     paddingHorizontal: 12,
                   }}
                 >
@@ -609,6 +616,22 @@ function TaskAssignmentModal({
                   >
                     {assignedDate || "YYYY-MM-DD"}
                   </Text>
+                  <View
+                    style={{
+                      width: 28,
+                      height: 28,
+                      borderRadius: 8,
+                      backgroundColor: "#fff7ed",
+                      alignItems: "center",
+                      justifyContent: "center",
+                    }}
+                  >
+                    <Ionicons
+                      name="calendar-outline"
+                      size={16}
+                      color="#f97316"
+                    />
+                  </View>
                 </Pressable>
               </View>
 
@@ -623,22 +646,41 @@ function TaskAssignmentModal({
                 >
                   Time
                 </Text>
-                <TextInput
-                  value={assignedTime}
-                  onChangeText={setAssignedTime}
-                  placeholder="HH:MM"
-                  placeholderTextColor="#9ca3af"
+                <Pressable
+                  onPress={() => setShowAssignedTimePicker(true)}
                   style={{
                     height: 48,
                     borderRadius: 12,
                     backgroundColor: "#f8fafc",
                     borderWidth: 1,
                     borderColor: "#dbe3ee",
-                    color: "#0f172a",
+                    flexDirection: "row",
+                    alignItems: "center",
+                    justifyContent: "space-between",
                     paddingHorizontal: 12,
-                    fontSize: 15,
                   }}
-                />
+                >
+                  <Text
+                    style={{
+                      color: assignedTime ? "#0f172a" : "#9ca3af",
+                      fontSize: 15,
+                    }}
+                  >
+                    {assignedTime || "HH:MM"}
+                  </Text>
+                  <View
+                    style={{
+                      width: 28,
+                      height: 28,
+                      borderRadius: 8,
+                      backgroundColor: "#fff7ed",
+                      alignItems: "center",
+                      justifyContent: "center",
+                    }}
+                  >
+                    <Ionicons name="time-outline" size={16} color="#f97316" />
+                  </View>
+                </Pressable>
               </View>
             </View>
 
@@ -661,7 +703,9 @@ function TaskAssignmentModal({
                   backgroundColor: "#f8fafc",
                   borderWidth: 1,
                   borderColor: "#dbe3ee",
-                  justifyContent: "center",
+                  flexDirection: "row",
+                  alignItems: "center",
+                  justifyContent: "space-between",
                   paddingHorizontal: 12,
                 }}
               >
@@ -673,6 +717,18 @@ function TaskAssignmentModal({
                 >
                   {dueDate || "YYYY-MM-DD"}
                 </Text>
+                <View
+                  style={{
+                    width: 28,
+                    height: 28,
+                    borderRadius: 8,
+                    backgroundColor: "#fff7ed",
+                    alignItems: "center",
+                    justifyContent: "center",
+                  }}
+                >
+                  <Ionicons name="calendar-outline" size={16} color="#f97316" />
+                </View>
               </Pressable>
             </View>
 
@@ -738,6 +794,7 @@ function TaskAssignmentModal({
               value={new Date(assignedDate || attendanceDate())}
               mode="date"
               display="default"
+              accentColor="#f97316"
               onChange={(_, selectedDate) => {
                 setShowAssignedDatePicker(false);
                 if (selectedDate)
@@ -751,9 +808,42 @@ function TaskAssignmentModal({
               value={dueDate ? new Date(dueDate) : new Date()}
               mode="date"
               display="default"
+              accentColor="#f97316"
               onChange={(_, selectedDate) => {
                 setShowDueDatePicker(false);
                 if (selectedDate) setDueDate(formatDateValue(selectedDate));
+              }}
+            />
+          ) : null}
+
+          {showAssignedTimePicker ? (
+            <DateTimePicker
+              value={(() => {
+                try {
+                  const now = new Date();
+                  if (assignedTime) {
+                    const parts = assignedTime.split(":").map(Number);
+                    if (
+                      parts.length >= 2 &&
+                      !Number.isNaN(parts[0]) &&
+                      !Number.isNaN(parts[1])
+                    ) {
+                      now.setHours(parts[0], parts[1], 0, 0);
+                    }
+                  }
+                  return now;
+                } catch {
+                  return new Date();
+                }
+              })()}
+              mode="time"
+              display="default"
+              is24Hour={true}
+              accentColor="#f97316"
+              onChange={(_, selectedTime) => {
+                setShowAssignedTimePicker(false);
+                if (selectedTime)
+                  setAssignedTime(formatTimeValue(selectedTime));
               }}
             />
           ) : null}
