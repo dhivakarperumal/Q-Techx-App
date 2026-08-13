@@ -5,8 +5,7 @@ import { ActivityIndicator, Modal, Pressable, RefreshControl, ScrollView, Text, 
 import { SafeAreaView } from "react-native-safe-area-context";
 import api from "../../api";
 import { useAuth } from "../../auth/AuthContext";
-import { BottomHome } from "../../components/BottomHome";
-import { TopHeader } from "../../components/TopHeader";
+import { LinearGradient } from "expo-linear-gradient";
 
 type SalaryRecord = {
   id: number | string;
@@ -41,8 +40,45 @@ const numberValue = (value?: string | number) => Number(value || 0);
 const monthName = (month: number) => new Date(2000, month - 1, 1).toLocaleString(undefined, { month: "long" });
 const monthYear = (record: SalaryRecord) => `${monthName(Number(record.salary_month))} ${record.salary_year}`;
 
-function SummaryCard({ label, value, icon, color, background }: { label: string; value: string; icon: React.ComponentProps<typeof Ionicons>["name"]; color: string; background: string }) {
-  return <View className="w-[47.5%] rounded-2xl border border-slate-200 bg-white p-4"><View className="h-10 w-10 items-center justify-center rounded-xl" style={{ backgroundColor: background }}><Ionicons name={icon} size={20} color={color} /></View><Text className="mt-3 text-lg font-black text-slate-900">{value}</Text><Text className="mt-1 text-xs text-slate-500">{label}</Text></View>;
+function SummaryCard({ label, value, icon, sub, subColor }: { label: string; value: string; icon: React.ComponentProps<typeof Ionicons>["name"]; sub?: string; subColor?: string }) {
+  return (
+    <View
+      className="w-[48%] mb-3 overflow-hidden rounded-2xl bg-white border border-orange-100"
+      style={{
+        shadowColor: "#f97316",
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.12,
+        shadowRadius: 10,
+        elevation: 4,
+      }}
+    >
+      <LinearGradient
+        colors={["#ffffff", "#fff7ed"]}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+        style={{ paddingHorizontal: 12, paddingVertical: 14 }}
+      >
+        <View className="flex-col items-start mb-2">
+          <View className="h-8 w-8 items-center justify-center rounded-xl bg-black mb-2">
+            <Ionicons name={icon} size={16} color="#f97316" />
+          </View>
+          <Text className="text-[10px] font-bold uppercase tracking-[0.5px] text-gray-500" numberOfLines={1}>
+            {label}
+          </Text>
+        </View>
+        <View className="flex-col items-start">
+          <Text className="text-xl font-black text-black">
+            {value}
+          </Text>
+          {sub && (
+            <Text className={`text-[9px] font-bold ${subColor || "text-gray-400"}`}>
+              {sub}
+            </Text>
+          )}
+        </View>
+      </LinearGradient>
+    </View>
+  );
 }
 
 function DetailRow({ label, value, color = "#0f172a" }: { label: string; value: string; color?: string }) {
@@ -61,11 +97,11 @@ function PayslipModal({ record, onClose }: { record: SalaryRecord | null; onClos
         <Pressable onPress={onClose} accessibilityLabel="Close payslip" className="h-10 w-10 items-center justify-center rounded-xl bg-slate-100"><Ionicons name="close" size={22} color="#475569" /></Pressable>
       </View>
       <ScrollView contentContainerStyle={{ padding: 20, paddingBottom: 32 }}>
-        <View className="rounded-2xl bg-slate-900 p-5"><Text className="text-xs font-bold uppercase tracking-widest text-emerald-300">Q TECHX</Text><Text className="mt-3 text-xl font-black text-white">Salary Payslip</Text><Text className="mt-1 text-sm text-slate-300">{employeeName} · {monthYear(record)}</Text><View className="mt-5 border-t border-white/10 pt-4"><Text className="text-xs text-slate-400">Net Pay</Text><Text className="mt-1 text-3xl font-black text-emerald-300">{amount(record.total_salary)}</Text><Text className="mt-1 text-xs text-slate-400">Credited {record.created_at ? new Date(record.created_at).toLocaleDateString() : "-"}</Text></View></View>
+        <View className="rounded-2xl bg-slate-900 p-5"><Text className="text-xs font-bold uppercase tracking-widest text-orange-300">Q TECHX</Text><Text className="mt-3 text-xl font-black text-white">Salary Payslip</Text><Text className="mt-1 text-sm text-slate-300">{employeeName} · {monthYear(record)}</Text><View className="mt-5 border-t border-white/10 pt-4"><Text className="text-xs text-slate-400">Net Pay</Text><Text className="mt-1 text-3xl font-black text-orange-300">{amount(record.total_salary)}</Text><Text className="mt-1 text-xs text-slate-400">Credited {record.created_at ? new Date(record.created_at).toLocaleDateString() : "-"}</Text></View></View>
         <Text className="mb-3 mt-7 text-xs font-bold uppercase tracking-widest text-slate-400">Employee attendance</Text>
         <View className="rounded-2xl border border-slate-200 bg-white p-4"><DetailRow label="Present Days" value={String(record.present_days ?? 0)} /><DetailRow label="Leave Days" value={String(record.leave_days ?? 0)} /></View>
         <Text className="mb-3 mt-7 text-xs font-bold uppercase tracking-widest text-slate-400">Earnings</Text>
-        <View className="rounded-2xl border border-slate-200 bg-white p-4"><DetailRow label="Basic Salary" value={amount(record.basic_salary)} /><DetailRow label={`Incentive (${record.incentive_percentage ?? 0}%)`} value={`+ ${amount(record.incentive_amount)}`} color="#16a34a" /></View>
+        <View className="rounded-2xl border border-slate-200 bg-white p-4"><DetailRow label="Basic Salary" value={amount(record.basic_salary)} /><DetailRow label={`Incentive (${record.incentive_percentage ?? 0}%)`} value={`+ ${amount(record.incentive_amount)}`} color="#f97316" /></View>
         <Text className="mb-3 mt-7 text-xs font-bold uppercase tracking-widest text-slate-400">Deductions</Text>
         <View className="rounded-2xl border border-slate-200 bg-white p-4"><DetailRow label={`Leave Deduction (${record.leave_days ?? 0} days)`} value={`- ${amount(record.leave_deduction)}`} color="#dc2626" /><DetailRow label="Additional Deduction" value={`- ${amount(record.additional_deduction)}`} color="#dc2626" /><View className="my-2 border-t border-slate-100" /><DetailRow label="Total Deductions" value={amount(deductions)} color="#dc2626" /></View>
       </ScrollView>
@@ -130,22 +166,69 @@ export default function PayrollScreen() {
       </Pressable>
       <Text style={{ fontSize: 18, fontWeight: "800", color: "#0f172a" }}>Payroll</Text>
     </View>
-    <ScrollView className="flex-1" contentContainerStyle={{ padding: 20, paddingBottom: 32 }} refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => fetchHistory(true)} tintColor="#2563eb" />}>
-      <Text className="text-3xl font-black text-slate-950">PayRole</Text>
+    <ScrollView className="flex-1" contentContainerStyle={{ padding: 20, paddingBottom: 32 }} refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => fetchHistory(true)} tintColor="#f97316" />}>
+      {/* <Text className="text-3xl font-black text-slate-950">PayRole</Text> */}
       <Text className="mt-2 text-base text-slate-500">Your salary slips and payment breakdown.</Text>
-      {loading ? <View className="items-center py-24"><ActivityIndicator size="large" color="#16a34a" /><Text className="mt-3 text-sm text-slate-500">Loading your payroll...</Text></View> : error ? <View className="mt-6 rounded-2xl border border-rose-200 bg-rose-50 p-5"><Text className="font-semibold text-rose-700">{error}</Text><Pressable onPress={() => fetchHistory()} className="mt-4 self-start rounded-xl bg-rose-600 px-4 py-2"><Text className="font-bold text-white">Try again</Text></Pressable></View> : sortedHistory.length === 0 ? <View className="mt-6 rounded-2xl border border-dashed border-slate-300 bg-white p-6"><Ionicons name="cash-outline" size={32} color="#94a3b8" style={{ alignSelf: "center" }} /><Text className="mt-3 text-center font-semibold text-slate-600">No payroll records found</Text><Text className="mt-1 text-center text-sm text-slate-400">Your salary details will appear here after payroll is processed.</Text></View> : <>
-        <View className="mt-5 rounded-3xl bg-emerald-600 p-5" style={{ shadowColor: "#16a34a", shadowOpacity: 0.2, shadowRadius: 12, shadowOffset: { width: 0, height: 6 }, elevation: 5 }}>
-          <Text className="text-sm font-semibold text-emerald-100">Latest salary {employeeName ? `· ${employeeName}` : ""}</Text>
-          <Text className="mt-2 text-sm font-semibold text-emerald-100">{monthYear(latest)}</Text>
-          <Text className="mt-1 text-4xl font-black text-white">{amount(latest.total_salary)}</Text>
-          <Text className="mt-1 text-xs text-emerald-100">Net pay after deductions</Text>
-        </View>
+      {loading ? <View className="items-center py-24"><ActivityIndicator size="large" color="#f97316" /><Text className="mt-3 text-sm text-slate-500">Loading your payroll...</Text></View> : error ? <View className="mt-6 rounded-2xl border border-rose-200 bg-rose-50 p-5"><Text className="font-semibold text-rose-700">{error}</Text><Pressable onPress={() => fetchHistory()} className="mt-4 self-start rounded-xl bg-rose-600 px-4 py-2"><Text className="font-bold text-white">Try again</Text></Pressable></View> : sortedHistory.length === 0 ? <View className="mt-6 rounded-2xl border border-dashed border-slate-300 bg-white p-6"><Ionicons name="cash-outline" size={32} color="#94a3b8" style={{ alignSelf: "center" }} /><Text className="mt-3 text-center font-semibold text-slate-600">No payroll records found</Text><Text className="mt-1 text-center text-sm text-slate-400">Your salary details will appear here after payroll is processed.</Text></View> : <>
+        <View
+  className="mt-5 rounded-3xl bg-orange-600 p-5"
+  style={{
+    shadowColor: "#f97316",
+    shadowOpacity: 0.2,
+    shadowRadius: 12,
+    shadowOffset: { width: 0, height: 6 },
+    elevation: 5,
+  }}
+>
+  {/* Header */}
+  <View className="flex-row items-center justify-between">
+    <View className="flex-1">
+      <Text className="text-xs font-semibold text-orange-100">
+        Latest Salary
+      </Text>
+
+      <Text className="mt-1 text-[11px] font-medium text-orange-100">
+        {employeeName ? employeeName : "Current Employee"}
+      </Text>
+    </View>
+
+    {/* Icon */}
+    <View className="h-11 w-11 items-center justify-center rounded-2xl bg-white/20">
+      <Ionicons name="wallet-outline" size={22} color="#fff" />
+    </View>
+  </View>
+
+  {/* Salary */}
+  <View className="mt-4">
+    <Text className="text-[11px] font-medium text-orange-100">
+      {monthYear(latest)}
+    </Text>
+
+    <Text className="mt-1 text-4xl font-black text-white">
+      {amount(latest.total_salary)}
+    </Text>
+  </View>
+
+  {/* Footer */}
+  <View className="mt-4 flex-row items-center">
+    <View className="mr-2 h-2 w-2 rounded-full bg-white" />
+
+    <Text className="text-xs font-medium text-orange-100">
+      Net pay after deductions
+    </Text>
+  </View>
+</View>
         <Text className="mb-3 mt-7 text-xs font-bold uppercase tracking-widest text-slate-400">Latest breakdown</Text>
-        <View className="flex-row flex-wrap justify-between gap-y-3"><SummaryCard label="Basic Salary" value={amount(latest.basic_salary)} icon="wallet-outline" color="#2563eb" background="#eff6ff" /><SummaryCard label="Present Days" value={String(latest.present_days ?? 0)} icon="calendar-outline" color="#16a34a" background="#f0fdf4" /><SummaryCard label="Deductions" value={amount(totalDeductions)} icon="remove-circle-outline" color="#dc2626" background="#fef2f2" /><SummaryCard label="Incentive" value={amount(latest.incentive_amount)} icon="gift-outline" color="#7c3aed" background="#f5f3ff" /></View>
+        <View className="flex-row flex-wrap justify-between">
+          <SummaryCard label="Basic Salary" value={amount(latest.basic_salary)} icon="wallet-outline" />
+          <SummaryCard label="Present Days" value={String(latest.present_days ?? 0)} icon="calendar-outline" />
+          <SummaryCard label="Deductions" value={amount(totalDeductions)} icon="remove-circle-outline" sub="Total" subColor="text-red-500" />
+          <SummaryCard label="Incentive" value={amount(latest.incentive_amount)} icon="gift-outline" />
+        </View>
         <Text className="mb-3 mt-7 text-xs font-bold uppercase tracking-widest text-slate-400">Latest salary details</Text>
-        <View className="rounded-2xl border border-slate-200 bg-white p-4"><DetailRow label="Basic Salary" value={amount(latest.basic_salary)} /><DetailRow label={`Leave Deduction (${latest.leave_days ?? 0} days)`} value={`- ${amount(latest.leave_deduction)}`} color="#dc2626" /><DetailRow label="Additional Deduction" value={`- ${amount(latest.additional_deduction)}`} color="#dc2626" /><DetailRow label={`Incentive (${latest.incentive_percentage ?? 0}%)`} value={`+ ${amount(latest.incentive_amount)}`} color="#16a34a" /><View className="my-2 border-t border-slate-100" /><DetailRow label="Net Pay" value={amount(latest.total_salary)} color="#059669" /></View>
+        <View className="rounded-2xl border border-slate-200 bg-white p-4"><DetailRow label="Basic Salary" value={amount(latest.basic_salary)} /><DetailRow label={`Leave Deduction (${latest.leave_days ?? 0} days)`} value={`- ${amount(latest.leave_deduction)}`} color="#dc2626" /><DetailRow label="Additional Deduction" value={`- ${amount(latest.additional_deduction)}`} color="#dc2626" /><DetailRow label={`Incentive (${latest.incentive_percentage ?? 0}%)`} value={`+ ${amount(latest.incentive_amount)}`} color="#f97316" /><View className="my-2 border-t border-slate-100" /><DetailRow label="Net Pay" value={amount(latest.total_salary)} color="#f97316" /></View>
         <Text className="mb-3 mt-7 text-xs font-bold uppercase tracking-widest text-slate-400">Payslip history</Text>
-        <View className="gap-3">{sortedHistory.map((record) => <Pressable key={record.id} onPress={() => setSelectedPayslip(record)} className="flex-row items-center rounded-2xl border border-slate-200 bg-white p-4 active:bg-emerald-50"><View className="h-11 w-11 items-center justify-center rounded-xl bg-emerald-50"><Ionicons name="document-text-outline" size={22} color="#16a34a" /></View><View className="ml-3 flex-1"><Text className="font-bold text-slate-900">{monthYear(record)}</Text><Text className="mt-1 text-xs text-slate-500">Basic {amount(record.basic_salary)} · Present {record.present_days ?? 0} days</Text><Text className="mt-1 text-xs font-bold text-emerald-600">View payslip</Text></View><View className="items-end"><Text className="font-black text-slate-900">{amount(record.total_salary)}</Text><Text className="mt-1 text-xs font-bold text-emerald-600">Paid</Text><Ionicons name="chevron-forward" size={16} color="#94a3b8" /></View></Pressable>)}</View>
+        <View className="gap-3">{sortedHistory.map((record) => <Pressable key={record.id} onPress={() => setSelectedPayslip(record)} className="flex-row items-center rounded-2xl border border-slate-200 bg-white p-4 active:bg-orange-50"><View className="h-11 w-11 items-center justify-center rounded-xl bg-orange-50"><Ionicons name="document-text-outline" size={22} color="#f97316" /></View><View className="ml-3 flex-1"><Text className="font-bold text-slate-900">{monthYear(record)}</Text><Text className="mt-1 text-xs text-slate-500">Basic {amount(record.basic_salary)} · Present {record.present_days ?? 0} days</Text></View><View className="items-end"><Text className="font-black text-slate-900">{amount(record.total_salary)}</Text><Text className="mt-1 text-xs font-bold text-orange-600">Paid</Text></View></Pressable>)}</View>
       </>}
     </ScrollView>
     <PayslipModal record={selectedPayslip} onClose={() => setSelectedPayslip(null)} />
