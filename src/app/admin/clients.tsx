@@ -135,7 +135,7 @@ export default function ClientsScreen() {
               colors={["#ffffff", "#fff7ed"]}
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 1 }}
-              className="px-4 py-4"
+              style={{ paddingHorizontal: 16, paddingVertical: 16 }}
             >
               <View className="flex-row items-center mb-3">
                 <View className="h-10 w-10 items-center justify-center rounded-xl bg-black">
@@ -170,7 +170,7 @@ export default function ClientsScreen() {
               colors={["#ffffff", "#fff7ed"]}
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 1 }}
-              className="px-4 py-4"
+              style={{ paddingHorizontal: 16, paddingVertical: 16 }}
             >
               <View className="flex-row items-center mb-3">
                 <View className="h-10 w-10 items-center justify-center rounded-xl bg-black">
@@ -205,7 +205,7 @@ export default function ClientsScreen() {
               colors={["#ffffff", "#fff7ed"]}
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 1 }}
-              className="px-4 py-4"
+              style={{ paddingHorizontal: 16, paddingVertical: 16 }}
             >
               <View className="flex-row items-center mb-3">
                 <View className="h-10 w-10 items-center justify-center rounded-xl bg-black">
@@ -240,7 +240,7 @@ export default function ClientsScreen() {
               colors={["#ffffff", "#fff7ed"]}
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 1 }}
-              className="px-4 py-4"
+              style={{ paddingHorizontal: 16, paddingVertical: 16 }}
             >
               <View className="flex-row items-center mb-3">
                 <View className="h-10 w-10 items-center justify-center rounded-xl bg-black">

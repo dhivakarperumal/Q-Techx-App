@@ -1,8 +1,7 @@
 import {
-    Stack,
-    useRootNavigationState,
-    useRouter,
-    useSegments,
+  Stack,
+  useRouter,
+  useSegments,
 } from "expo-router";
 import { useEffect } from "react";
 import { SafeAreaProvider } from "react-native-safe-area-context";
@@ -14,10 +13,9 @@ function RootLayoutNav() {
   const { user, isLoading } = useAuth();
   const segments = useSegments();
   const router = useRouter();
-  const navigationState = useRootNavigationState();
 
   useEffect(() => {
-    if (isLoading || !navigationState?.key) return;
+    if (isLoading) return;
 
     const currentPath = `/${segments.join("/")}`;
     const inAuthGroup = segments[0] === "admin" || segments[0] === "employee";
@@ -36,7 +34,7 @@ function RootLayoutNav() {
         }
       }
     }
-  }, [user, isLoading, segments, router, navigationState]);
+  }, [user, isLoading, segments, router]);
 
   return <Stack screenOptions={{ headerShown: false }} />;
 }

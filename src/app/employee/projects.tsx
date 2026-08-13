@@ -1,4 +1,5 @@
 import { Ionicons } from "@expo/vector-icons";
+import DateTimePicker from "@react-native-community/datetimepicker";
 import { useRouter } from "expo-router";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
@@ -12,7 +13,6 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import DateTimePicker from "@react-native-community/datetimepicker";
 import api from "../../api";
 import { useAuth } from "../../auth/AuthContext";
 import { BottomHome } from "../../components/BottomHome";
@@ -126,15 +126,17 @@ export default function EmployeeProjectsScreen() {
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("All");
   const [dateFilter, setDateFilter] = useState("All");
-  
+
   const [statusDropdownOpen, setStatusDropdownOpen] = useState(false);
   const [dateDropdownOpen, setDateDropdownOpen] = useState(false);
-  
+
   // Custom Date Range State
   const [customRangeVisible, setCustomRangeVisible] = useState(false);
   const [customStart, setCustomStart] = useState("");
   const [customEnd, setCustomEnd] = useState("");
-  const [customPickerField, setCustomPickerField] = useState<"start" | "end" | null>(null);
+  const [customPickerField, setCustomPickerField] = useState<
+    "start" | "end" | null
+  >(null);
   const [showCustomDatePicker, setShowCustomDatePicker] = useState(false);
 
   const [loading, setLoading] = useState(true);
@@ -215,9 +217,15 @@ export default function EmployeeProjectsScreen() {
         const newProgressMap: Record<string, number> = {};
         assigned.forEach((p) => {
           const projectTasks = globalTasks.filter((t: any) => {
-            const tProjId = String(t.project_id ?? t.projectId ?? t.project?.id ?? "");
-            const tProjUuid = String(t.project_uuid ?? t.project?.uuid ?? t.project ?? "");
-            const tProjName = String(t.project_name ?? t.projectName ?? t.project?.name ?? "").toLowerCase();
+            const tProjId = String(
+              t.project_id ?? t.projectId ?? t.project?.id ?? "",
+            );
+            const tProjUuid = String(
+              t.project_uuid ?? t.project?.uuid ?? t.project ?? "",
+            );
+            const tProjName = String(
+              t.project_name ?? t.projectName ?? t.project?.name ?? "",
+            ).toLowerCase();
             return (
               tProjId === String(p.id) ||
               tProjUuid === p.uuid ||
@@ -226,9 +234,12 @@ export default function EmployeeProjectsScreen() {
           });
           if (projectTasks.length > 0) {
             const done = projectTasks.filter(
-              (t: any) => (t.status ?? t.task_status ?? "").toLowerCase() === "completed"
+              (t: any) =>
+                (t.status ?? t.task_status ?? "").toLowerCase() === "completed",
             ).length;
-            newProgressMap[p.uuid] = Math.round((done / projectTasks.length) * 100);
+            newProgressMap[p.uuid] = Math.round(
+              (done / projectTasks.length) * 100,
+            );
           } else {
             newProgressMap[p.uuid] = 0;
           }
@@ -277,16 +288,20 @@ export default function EmployeeProjectsScreen() {
     today.setHours(0, 0, 0, 0);
     const yesterday = new Date(today);
     yesterday.setDate(today.getDate() - 1);
-    
+
     const startOfWeek = new Date(today);
     startOfWeek.setDate(today.getDate() - today.getDay());
     const endOfWeek = new Date(today);
     endOfWeek.setDate(today.getDate() + (6 - today.getDay()));
-    
+
     const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
     const endOfMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0);
-    
-    const startOfLastMonth = new Date(today.getFullYear(), today.getMonth() - 1, 1);
+
+    const startOfLastMonth = new Date(
+      today.getFullYear(),
+      today.getMonth() - 1,
+      1,
+    );
     const endOfLastMonth = new Date(today.getFullYear(), today.getMonth(), 0);
 
     return currentProjects.filter((project) => {
@@ -298,15 +313,16 @@ export default function EmployeeProjectsScreen() {
           project.project_manager,
           project.project_code,
         ].some((value) => (value || "").toLowerCase().includes(query));
-      
-      const matchesStatus = statusFilter === "All" || project.current_status === statusFilter;
+
+      const matchesStatus =
+        statusFilter === "All" || project.current_status === statusFilter;
 
       let matchesDate = true;
       if (dateFilter !== "All" && project.project_start_date) {
         const pDate = new Date(project.project_start_date);
         if (!Number.isNaN(pDate.getTime())) {
           pDate.setHours(0, 0, 0, 0);
-          
+
           switch (dateFilter) {
             case "Today":
               matchesDate = pDate.getTime() === today.getTime();
@@ -321,7 +337,8 @@ export default function EmployeeProjectsScreen() {
               matchesDate = pDate >= startOfMonth && pDate <= endOfMonth;
               break;
             case "Last Month":
-              matchesDate = pDate >= startOfLastMonth && pDate <= endOfLastMonth;
+              matchesDate =
+                pDate >= startOfLastMonth && pDate <= endOfLastMonth;
               break;
             case "Custom Range":
               if (customStart && customEnd) {
@@ -338,7 +355,14 @@ export default function EmployeeProjectsScreen() {
 
       return matchesSearch && matchesStatus && matchesDate;
     });
-  }, [currentProjects, search, statusFilter, dateFilter, customStart, customEnd]);
+  }, [
+    currentProjects,
+    search,
+    statusFilter,
+    dateFilter,
+    customStart,
+    customEnd,
+  ]);
 
   return (
     <View className="flex-1 bg-slate-50">
@@ -433,9 +457,11 @@ export default function EmployeeProjectsScreen() {
               className="text-xs font-medium text-slate-700"
               numberOfLines={1}
             >
-              {dateFilter === "Custom Range" && customStart && customEnd 
-                ? `${new Date(customStart).toLocaleDateString(undefined, {month: "short", day: "numeric"})} - ${new Date(customEnd).toLocaleDateString(undefined, {month: "short", day: "numeric"})}`
-                : dateFilter === "All" ? "All Dates" : dateFilter}
+              {dateFilter === "Custom Range" && customStart && customEnd
+                ? `${new Date(customStart).toLocaleDateString(undefined, { month: "short", day: "numeric" })} - ${new Date(customEnd).toLocaleDateString(undefined, { month: "short", day: "numeric" })}`
+                : dateFilter === "All"
+                  ? "All Dates"
+                  : dateFilter}
             </Text>
             <Ionicons name="chevron-down" size={16} color="#64748b" />
           </Pressable>
@@ -617,7 +643,9 @@ export default function EmployeeProjectsScreen() {
                   }}
                   className="px-5 py-4 border-b border-slate-100"
                 >
-                  <Text className={`text-sm ${statusFilter === filter ? "font-bold text-blue-600" : "text-slate-700"}`}>
+                  <Text
+                    className={`text-sm ${statusFilter === filter ? "font-bold text-blue-600" : "text-slate-700"}`}
+                  >
                     {filter === "All" ? "All Status" : filter}
                   </Text>
                 </Pressable>
@@ -645,7 +673,15 @@ export default function EmployeeProjectsScreen() {
               Select Date
             </Text>
             <ScrollView>
-              {["All", "Today", "Yesterday", "This Week", "This Month", "Last Month", "Custom Range"].map((filter) => (
+              {[
+                "All",
+                "Today",
+                "Yesterday",
+                "This Week",
+                "This Month",
+                "Last Month",
+                "Custom Range",
+              ].map((filter) => (
                 <Pressable
                   key={filter}
                   onPress={() => {
@@ -657,7 +693,9 @@ export default function EmployeeProjectsScreen() {
                   }}
                   className="px-5 py-4 border-b border-slate-100"
                 >
-                  <Text className={`text-sm ${dateFilter === filter ? "font-bold text-blue-600" : "text-slate-700"}`}>
+                  <Text
+                    className={`text-sm ${dateFilter === filter ? "font-bold text-blue-600" : "text-slate-700"}`}
+                  >
                     {filter === "All" ? "All Dates" : filter}
                   </Text>
                 </Pressable>
@@ -676,10 +714,14 @@ export default function EmployeeProjectsScreen() {
       >
         <View className="flex-1 bg-black/40 justify-center px-8">
           <View className="bg-white rounded-2xl overflow-hidden p-6">
-            <Text className="text-lg font-bold text-slate-900 mb-4">Select Date Range</Text>
-            
+            <Text className="text-lg font-bold text-slate-900 mb-4">
+              Select Date Range
+            </Text>
+
             <View className="mb-4">
-              <Text className="text-sm font-medium text-slate-700 mb-1">Start Date</Text>
+              <Text className="text-sm font-medium text-slate-700 mb-1">
+                Start Date
+              </Text>
               <Pressable
                 onPress={() => {
                   setCustomPickerField("start");
@@ -687,7 +729,9 @@ export default function EmployeeProjectsScreen() {
                 }}
                 className="h-12 rounded-xl border border-slate-200 bg-slate-50 px-4 flex-row items-center justify-between"
               >
-                <Text className={`text-sm ${customStart ? "text-slate-900" : "text-slate-400"}`}>
+                <Text
+                  className={`text-sm ${customStart ? "text-slate-900" : "text-slate-400"}`}
+                >
                   {customStart || "Select start date"}
                 </Text>
                 <Ionicons name="calendar-outline" size={20} color="#94a3b8" />
@@ -695,7 +739,9 @@ export default function EmployeeProjectsScreen() {
             </View>
 
             <View className="mb-6">
-              <Text className="text-sm font-medium text-slate-700 mb-1">End Date</Text>
+              <Text className="text-sm font-medium text-slate-700 mb-1">
+                End Date
+              </Text>
               <Pressable
                 onPress={() => {
                   setCustomPickerField("end");
@@ -703,7 +749,9 @@ export default function EmployeeProjectsScreen() {
                 }}
                 className="h-12 rounded-xl border border-slate-200 bg-slate-50 px-4 flex-row items-center justify-between"
               >
-                <Text className={`text-sm ${customEnd ? "text-slate-900" : "text-slate-400"}`}>
+                <Text
+                  className={`text-sm ${customEnd ? "text-slate-900" : "text-slate-400"}`}
+                >
                   {customEnd || "Select end date"}
                 </Text>
                 <Ionicons name="calendar-outline" size={20} color="#94a3b8" />
@@ -740,8 +788,12 @@ export default function EmployeeProjectsScreen() {
         <DateTimePicker
           value={
             customPickerField === "start"
-              ? (customStart ? new Date(customStart) : new Date())
-              : (customEnd ? new Date(customEnd) : new Date())
+              ? customStart
+                ? new Date(customStart)
+                : new Date()
+              : customEnd
+                ? new Date(customEnd)
+                : new Date()
           }
           mode="date"
           display="default"
