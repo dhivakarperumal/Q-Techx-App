@@ -375,57 +375,246 @@ export default function EmployeeScreen() {
                 background="#fef2f2"
               />
             </View>
-            <Text className="mb-3 mt-7 text-xs font-bold uppercase tracking-widest text-slate-400">
-              Today&apos;s tasks
-            </Text>
-            <View className="gap-3">
-              {tasks.today?.length ? (
-                tasks.today.map((task, index) => (
-                  <View
-                    key={`${task.task_name || task.title}-${index}`}
-                    className="flex-row items-center rounded-2xl border border-slate-200 bg-white p-4"
-                  >
-                    <View className="h-10 w-10 items-center justify-center rounded-xl bg-blue-50">
+            {/* Today's Tasks */}
+            <View className="mb-5 mt-3 overflow-hidden rounded-3xl bg-white shadow-md">
+              {/* Orange top accent */}
+              <LinearGradient
+                colors={["#fb923c", "#f97316"]}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 0 }}
+                className="h-0.5 w-full"
+              />
+
+              <View className="p-5">
+                {/* Header */}
+                <View className="mb-4 flex-row items-center justify-between">
+                  <View className="flex-row items-center">
+                    <View className="h-10 w-10 items-center justify-center rounded-xl bg-black">
                       <Ionicons
-                        name="clipboard-outline"
-                        size={20}
-                        color="#2563eb"
+                        name="checkbox-outline"
+                        size={19}
+                        color="#f97316"
                       />
                     </View>
-                    <View className="ml-3 flex-1">
-                      <Text
-                        className="font-bold text-slate-900"
-                        numberOfLines={1}
-                      >
-                        {task.task_name || task.title || "Assigned task"}
+
+                    <View className="ml-3">
+                      <Text className="text-base font-black text-black">
+                        Today&apos;s Tasks
                       </Text>
-                      <Text className="mt-1 text-xs text-slate-500">
-                        {task.status || "Pending"}
+
+                      <Text className="mt-0.5 text-[10px] text-gray-400">
+                        Your assigned work
                       </Text>
                     </View>
-                    <Ionicons
-                      name="chevron-forward"
-                      size={18}
-                      color="#94a3b8"
-                    />
                   </View>
-                ))
-              ) : (
-                <View className="rounded-2xl border border-dashed border-slate-300 bg-white p-5">
-                  <Text className="text-center text-sm text-slate-500">
-                    No tasks scheduled for today.
-                  </Text>
+
+                  {/* Task count */}
+                  <View className="rounded-xl bg-orange-50 px-3 py-2">
+                    <Text className="text-xs font-black text-orange-500">
+                      {tasks.today?.length ?? 0}
+                    </Text>
+                  </View>
                 </View>
-              )}
+
+                {/* Task List */}
+                <View className="gap-3">
+                  {tasks.today?.length ? (
+                    tasks.today.map((task, index) => (
+                      <View
+                        key={`${task.task_name || task.title}-${index}`}
+                        className="flex-row items-center rounded-2xl border border-orange-100 bg-orange-50/40 p-3"
+                      >
+                        {/* Task Icon */}
+                        <View className="h-11 w-11 items-center justify-center rounded-xl bg-black">
+                          <Ionicons
+                            name="clipboard-outline"
+                            size={19}
+                            color="#f97316"
+                          />
+                        </View>
+
+                        {/* Task Details */}
+                        <View className="ml-3 flex-1">
+                          <Text
+                            className="text-sm font-bold text-black"
+                            numberOfLines={1}
+                          >
+                            {task.task_name || task.title || "Assigned task"}
+                          </Text>
+
+                          <Text
+                            className="mt-1 text-[11px] font-medium text-gray-400"
+                            numberOfLines={1}
+                          >
+                            {task.status || "Pending"}
+                          </Text>
+                        </View>
+
+                        {/* Status Badge */}
+                        <View className="mr-2 rounded-lg bg-white px-2 py-1">
+                          <Text className="text-[10px] font-bold text-orange-500">
+                            {task.status || "Pending"}
+                          </Text>
+                        </View>
+
+                        <Ionicons
+                          name="chevron-forward"
+                          size={17}
+                          color="#f97316"
+                        />
+                      </View>
+                    ))
+                  ) : (
+                    <View className="rounded-2xl border border-dashed border-orange-200 bg-orange-50/40 p-6">
+                      <View className="mb-2 items-center">
+                        <View className="h-12 w-12 items-center justify-center rounded-2xl bg-black">
+                          <Ionicons
+                            name="checkbox-outline"
+                            size={22}
+                            color="#f97316"
+                          />
+                        </View>
+                      </View>
+
+                      <Text className="text-center text-sm font-bold text-black">
+                        No tasks scheduled for today
+                      </Text>
+
+                      <Text className="mt-1 text-center text-xs text-gray-400">
+                        You&apos;re all caught up!
+                      </Text>
+                    </View>
+                  )}
+                </View>
+              </View>
             </View>
-            <View className="mt-7 flex-row items-center justify-between">
-              <Text className="text-xs font-bold uppercase tracking-widest text-slate-400">
-                Active projects
-              </Text>
-              <Text className="text-xs font-semibold text-slate-400">
-                {projects.activeCount ?? 0} active
-              </Text>
+
+            {/* Active Projects */}
+            <View className="mb-5 overflow-hidden rounded-3xl bg-white shadow-md">
+              {/* Orange top accent */}
+              <LinearGradient
+                colors={["#fb923c", "#f97316"]}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 0 }}
+                className="h-0.5 w-full"
+              />
+
+              <View className="p-5">
+                {/* Header */}
+                <View className="mb-4 flex-row items-center justify-between">
+                  <View className="flex-row items-center">
+                    <View className="h-10 w-10 items-center justify-center rounded-xl bg-black">
+                      <Ionicons
+                        name="folder-outline"
+                        size={19}
+                        color="#f97316"
+                      />
+                    </View>
+
+                    <View className="ml-3">
+                      <Text className="text-base font-black text-black">
+                        Active Projects
+                      </Text>
+
+                      <Text className="mt-0.5 text-[10px] text-gray-400">
+                        Projects currently assigned to you
+                      </Text>
+                    </View>
+                  </View>
+
+                  {/* Active count */}
+                  <View className="rounded-xl bg-orange-50 px-3 py-2">
+                    <Text className="text-xs font-black text-orange-500">
+                      {projects.activeCount ?? 0} active
+                    </Text>
+                  </View>
+                </View>
+
+                {/* Projects */}
+                <View className="gap-3">
+                  {projects.activeList?.length ? (
+                    projects.activeList.slice(0, 3).map((project, index) => (
+                      <View
+                        key={`${project.name}-${index}`}
+                        className="rounded-2xl border border-orange-100 bg-orange-50/40 p-4"
+                      >
+                        {/* Project name + percentage */}
+                        <View className="flex-row items-center justify-between">
+                          <View className="flex-1 pr-3">
+                            <Text
+                              className="text-sm font-bold text-black"
+                              numberOfLines={1}
+                            >
+                              {project.name || "Project"}
+                            </Text>
+
+                            <Text className="mt-1 text-[10px] text-gray-400">
+                              Project progress
+                            </Text>
+                          </View>
+
+                          <View className="rounded-lg bg-white px-2.5 py-1">
+                            <Text className="text-xs font-black text-orange-500">
+                              {project.progress ?? 0}%
+                            </Text>
+                          </View>
+                        </View>
+
+                        {/* Progress bar */}
+                        <View className="mt-3 h-2 overflow-hidden rounded-full bg-white">
+                          <LinearGradient
+                            colors={["#fb923c", "#f97316"]}
+                            start={{ x: 0, y: 0 }}
+                            end={{ x: 1, y: 0 }}
+                            className="h-full rounded-full"
+                            style={{
+                              width: `${Math.min(
+                                100,
+                                Math.max(0, Number(project.progress || 0))
+                              )}%`,
+                            }}
+                          />
+                        </View>
+
+                        {/* Due date */}
+                        <View className="mt-3 flex-row items-center">
+                          <Ionicons
+                            name="calendar-outline"
+                            size={14}
+                            color="#f97316"
+                          />
+
+                          <Text className="ml-1.5 text-[11px] text-gray-500">
+                            Due {project.due || "-"}
+                          </Text>
+                        </View>
+                      </View>
+                    ))
+                  ) : (
+                    <View className="rounded-2xl border border-dashed border-orange-200 bg-orange-50/40 p-6">
+                      <View className="mb-2 items-center">
+                        <View className="h-12 w-12 items-center justify-center rounded-2xl bg-black">
+                          <Ionicons
+                            name="folder-outline"
+                            size={22}
+                            color="#f97316"
+                          />
+                        </View>
+                      </View>
+
+                      <Text className="text-center text-sm font-bold text-black">
+                        No active projects
+                      </Text>
+
+                      <Text className="mt-1 text-center text-xs text-gray-400">
+                        Your active projects will appear here.
+                      </Text>
+                    </View>
+                  )}
+                </View>
+              </View>
             </View>
+
             <View className="mt-3 gap-3">
               {projects.activeList?.length ? (
                 projects.activeList.slice(0, 3).map((project, index) => (
