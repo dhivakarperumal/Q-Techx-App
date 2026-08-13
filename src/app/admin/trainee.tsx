@@ -34,6 +34,27 @@ const dateText = (value?: string | Date) => {
 const joiningDateOf = (member: Member) => member.joining_date || member.joiningDate || member.joined_date || member.date_joined || member.created_at || "";
 const initials = (name: string) => name.split(" ").slice(0, 2).map((part) => part[0]).join("").toUpperCase() || "?";
 const employeeName = (employee: Employee) => `${employee.first_name || ""} ${employee.last_name || ""}`.trim() || employee.employee_code || "Employee";
+const hasActiveAssignment = (member: Member) => {
+  const candidateValues = [
+    member?.has_active_assignment,
+    member?.assigned_employee_id,
+    member?.employee_id,
+    member?.assigned_to,
+    member?.current_employee_id,
+    member?.assignment_status,
+    member?.assignment?.is_active,
+    member?.assignment?.active,
+    member?.assignment?.status,
+  ];
+
+  return candidateValues.some((value) => {
+    if (value === null || value === undefined || value === "") return false;
+    if (typeof value === "boolean") return value;
+    const text = String(value).trim().toLowerCase();
+    if (["0", "false", "none", "null", "unassigned", "not assigned"].includes(text)) return false;
+    return true;
+  });
+};
 
 function Field({ label, value, onChange, placeholder = "", multiline = false, secure = false }: { label: string; value: string; onChange: (value: string) => void; placeholder?: string; multiline?: boolean; secure?: boolean }) {
   return <View className="mb-3"><Text className="mb-1.5 text-xs font-bold text-slate-500">{label}</Text><TextInput value={value || ""} onChangeText={onChange} placeholder={placeholder} placeholderTextColor="#94a3b8" secureTextEntry={secure} multiline={multiline} numberOfLines={multiline ? 3 : 1} textAlignVertical={multiline ? "top" : "center"} className={inputClass} /></View>;
@@ -185,81 +206,134 @@ export default function AdminTraineeScreen() {
   useEffect(() => { if (tab === "Tasks" || tab === "Assign Task") loadTasks(); }, [tab, loadTasks]);
   const remove = (member: Member) => Alert.alert("Delete member", `Delete ${nameOf(member)}?`, [{ text: "Cancel", style: "cancel" }, { text: "Delete", style: "destructive", onPress: async () => { try { await api.delete(`/trainee-intern/${member.uuid}`); setSelected(null); loadMembers(true); } catch (error: any) { Alert.alert("Delete failed", error?.message || "Please try again."); } } }]);
   const stats = { total: members.length, active: members.filter((item) => item.status === "Active").length, trainees: members.filter((item) => item.type === "Trainee").length, interns: members.filter((item) => item.type === "Intern").length };
-  const renderMembers = () => {
-    const hasActiveAssignment = (m: Member) => Number(m.has_active_assignment || m.assigned_employee_id ? 1 : 0) > 0;
-    return (
-      <>
-        {/* Stats cards (like ExpensesTab) */}
-        <View className="mb-6 flex-row flex-wrap justify-between">
-          {[{ label: 'Total', value: stats.total, icon: 'people' }, { label: 'Active', value: stats.active, icon: 'checkmark' }, { label: 'Trainees', value: stats.trainees, icon: 'school' }, { label: 'Interns', value: stats.interns, icon: 'book' }].map((stat, idx) => (
-            <TouchableOpacity
-              key={String(idx)}
-              activeOpacity={0.9}
-              className="mb-3 w-[48%] overflow-hidden rounded-2xl border border-orange-100"
-              style={{
-                shadowColor: '#f97316',
-                shadowOffset: { width: 0, height: 4 },
-                shadowOpacity: 0.12,
-                shadowRadius: 10,
-                elevation: 4,
-              }}
+  const filteredMembers = members.filter((member) => {
+    const query = search.trim().toLowerCase();
+    const matchesSearch = !query || [
+      member.full_name,
+      member.person_id,
+      member.email_address,
+      member.mobile_number,
+      member.department,
+      member.designation,
+      member.course,
+    ].some((value) => String(value || "").toLowerCase().includes(query));
+    const matchesType = type === "All" || member.type === type;
+    const matchesStatus = status === "All" || member.status === status;
+    return matchesSearch && matchesType && matchesStatus;
+  });
+  const filteredTasks = tasks.filter((task) => {
+    const query = search.trim().toLowerCase();
+    if (!query) return true;
+    return [task.task_name, task.description].some((value) => String(value || "").toLowerCase().includes(query));
+  });
+  const filteredTaskAssignments = taskAssignments.filter((assignment) => {
+    const query = search.trim().toLowerCase();
+    if (!query) return true;
+    return [
+      assignment.task_name,
+      assignment.trainee_name,
+      assignment.status,
+      assignment.assigned_date,
+      assignment.due_date,
+    ].some((value) => String(value || "").toLowerCase().includes(query));
+  });
+  const renderMembers = () => (
+    <>
+      <View className="mb-6 flex-row flex-wrap justify-between">
+        {[{ label: 'Total', value: stats.total, icon: 'people' }, { label: 'Active', value: stats.active, icon: 'checkmark' }, { label: 'Trainees', value: stats.trainees, icon: 'school' }, { label: 'Interns', value: stats.interns, icon: 'book' }].map((stat, idx) => (
+          <TouchableOpacity
+            key={String(idx)}
+            activeOpacity={0.9}
+            className="mb-3 w-[48%] overflow-hidden rounded-2xl border border-orange-100"
+            style={{ shadowColor: '#f97316', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.12, shadowRadius: 10, elevation: 4 }}
+          >
+            <LinearGradient colors={["#ffffff", "#fff7ed"]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} className="px-4 py-4">
+              <View className="flex-row items-center mb-3">
+                <View className="h-10 w-10 items-center justify-center rounded-xl bg-black">
+                  <Ionicons name={stat.icon as any} size={20} color="#f97316" />
+                </View>
+                <View className="ml-2 flex-1">
+                  <Text className="text-[10px] font-bold uppercase tracking-[0.5px] text-gray-500">{stat.label}</Text>
+                </View>
+              </View>
+              <View className="mt-1 flex-col">
+                <Text className="text-[22px] font-black text-black">{stat.value}</Text>
+                <Text className="text-[10px] font-bold mt-0.5 text-gray-400">All Time</Text>
+              </View>
+            </LinearGradient>
+          </TouchableOpacity>
+        ))}
+      </View>
+
+      <Text className="mb-3 mt-6 text-lg font-black text-slate-900">Member Directory</Text>
+
+      <View className="mb-4 rounded-2xl border border-slate-200 bg-white p-3 shadow-sm">
+        <TextInput
+          placeholder="Search by name, ID, email, phone..."
+          placeholderTextColor="#94a3b8"
+          value={search}
+          onChangeText={setSearch}
+          className="h-11 rounded-xl border border-slate-200 bg-slate-50 px-3 text-sm font-medium text-slate-800"
+        />
+
+        <View className="mt-3 flex-row flex-wrap gap-2">
+          {["All", "Trainee", "Intern"].map((option) => (
+            <Pressable
+              key={option}
+              onPress={() => setType(option)}
+              className={`rounded-full border px-3 py-1.5 ${type === option ? 'border-orange-500 bg-orange-50' : 'border-slate-200 bg-white'}`}
             >
-              <LinearGradient colors={["#ffffff", "#fff7ed"]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} className="px-4 py-4">
-                <View className="flex-row items-center mb-3">
-                  <View className="h-10 w-10 items-center justify-center rounded-xl bg-black">
-                    <Ionicons name={stat.icon as any} size={20} color="#f97316" />
-                  </View>
-                  <View className="ml-2 flex-1">
-                    <Text className="text-[10px] font-bold uppercase tracking-[0.5px] text-gray-500">{stat.label}</Text>
-                  </View>
-                </View>
-                <View className="mt-1 flex-col">
-                  <Text className="text-[22px] font-black text-black">{stat.value}</Text>
-                  <Text className={`text-[10px] font-bold mt-0.5 text-gray-400`}>{"All Time"}</Text>
-                </View>
-              </LinearGradient>
-            </TouchableOpacity>
+              <Text className={`text-[11px] font-bold ${type === option ? 'text-orange-600' : 'text-slate-500'}`}>{option}</Text>
+            </Pressable>
           ))}
         </View>
 
-        {/* Search and filters (like ExpensesTab) */}
-        <Text className="mb-3 mt-6 text-lg font-black text-slate-900">Member Directory</Text>
+        <View className="mt-3 flex-row flex-wrap gap-2">
+          {['All', 'Active', 'Completed', 'On Leave', 'Inactive'].map((option) => (
+            <Pressable
+              key={option}
+              onPress={() => setStatus(option)}
+              className={`rounded-full border px-3 py-1.5 ${status === option ? 'border-orange-500 bg-orange-50' : 'border-slate-200 bg-white'}`}
+            >
+              <Text className={`text-[11px] font-bold ${status === option ? 'text-orange-600' : 'text-slate-500'}`}>{option}</Text>
+            </Pressable>
+          ))}
+        </View>
+      </View>
 
-        {/* Members list */}
-        {loading ? (
-          <View className="items-center py-12"><ActivityIndicator color="#f97316" /></View>
-        ) : members.length === 0 ? (
-          <View className="items-center justify-center p-6 py-10">
-            <Ionicons name="people-outline" size={40} color="#cbd5e1" />
-            <Text className="text-slate-400 text-sm mt-3">No members found</Text>
-          </View>
-        ) : (
-          <View className="p-0">
-            {members.map((member, i) => (
-              <View key={member.uuid || i} className="p-4 mb-3 bg-white rounded-2xl shadow-sm flex-row items-center justify-between" style={{ shadowColor: "#cbd5e1", shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.1, shadowRadius: 4, elevation: 2 }}>
-                <View className="flex-row items-center flex-1 mr-3">
-                  <View className="w-12 h-12 rounded-full items-center justify-center bg-orange-50">
-                    <Text className="text-orange-600 font-black">{initials(nameOf(member))}</Text>
-                  </View>
-                  <View className="ml-3 flex-1">
-                    <Text className="font-bold text-slate-900">{nameOf(member)}</Text>
-                    <Text className="mt-1 text-xs text-slate-500">{member.person_id || member.personId || 'Trainee'} • {member.type || 'Trainee'}</Text>
-                    <Text className="mt-1 text-xs text-slate-400">{member.joining_date ? `Joined ${dateText(member.joining_date)}` : ''}</Text>
-                  </View>
+      {loading ? (
+        <View className="items-center py-12"><ActivityIndicator color="#f97316" /></View>
+      ) : filteredMembers.length === 0 ? (
+        <View className="items-center justify-center p-6 py-10">
+          <Ionicons name="people-outline" size={40} color="#cbd5e1" />
+          <Text className="text-slate-400 text-sm mt-3">No members found</Text>
+        </View>
+      ) : (
+        <View className="p-0">
+          {filteredMembers.map((member, i) => (
+            <View key={member.uuid || i} className="p-4 mb-3 bg-white rounded-2xl shadow-sm flex-row items-center justify-between" style={{ shadowColor: "#cbd5e1", shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.1, shadowRadius: 4, elevation: 2 }}>
+              <View className="flex-row items-center flex-1 mr-3">
+                <View className="w-12 h-12 rounded-full items-center justify-center bg-orange-50">
+                  <Text className="text-orange-600 font-black">{initials(nameOf(member))}</Text>
                 </View>
-                <View className="items-end">
-                  <Text className={`text-sm font-bold ${member.status === 'Active' ? 'text-emerald-600' : 'text-slate-500'}`}>{member.status || 'Active'}</Text>
-                  <Pressable onPress={() => { setAssignmentMember(member); setAssignmentVisible(true); }} className={`mt-3 items-center rounded-full border px-3 py-1 ${hasActiveAssignment(member) ? 'border-slate-300 bg-slate-100' : 'border-orange-200 bg-orange-50'}`}>
-                    <Text className={`text-xs font-bold ${hasActiveAssignment(member) ? 'text-slate-600' : 'text-orange-600'}`}>{hasActiveAssignment(member) ? 'Reassign' : 'Assign'}</Text>
-                  </Pressable>
+                <View className="ml-3 flex-1">
+                  <Text className="font-bold text-slate-900">{nameOf(member)}</Text>
+                  <Text className="mt-1 text-xs text-slate-500">{member.person_id || member.personId || 'Trainee'} • {member.type || 'Trainee'}</Text>
+                  <Text className="mt-1 text-xs text-slate-400">{member.joining_date ? `Joined ${dateText(member.joining_date)}` : ''}</Text>
                 </View>
               </View>
-            ))}
-          </View>
-        )}
-      </>
-    );
-  };
+              <View className="items-end">
+                <Text className={`text-sm font-bold ${member.status === 'Active' ? 'text-emerald-600' : 'text-slate-500'}`}>{member.status || 'Active'}</Text>
+                <Pressable onPress={() => { setAssignmentMember(member); setAssignmentVisible(true); }} className={`mt-3 items-center rounded-full border px-3 py-1 ${hasActiveAssignment(member) ? 'border-slate-300 bg-slate-100' : 'border-orange-200 bg-orange-50'}`}>
+                  <Text className={`text-xs font-bold ${hasActiveAssignment(member) ? 'text-slate-600' : 'text-orange-600'}`}>{hasActiveAssignment(member) ? 'Reassign' : 'Assign'}</Text>
+                </Pressable>
+              </View>
+            </View>
+          ))}
+        </View>
+      )}
+    </>
+  );
   const renderAttendance = () => {
     const filteredAttendance = attendance.filter(row => {
       if (!search) return true;
