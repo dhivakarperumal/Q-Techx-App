@@ -1,12 +1,12 @@
 import { Ionicons } from "@expo/vector-icons";
 import { useCallback, useEffect, useState } from "react";
 import {
-    ActivityIndicator,
-    Pressable,
-    RefreshControl,
-    ScrollView,
-    Text,
-    View,
+  ActivityIndicator,
+  Pressable,
+  RefreshControl,
+  ScrollView,
+  Text,
+  View,
 } from "react-native";
 import api from "../../api";
 import { useAuth } from "../../auth/AuthContext";
@@ -201,18 +201,24 @@ export default function EmployeeScreen() {
           </View>
         ) : (
           <>
-            <View className="rounded-3xl border border-orange-200 bg-orange-50 p-5">
+            <LinearGradient
+              colors={["#ea580c", "#171717"]}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+              className="mb-5 overflow-hidden rounded-[28px] border border-white/10 p-5"
+            >
+              {/* Header */}
               <View className="flex-row items-start justify-between">
-                <View className="flex-1">
-                  <Text className="text-sm font-semibold text-orange-600">
+                <View className="flex-1 pr-4">
+                  <Text className="text-xs font-bold uppercase tracking-[2px] text-orange-200">
                     {new Date().toLocaleDateString(undefined, {
                       weekday: "long",
-                      year: "numeric",
-                      month: "long",
+                      month: "short",
                       day: "numeric",
                     })}
                   </Text>
-                  <Text className="mt-2 text-3xl font-black text-slate-950">
+
+                  <Text className="mt-2 text-2xl font-black text-white">
                     Good{" "}
                     {new Date().getHours() < 12
                       ? "Morning"
@@ -221,47 +227,90 @@ export default function EmployeeScreen() {
                         : "Evening"}
                     , {displayName}!
                   </Text>
-                  <Text className="mt-2 text-sm text-slate-600">
-                    Here&apos;s your work summary for today.
+
+                  <Text className="mt-1 text-sm text-gray-300">
+                    Here's your work summary for today.
                   </Text>
                 </View>
+
+                {/* Refresh */}
                 <Pressable
                   onPress={() => fetchDashboard(true)}
                   accessibilityLabel="Refresh dashboard"
-                  className="rounded-xl bg-white p-3"
+                  className="h-11 w-11 items-center justify-center rounded-2xl bg-white/10"
                 >
-                  <Ionicons name="refresh-outline" size={20} color="#ea580c" />
+                  <Ionicons
+                    name="refresh-outline"
+                    size={21}
+                    color="#ffffff"
+                  />
                 </Pressable>
               </View>
-              <View className="mt-5 gap-3">
-                <View className="flex-row items-center rounded-xl border border-white bg-white/70 px-3 py-3">
-                  <Ionicons
-                    name="checkmark-circle-outline"
-                    size={18}
-                    color="#16a34a"
-                  />
-                  <Text className="ml-2 text-sm font-semibold text-slate-700">
-                    Check-in:{" "}
-                    <Text className="text-green-600">
-                      {attendance.checkIn || "Not yet"}
+
+              {/* Attendance */}
+              <View className="mt-5 flex-row gap-3">
+                <View className="flex-1 rounded-2xl border border-white/5 bg-white/10 p-3">
+                  <View className="mb-2 flex-row items-center">
+                    <View className="h-8 w-8 items-center justify-center rounded-xl bg-black/40">
+                      <Ionicons
+                        name="log-in-outline"
+                        size={17}
+                        color="#fb923c"
+                      />
+                    </View>
+
+                    <Text className="ml-2 text-[10px] font-bold uppercase text-orange-200">
+                      Check-in
                     </Text>
-                    <Text> · </Text>Check-out:{" "}
-                    <Text className="text-amber-600">
-                      {attendance.checkOut || "Not yet"}
-                    </Text>
+                  </View>
+
+                  <Text className="text-base font-black text-white">
+                    {attendance.checkIn || "Not yet"}
                   </Text>
                 </View>
-                <View className="flex-row items-center rounded-xl border border-white bg-white/70 px-3 py-3">
-                  <Ionicons name="calendar-outline" size={18} color="#2563eb" />
-                  <Text className="ml-2 text-sm font-semibold text-slate-700">
-                    Leave Balance:{" "}
-                    <Text className="text-blue-600">
-                      {dashboard?.leaveBalance ?? 0} days left
+
+                <View className="flex-1 rounded-2xl border border-white/5 bg-white/10 p-3">
+                  <View className="mb-2 flex-row items-center">
+                    <View className="h-8 w-8 items-center justify-center rounded-xl bg-black/40">
+                      <Ionicons
+                        name="log-out-outline"
+                        size={17}
+                        color="#fb923c"
+                      />
+                    </View>
+
+                    <Text className="ml-2 text-[10px] font-bold uppercase text-orange-200">
+                      Check-out
                     </Text>
+                  </View>
+
+                  <Text className="text-base font-black text-white">
+                    {attendance.checkOut || "Not yet"}
                   </Text>
                 </View>
               </View>
-            </View>
+
+              {/* Leave Balance */}
+              <View className="mt-3 flex-row items-center rounded-2xl border border-white/5 bg-white/10 p-3">
+                <View className="h-9 w-9 items-center justify-center rounded-xl bg-black/40">
+                  <Ionicons
+                    name="calendar-outline"
+                    size={18}
+                    color="#fb923c"
+                  />
+                </View>
+
+                <View className="ml-3 flex-1">
+                  <Text className="text-[10px] font-bold uppercase text-orange-200">
+                    Leave Balance
+                  </Text>
+
+                  <Text className="mt-0.5 text-sm font-black text-white">
+                    {dashboard?.leaveBalance ?? 0} days left
+                  </Text>
+                </View>
+              </View>
+            </LinearGradient>
             <View className="mt-5 flex-row gap-3">
               <Metric
                 label="Attendance This Month"
