@@ -12,6 +12,7 @@ import api from "../../api";
 import { useAuth } from "../../auth/AuthContext";
 import { BottomHome } from "../../components/BottomHome";
 import { TopHeader } from "../../components/TopHeader";
+import { LinearGradient } from "expo-linear-gradient";
 
 type Dashboard = {
   employee?: { first_name?: string; employee_code?: string };
@@ -70,15 +71,49 @@ function Metric({
   background: string;
 }) {
   return (
-    <View className="flex-1 rounded-2xl border border-slate-200 bg-white p-4">
-      <View
-        className="h-10 w-10 items-center justify-center rounded-xl"
-        style={{ backgroundColor: background }}
+    <View
+      className="mb-3 w-[48%] overflow-hidden rounded-2xl border border-orange-100 bg-white"
+      style={{
+        shadowColor: "#f97316",
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.12,
+        shadowRadius: 10,
+        elevation: 4,
+      }}
+    >
+      <LinearGradient
+        colors={["#ffffff", "#fff7ed"]}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+        className="px-4 py-4"
       >
-        <Ionicons name={icon} size={20} color={color} />
-      </View>
-      <Text className="mt-3 text-xs font-semibold text-slate-500">{label}</Text>
-      <Text className="mt-1 text-2xl font-black text-slate-900">{value}</Text>
+        {/* Icon + Label */}
+        <View className="mb-3 flex-row items-center">
+          <View className="h-10 w-10 items-center justify-center rounded-xl bg-black">
+            <Ionicons
+              name={icon}
+              size={20}
+              color="#f97316"
+            />
+          </View>
+
+          <View className="ml-2 flex-1">
+            <Text
+              className="text-[10px] font-bold uppercase tracking-[0.5px] text-gray-500"
+              numberOfLines={2}
+            >
+              {label}
+            </Text>
+          </View>
+        </View>
+
+        {/* Value */}
+        <View className="flex-row items-baseline justify-between">
+          <Text className="text-[22px] font-black text-black">
+            {value}
+          </Text>
+        </View>
+      </LinearGradient>
     </View>
   );
 }
