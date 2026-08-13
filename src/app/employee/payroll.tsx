@@ -1,6 +1,8 @@
 import { Ionicons } from "@expo/vector-icons";
+import { useRouter } from "expo-router";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { ActivityIndicator, Modal, Pressable, RefreshControl, ScrollView, Text, View } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import api from "../../api";
 import { useAuth } from "../../auth/AuthContext";
 import { BottomHome } from "../../components/BottomHome";
@@ -72,6 +74,7 @@ function PayslipModal({ record, onClose }: { record: SalaryRecord | null; onClos
 }
 
 export default function PayrollScreen() {
+  const router = useRouter();
   const { user } = useAuth();
   const [history, setHistory] = useState<SalaryRecord[]>([]);
   const [loading, setLoading] = useState(true);
@@ -107,8 +110,26 @@ export default function PayrollScreen() {
   const totalDeductions = latest ? numberValue(latest.leave_deduction) + numberValue(latest.additional_deduction) : 0;
   const employeeName = latest ? [latest.first_name, latest.last_name].filter(Boolean).join(" ") : "";
 
-  return <View className="flex-1 bg-slate-50">
-    <TopHeader title="PayRole" subtitle="Salary & payroll details" />
+  return <SafeAreaView className="flex-1 bg-slate-50" edges={["top"]}>
+    <View style={{
+      flexDirection: "row", alignItems: "center",
+      paddingHorizontal: 16, paddingVertical: 14,
+      backgroundColor: "#fff",
+      borderBottomWidth: 1, borderBottomColor: "#f1f5f9",
+    }}>
+      <Pressable
+        onPress={() => router.back()}
+        style={{
+          width: 38, height: 38, borderRadius: 12,
+          backgroundColor: "#f8fafc",
+          alignItems: "center", justifyContent: "center",
+          marginRight: 12,
+        }}
+      >
+        <Ionicons name="arrow-back" size={20} color="#0f172a" />
+      </Pressable>
+      <Text style={{ fontSize: 18, fontWeight: "800", color: "#0f172a" }}>Payroll</Text>
+    </View>
     <ScrollView className="flex-1" contentContainerStyle={{ padding: 20, paddingBottom: 32 }} refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => fetchHistory(true)} tintColor="#2563eb" />}>
       <Text className="text-3xl font-black text-slate-950">PayRole</Text>
       <Text className="mt-2 text-base text-slate-500">Your salary slips and payment breakdown.</Text>
@@ -127,7 +148,6 @@ export default function PayrollScreen() {
         <View className="gap-3">{sortedHistory.map((record) => <Pressable key={record.id} onPress={() => setSelectedPayslip(record)} className="flex-row items-center rounded-2xl border border-slate-200 bg-white p-4 active:bg-emerald-50"><View className="h-11 w-11 items-center justify-center rounded-xl bg-emerald-50"><Ionicons name="document-text-outline" size={22} color="#16a34a" /></View><View className="ml-3 flex-1"><Text className="font-bold text-slate-900">{monthYear(record)}</Text><Text className="mt-1 text-xs text-slate-500">Basic {amount(record.basic_salary)} · Present {record.present_days ?? 0} days</Text><Text className="mt-1 text-xs font-bold text-emerald-600">View payslip</Text></View><View className="items-end"><Text className="font-black text-slate-900">{amount(record.total_salary)}</Text><Text className="mt-1 text-xs font-bold text-emerald-600">Paid</Text><Ionicons name="chevron-forward" size={16} color="#94a3b8" /></View></Pressable>)}</View>
       </>}
     </ScrollView>
-    <BottomHome />
     <PayslipModal record={selectedPayslip} onClose={() => setSelectedPayslip(null)} />
-  </View>;
+  </SafeAreaView>;
 }
