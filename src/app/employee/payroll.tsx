@@ -92,9 +92,9 @@ function PayslipModal({ record, onClose }: { record: SalaryRecord | null; onClos
 
   return <Modal visible animationType="slide" presentationStyle="pageSheet" onRequestClose={onClose}>
     <View className="flex-1 bg-slate-50">
-      <View className="flex-row items-center justify-between border-b border-slate-200 bg-white px-5 py-4">
-        <View><Text className="text-lg font-black text-slate-900">Payslip</Text><Text className="mt-0.5 text-xs text-slate-500">{monthYear(record)}</Text></View>
-        <Pressable onPress={onClose} accessibilityLabel="Close payslip" className="h-10 w-10 items-center justify-center rounded-xl bg-slate-100"><Ionicons name="close" size={22} color="#475569" /></Pressable>
+      <View className="flex-row items-center justify-between border-b border-slate-800 bg-black px-5 py-4">
+        <View><Text className="text-lg font-black text-orange-500">Payslip</Text><Text className="mt-0.5 text-xs text-orange-200">{monthYear(record)}</Text></View>
+        <Pressable onPress={onClose} accessibilityLabel="Close payslip" className="h-10 w-10 items-center justify-center rounded-xl bg-slate-800"><Ionicons name="close" size={22} color="#f97316" /></Pressable>
       </View>
       <ScrollView contentContainerStyle={{ padding: 20, paddingBottom: 32 }}>
         <View

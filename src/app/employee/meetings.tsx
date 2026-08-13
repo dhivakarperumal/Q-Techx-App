@@ -192,31 +192,16 @@ export default function EmployeeMeetingsScreen() {
         contentContainerStyle={{ padding: 20, paddingBottom: 32 }}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => fetchMeetings(true)} />}
       >
-        <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
-          <View>
-            <Text style={{ fontSize: 28, fontWeight: "800", color: "#0f172a" }}>Meetings</Text>
-            <Text style={{ marginTop: 6, fontSize: 15, color: "#64748b" }}>
-              {loading ? "Loading your schedule..." : `${meetings.length} meeting${meetings.length === 1 ? "" : "s"}`}
-            </Text>
-          </View>
-          <Pressable
-            accessibilityLabel="Refresh meetings"
-            onPress={() => fetchMeetings(true)}
-            style={{ padding: 10, borderRadius: 12, backgroundColor: "#ecfeff" }}
-          >
-            <Ionicons name="refresh-outline" size={22} color="#0891b2" />
-          </Pressable>
-        </View>
 
         {loading && !refreshing ? (
           <View style={{ alignItems: "center", paddingVertical: 72 }}>
-            <ActivityIndicator size="large" color="#0891b2" />
+            <ActivityIndicator size="large" color="#f97316" />
           </View>
         ) : error ? (
           <View style={{ alignItems: "center", paddingVertical: 72 }}>
             <Ionicons name="cloud-offline-outline" size={42} color="#94a3b8" />
             <Text style={{ marginTop: 12, color: "#64748b", textAlign: "center" }}>{error}</Text>
-            <Pressable onPress={() => fetchMeetings()} style={{ marginTop: 16, borderRadius: 10, backgroundColor: "#0891b2", paddingHorizontal: 16, paddingVertical: 10 }}>
+            <Pressable onPress={() => fetchMeetings()} style={{ marginTop: 16, borderRadius: 10, backgroundColor: "#f97316", paddingHorizontal: 16, paddingVertical: 10 }}>
               <Text style={{ color: "#fff", fontWeight: "700" }}>Try again</Text>
             </Pressable>
           </View>
@@ -232,12 +217,12 @@ export default function EmployeeMeetingsScreen() {
               return (
                 <View key={meeting.id || meeting._id || `${meeting.title}-${index}`} style={{ borderRadius: 16, borderWidth: 1, borderColor: "#e2e8f0", backgroundColor: "#fff", padding: 16 }}>
                   <View style={{ flexDirection: "row", alignItems: "flex-start" }}>
-                    <View style={{ width: 44, height: 44, borderRadius: 12, backgroundColor: "#ecfeff", alignItems: "center", justifyContent: "center" }}>
-                      <Ionicons name="videocam-outline" size={22} color="#0891b2" />
+                    <View style={{ width: 44, height: 44, borderRadius: 12, backgroundColor: "#fff7ed", alignItems: "center", justifyContent: "center" }}>
+                      <Ionicons name="videocam-outline" size={22} color="#f97316" />
                     </View>
                     <View style={{ flex: 1, marginLeft: 12 }}>
                       <Text style={{ fontSize: 16, fontWeight: "800", color: "#0f172a" }}>{meeting.planTitle || meeting.title || "Untitled meeting"}</Text>
-                      <Text style={{ marginTop: 4, fontSize: 12, color: "#0891b2", fontWeight: "700" }}>{meeting.eventType || meeting.category || "Meeting"}</Text>
+                      <Text style={{ marginTop: 4, fontSize: 12, color: "#f97316", fontWeight: "700" }}>{meeting.eventType || meeting.category || "Meeting"}</Text>
                     </View>
                   </View>
                   <View style={{ marginTop: 16, gap: 8 }}>
@@ -247,9 +232,22 @@ export default function EmployeeMeetingsScreen() {
                   </View>
                   {meeting.description ? <Text style={{ marginTop: 12, color: "#64748b" }}>{meeting.description}</Text> : null}
                   {link ? (
-                    <Pressable onPress={() => Linking.openURL(link)} style={{ marginTop: 16, alignItems: "center", borderRadius: 10, backgroundColor: "#0891b2", paddingVertical: 11 }}>
-                      <Text style={{ color: "#fff", fontWeight: "800" }}>Join meeting</Text>
-                    </Pressable>
+                    (() => {
+                      const meetingDate = new Date(eventDate(meeting));
+                      const today = new Date();
+                      const isPast = meetingDate.setHours(0, 0, 0, 0) < today.setHours(0, 0, 0, 0);
+                      return (
+                        <Pressable 
+                          onPress={() => { if (!isPast) Linking.openURL(link); }} 
+                          disabled={isPast}
+                          style={{ marginTop: 16, alignItems: "center", borderRadius: 10, backgroundColor: isPast ? "#cbd5e1" : "#f97316", paddingVertical: 11, opacity: isPast ? 0.7 : 1 }}
+                        >
+                          <Text style={{ color: isPast ? "#64748b" : "#fff", fontWeight: "800" }}>
+                            {isPast ? "Meeting Ended" : "Join meeting"}
+                          </Text>
+                        </Pressable>
+                      );
+                    })()
                   ) : (
                     <Text style={{ marginTop: 16, color: "#94a3b8", fontSize: 12 }}>No meeting link provided</Text>
                   )}
