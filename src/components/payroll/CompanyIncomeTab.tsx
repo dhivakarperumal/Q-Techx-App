@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from "react";
-import { View, Text, ScrollView, TouchableOpacity, TextInput, Modal, ActivityIndicator, Alert, RefreshControl } from "react-native";
+import { View, Text, ScrollView, TouchableOpacity, TextInput, Modal, ActivityIndicator, Alert, RefreshControl, Pressable } from "react-native";
 import { X, History, Edit, Trash2, Briefcase, Eye } from "lucide-react-native";
+import { Ionicons } from "@expo/vector-icons";
+import { LinearGradient } from "expo-linear-gradient";
 import api from "../../api";
 import { FAB } from "../FAB";
 
@@ -13,6 +15,15 @@ export default function CompanyIncomeTab() {
   const [showForm, setShowForm] = useState(false);
   const [editId, setEditId] = useState(null);
   const [viewRecord, setViewRecord] = useState(null);
+
+  const [searchQuery, setSearchQuery] = useState("");
+  const [typeFilter, setTypeFilter] = useState("");
+  const [modeFilter, setModeFilter] = useState("");
+  const [monthFilter, setMonthFilter] = useState("");
+  
+  const [typeDropdownOpen, setTypeDropdownOpen] = useState(false);
+  const [modeDropdownOpen, setModeDropdownOpen] = useState(false);
+  const [monthDropdownOpen, setMonthDropdownOpen] = useState(false);
   
   const [nextInvoiceNumber, setNextInvoiceNumber] = useState("");
   
@@ -168,16 +179,208 @@ export default function CompanyIncomeTab() {
     ]);
   };
 
+  const filteredHistory = history.filter(record => {
+    const matchesSearch = !searchQuery || (
+      record.intern_name?.toLowerCase().includes(searchQuery.toLowerCase()) || 
+      record.income_reason?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      record.invoice_number?.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+    const dateStr = record.date_of_payment ? new Date(record.date_of_payment).toISOString().substring(5,7) : "";
+    const matchesMonth = !monthFilter || dateStr === monthFilter;
+    const matchesType = !typeFilter || record.income_type === typeFilter;
+    const matchesMode = !modeFilter || record.payment_type === modeFilter;
+    
+    return matchesSearch && matchesMonth && matchesType && matchesMode;
+  });
+
+  const totalInterns = interns.length;
+  const totalReceived = filteredHistory.reduce((acc, curr) => acc + parseFloat(curr.amount || 0), 0);
+  const receivedCount = filteredHistory.length;
+  const avgReceived = receivedCount > 0 ? totalReceived / receivedCount : 0;
+
+  const dynamicStats = [
+    {
+      label: "Total Interns",
+      value: String(totalInterns),
+      sub: "Active Interns",
+      icon: "people",
+      subColor: "text-blue-500",
+    },
+    {
+      label: "Total Income",
+      value: `₹ ${totalReceived.toFixed(2)}`,
+      sub: monthFilter ? `Month: ${monthFilter}` : "All Time",
+      icon: "cash",
+      subColor: "text-green-500",
+    },
+    {
+      label: "Income Records",
+      value: String(receivedCount),
+      sub: "Processed",
+      icon: "document-text",
+      subColor: "text-orange-500",
+    },
+    {
+      label: "Average Income",
+      value: `₹ ${avgReceived.toFixed(2)}`,
+      sub: "Per Record",
+      icon: "pie-chart",
+      subColor: "text-violet-500",
+    },
+  ];
+
+  const MONTHS = ["01", "02", "03", "04", "05", "06", "07", "08", "09", "10", "11", "12"];
+  const TYPES = ["Internship Payment", "Other"];
+  const MODES = ["Bank Transfer", "UPI", "Cash", "Cheque"];
+
   return (
     <View className="flex-1">
       <ScrollView className="flex-1 bg-[#F9FAFB] p-4" refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#f97316" />}>
-        {/* Header */}
-      <View className="flex-row justify-between items-center mb-6 mt-2">
-        <View>
-          <Text className="text-xl font-bold text-slate-900">Company Income</Text>
-          <Text className="text-sm text-slate-500">Record and track company incomes</Text>
+        {/* ── STATS SECTION ── */}
+        <View className="mb-6 flex-row flex-wrap justify-between pt-2">
+          {dynamicStats.map((stat, idx) => (
+            <View
+              key={idx}
+              className="mb-3 w-[48%] overflow-hidden rounded-2xl bg-white border border-orange-100"
+              style={{
+                shadowColor: "#f97316",
+                shadowOffset: { width: 0, height: 4 },
+                shadowOpacity: 0.12,
+                shadowRadius: 10,
+                elevation: 4,
+              }}
+            >
+              <LinearGradient
+                colors={["#ffffff", "#fff7ed"]}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+                className="px-4 py-4"
+              >
+                <View className="flex-row items-center mb-3">
+                  <View className="h-10 w-10 items-center justify-center rounded-xl bg-black">
+                    <Ionicons name={stat.icon as any} size={20} color="#f97316" />
+                  </View>
+                  <View className="ml-2 flex-1">
+                    <Text className="text-[10px] font-bold uppercase tracking-[0.5px] text-gray-500" numberOfLines={2}>
+                      {stat.label}
+                    </Text>
+                  </View>
+                </View>
+                <View className="flex-row items-baseline justify-between">
+                  <Text className="text-[22px] font-black text-black" numberOfLines={1} adjustsFontSizeToFit>
+                    {stat.value}
+                  </Text>
+                  <Text className={`text-[10px] font-bold ${stat.subColor || "text-gray-400"}`}>
+                    {stat.sub}
+                  </Text>
+                </View>
+              </LinearGradient>
+            </View>
+          ))}
         </View>
-      </View>
+
+        {/* ── SEARCH & FILTER ── */}
+        <View className="mb-6">
+          {/* Search */}
+          <View className="bg-white border border-slate-200 rounded-2xl flex-row items-center px-4 py-2 shadow-sm mb-3">
+            <Ionicons name="search" size={16} color="#94a3b8" />
+            <TextInput
+              placeholder="Search history..."
+              placeholderTextColor="#94a3b8"
+              value={searchQuery}
+              onChangeText={setSearchQuery}
+              className="flex-1 ml-2 text-sm font-medium text-slate-800 h-10"
+            />
+          </View>
+
+          {/* Dropdown Filters */}
+          <View className="flex-row gap-2 flex-wrap">
+            <TouchableOpacity
+              onPress={() => { setTypeDropdownOpen(true); setModeDropdownOpen(false); setMonthDropdownOpen(false); }}
+              className="h-11 flex-1 bg-white border border-slate-200 rounded-xl px-3 flex-row items-center justify-between min-w-[30%]"
+            >
+              <Text className="text-[11px] font-medium text-slate-700" numberOfLines={1}>
+                {typeFilter || "All Types"}
+              </Text>
+              <Ionicons name="chevron-down" size={12} color="#64748b" />
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              onPress={() => { setModeDropdownOpen(true); setTypeDropdownOpen(false); setMonthDropdownOpen(false); }}
+              className="h-11 flex-1 bg-white border border-slate-200 rounded-xl px-3 flex-row items-center justify-between min-w-[30%]"
+            >
+              <Text className="text-[11px] font-medium text-slate-700" numberOfLines={1}>
+                {modeFilter || "All Modes"}
+              </Text>
+              <Ionicons name="chevron-down" size={12} color="#64748b" />
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              onPress={() => { setMonthDropdownOpen(true); setTypeDropdownOpen(false); setModeDropdownOpen(false); }}
+              className="h-11 flex-1 bg-white border border-slate-200 rounded-xl px-3 flex-row items-center justify-between min-w-[30%]"
+            >
+              <Text className="text-[11px] font-medium text-slate-700" numberOfLines={1}>
+                {monthFilter ? `Month: ${monthFilter}` : "All Dates"}
+              </Text>
+              <Ionicons name="chevron-down" size={12} color="#64748b" />
+            </TouchableOpacity>
+          </View>
+        </View>
+
+        {/* Dropdown Modals */}
+        <Modal visible={typeDropdownOpen} transparent animationType="fade" onRequestClose={() => setTypeDropdownOpen(false)}>
+          <Pressable className="flex-1 bg-black/40 justify-center px-8" onPress={() => setTypeDropdownOpen(false)}>
+            <Pressable className="bg-white rounded-2xl overflow-hidden" onPress={(e) => e.stopPropagation()}>
+              <Text className="px-5 py-4 text-base font-bold text-slate-900 border-b border-slate-100">Select Income Type</Text>
+              <ScrollView style={{maxHeight: 400}}>
+                <TouchableOpacity onPress={() => { setTypeFilter(""); setTypeDropdownOpen(false); }} className="px-5 py-4 border-b border-slate-100">
+                  <Text className={`text-sm ${!typeFilter ? "font-bold text-orange-500" : "text-slate-700"}`}>All Types</Text>
+                </TouchableOpacity>
+                {TYPES.map((t) => (
+                  <TouchableOpacity key={t} onPress={() => { setTypeFilter(t); setTypeDropdownOpen(false); }} className="px-5 py-4 border-b border-slate-100">
+                    <Text className={`text-sm ${typeFilter === t ? "font-bold text-orange-500" : "text-slate-700"}`}>{t}</Text>
+                  </TouchableOpacity>
+                ))}
+              </ScrollView>
+            </Pressable>
+          </Pressable>
+        </Modal>
+
+        <Modal visible={modeDropdownOpen} transparent animationType="fade" onRequestClose={() => setModeDropdownOpen(false)}>
+          <Pressable className="flex-1 bg-black/40 justify-center px-8" onPress={() => setModeDropdownOpen(false)}>
+            <Pressable className="bg-white rounded-2xl overflow-hidden" onPress={(e) => e.stopPropagation()}>
+              <Text className="px-5 py-4 text-base font-bold text-slate-900 border-b border-slate-100">Select Payment Mode</Text>
+              <ScrollView style={{maxHeight: 400}}>
+                <TouchableOpacity onPress={() => { setModeFilter(""); setModeDropdownOpen(false); }} className="px-5 py-4 border-b border-slate-100">
+                  <Text className={`text-sm ${!modeFilter ? "font-bold text-orange-500" : "text-slate-700"}`}>All Modes</Text>
+                </TouchableOpacity>
+                {MODES.map((m) => (
+                  <TouchableOpacity key={m} onPress={() => { setModeFilter(m); setModeDropdownOpen(false); }} className="px-5 py-4 border-b border-slate-100">
+                    <Text className={`text-sm ${modeFilter === m ? "font-bold text-orange-500" : "text-slate-700"}`}>{m}</Text>
+                  </TouchableOpacity>
+                ))}
+              </ScrollView>
+            </Pressable>
+          </Pressable>
+        </Modal>
+
+        <Modal visible={monthDropdownOpen} transparent animationType="fade" onRequestClose={() => setMonthDropdownOpen(false)}>
+          <Pressable className="flex-1 bg-black/40 justify-center px-8" onPress={() => setMonthDropdownOpen(false)}>
+            <Pressable className="bg-white rounded-2xl overflow-hidden" onPress={(e) => e.stopPropagation()}>
+              <Text className="px-5 py-4 text-base font-bold text-slate-900 border-b border-slate-100">Select Month</Text>
+              <ScrollView style={{maxHeight: 400}}>
+                <TouchableOpacity onPress={() => { setMonthFilter(""); setMonthDropdownOpen(false); }} className="px-5 py-4 border-b border-slate-100">
+                  <Text className={`text-sm ${!monthFilter ? "font-bold text-orange-500" : "text-slate-700"}`}>All Dates</Text>
+                </TouchableOpacity>
+                {MONTHS.map((m) => (
+                  <TouchableOpacity key={m} onPress={() => { setMonthFilter(m); setMonthDropdownOpen(false); }} className="px-5 py-4 border-b border-slate-100">
+                    <Text className={`text-sm ${monthFilter === m ? "font-bold text-orange-500" : "text-slate-700"}`}>{m}</Text>
+                  </TouchableOpacity>
+                ))}
+              </ScrollView>
+            </Pressable>
+          </Pressable>
+        </Modal>
 
       {/* History List */}
       <View className="bg-white border border-slate-100 rounded-2xl overflow-hidden shadow-sm mb-10">
@@ -190,13 +393,13 @@ export default function CompanyIncomeTab() {
           <View className="items-center justify-center py-10">
             <ActivityIndicator size="large" color="#f97316" />
           </View>
-        ) : history.length === 0 ? (
+        ) : filteredHistory.length === 0 ? (
           <View className="items-center justify-center py-10">
             <Text className="text-slate-400">No income records found</Text>
           </View>
         ) : (
           <View>
-            {history.map((record, index) => (
+            {filteredHistory.map((record, index) => (
               <View key={record.income_id || index} className="p-4 border-b border-slate-100 flex-row items-center justify-between">
                 <View className="flex-1 mr-4">
                   <View className="flex-row items-center gap-2 mb-1">
