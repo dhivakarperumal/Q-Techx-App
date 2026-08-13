@@ -387,28 +387,27 @@ export default function CompanyIncomeTab() {
           </Pressable>
         </Modal>
 
-      {/* History List */}
-      <View className="bg-white border border-slate-100 rounded-2xl overflow-hidden shadow-sm mb-10">
-        <View className="p-4 border-b border-slate-100 bg-slate-50 flex-row items-center gap-2">
-          <History size={18} color="#64748b" />
+      <View className="mb-10">
+        <View className="flex-row items-center gap-2 mb-4 px-1">
+          <History size={18} color="#f97316" />
           <Text className="font-semibold text-slate-700">Income History</Text>
         </View>
         
         {historyLoading ? (
-          <View className="items-center justify-center py-10">
+          <View className="items-center justify-center py-10 bg-white rounded-2xl shadow-sm" style={{ shadowColor: "#cbd5e1", shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.1, shadowRadius: 4, elevation: 2 }}>
             <ActivityIndicator size="large" color="#f97316" />
           </View>
         ) : filteredHistory.length === 0 ? (
-          <View className="items-center justify-center py-10">
+          <View className="items-center justify-center py-10 bg-white rounded-2xl shadow-sm" style={{ shadowColor: "#cbd5e1", shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.1, shadowRadius: 4, elevation: 2 }}>
             <Text className="text-slate-400">No income records found</Text>
           </View>
         ) : (
           <View>
             {filteredHistory.map((record, index) => (
-              <View key={record.income_id || index} className="flex-row items-center justify-between p-4 mb-3 bg-white rounded-2xl shadow-sm" style={{ shadowColor: "#cbd5e1", shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.1, shadowRadius: 4, elevation: 2 }}>
+              <View key={record.income_id || index} className="flex-row items-center justify-between p-4 mb-3 bg-white rounded-2xl shadow-sm" style={{ shadowColor: "#f97316", shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.08, shadowRadius: 8, elevation: 3 }}>
                 <View className="flex-1 mr-3 flex-row items-center gap-3">
-                  <View className="w-10 h-10 rounded-full items-center justify-center bg-blue-50">
-                    <Ionicons name="cash" size={18} color="#3b82f6" />
+                  <View className="w-10 h-10 rounded-full items-center justify-center bg-orange-50">
+                    <Ionicons name="cash" size={18} color="#f97316" />
                   </View>
                   <View className="flex-1">
                     <View className="flex-row items-center gap-2 mb-0.5">
@@ -424,16 +423,16 @@ export default function CompanyIncomeTab() {
                   </View>
                 </View>
                 <View className="items-end gap-2">
-                  <Text className="font-black text-emerald-600 text-base">₹{parseFloat(record.amount).toFixed(2)}</Text>
+                  <Text className="font-black text-orange-600 text-base">₹{parseFloat(record.amount).toFixed(2)}</Text>
                   <View className="flex-row gap-1">
                     <TouchableOpacity onPress={() => setViewRecord(record)} className="bg-slate-100 p-1.5 rounded-md">
                       <Eye size={12} color="#64748b" />
                     </TouchableOpacity>
-                    <TouchableOpacity onPress={() => handleEdit(record)} className="bg-blue-50 p-1.5 rounded-md">
-                      <Edit size={12} color="#3b82f6" />
+                    <TouchableOpacity onPress={() => handleEdit(record)} className="bg-orange-50 p-1.5 rounded-md">
+                      <Edit size={12} color="#f97316" />
                     </TouchableOpacity>
-                    <TouchableOpacity onPress={() => handleDelete(record.income_id)} className="bg-rose-50 p-1.5 rounded-md">
-                      <Trash2 size={12} color="#f43f5e" />
+                    <TouchableOpacity onPress={() => handleDelete(record.income_id)} className="bg-orange-50 p-1.5 rounded-md">
+                      <Trash2 size={12} color="#f97316" />
                     </TouchableOpacity>
                   </View>
                 </View>
