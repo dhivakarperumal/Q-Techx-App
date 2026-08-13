@@ -560,7 +560,7 @@ export default function EmployeeLeaveScreen() {
                   <Pressable
                     key={type}
                     onPress={() => updateForm("leave_type", type)}
-                    className={`mr-2 rounded-full border px-4 py-3 ${form.leave_type === type ? "border-[#2563eb] bg-[#2563eb]" : "border-slate-300 bg-white"}`}
+                    className={`mr-2 rounded-full border px-4 py-3 ${form.leave_type === type ? "border-[#f97316] bg-[#f97316]" : "border-slate-300 bg-white"}`}
                   >
                     <Text
                       className={`text-sm font-semibold ${form.leave_type === type ? "text-white" : "text-slate-700"}`}
@@ -613,10 +613,10 @@ export default function EmployeeLeaveScreen() {
                   <Pressable
                     key={type}
                     onPress={() => updateForm("day_type", type)}
-                    className={`flex-1 rounded-xl border px-3 py-3 ${form.day_type === type ? "border-[#2563eb] bg-[#dfe9ff]" : "border-slate-300 bg-white"}`}
+                    className={`flex-1 rounded-xl border px-3 py-3 ${form.day_type === type ? "border-[#f97316] bg-[#fff7ed]" : "border-slate-300 bg-white"}`}
                   >
                     <Text
-                      className={`text-center text-base font-semibold ${form.day_type === type ? "text-[#1d4ed8]" : "text-slate-600"}`}
+                      className={`text-center text-base font-semibold ${form.day_type === type ? "text-[#f97316]" : "text-slate-600"}`}
                     >
                       {type}
                     </Text>
@@ -630,9 +630,9 @@ export default function EmployeeLeaveScreen() {
                     <Pressable
                       key={type}
                       onPress={() => updateForm("half_day_type", type)}
-                      className={`flex-1 rounded-xl border px-3 py-3 ${form.half_day_type === type ? "border-[#2563eb] bg-[#dfe9ff]" : "border-slate-300 bg-white"}`}
+                      className={`flex-1 rounded-xl border px-3 py-3 ${form.half_day_type === type ? "border-[#f97316] bg-[#fff7ed]" : "border-slate-300 bg-white"}`}
                     >
-                      <Text className="text-center text-base font-semibold text-slate-600">
+                      <Text className={`text-center text-base font-semibold ${form.half_day_type === type ? "text-[#f97316]" : "text-slate-600"}`}>
                         {type}
                       </Text>
                     </Pressable>
@@ -657,12 +657,12 @@ export default function EmployeeLeaveScreen() {
               <Pressable
                 disabled={submitting}
                 onPress={submitLeave}
-                className="mx-5 mt-5 items-center rounded-xl bg-[#2563eb] py-4 active:bg-[#1d4ed8]"
+                className="mx-5 mt-5 items-center rounded-xl bg-[#f97316] py-4 active:bg-[#ea580c]"
               >
                 {submitting ? (
                   <ActivityIndicator color="#fff" />
                 ) : (
-                  <Text className="text-[20px] font-black text-white">
+                  <Text className="text-[16px] font-black text-white">
                     Submit request
                   </Text>
                 )}
