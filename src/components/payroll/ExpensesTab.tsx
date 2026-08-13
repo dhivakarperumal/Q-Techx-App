@@ -152,6 +152,16 @@ export default function ExpensesTab() {
 
     if (filters.datePreset === "today") {
       return Boolean(expenseDate && expenseDate >= startOfToday && expenseDate <= endOfToday);
+    } else if (filters.datePreset === "yesterday") {
+      const startOfYesterday = new Date(startOfToday);
+      startOfYesterday.setDate(startOfYesterday.getDate() - 1);
+      const endOfYesterday = new Date(endOfToday);
+      endOfYesterday.setDate(endOfYesterday.getDate() - 1);
+      return Boolean(expenseDate && expenseDate >= startOfYesterday && expenseDate <= endOfYesterday);
+    } else if (filters.datePreset === "this_week") {
+      const startOfWeek = new Date(startOfToday);
+      startOfWeek.setDate(startOfWeek.getDate() - startOfWeek.getDay());
+      return Boolean(expenseDate && expenseDate >= startOfWeek && expenseDate <= endOfToday);
     } else if (filters.datePreset === "this_month") {
       const monthStart = new Date(today.getFullYear(), today.getMonth(), 1);
       const monthEnd = new Date(today.getFullYear(), today.getMonth() + 1, 0, 23, 59, 59, 999);
@@ -255,11 +265,11 @@ export default function ExpensesTab() {
                   </Text>
                 </View>
               </View>
-              <View className="flex-row items-baseline justify-between">
+              <View className="mt-1 flex-col">
                 <Text className="text-[22px] font-black text-black">
                   {stat.value}
                 </Text>
-                <Text className={`text-[10px] font-bold ${stat.subColor || "text-gray-400"}`}>
+                <Text className={`text-[10px] font-bold mt-0.5 ${stat.subColor || "text-gray-400"}`}>
                   {stat.sub}
                 </Text>
               </View>
@@ -302,17 +312,17 @@ export default function ExpensesTab() {
         </View>
 
         {/* Date Pills */}
-        <View className="flex-row flex-wrap gap-2 mb-3">
-          {[ {l: "All Time", v: "all"}, {l: "Today", v: "today"}, {l: "This Month", v: "this_month"}].map(pre => (
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} className="flex-row gap-2 mb-3">
+          {[ {l: "All Time", v: "all"}, {l: "Today", v: "today"}, {l: "Yesterday", v: "yesterday"}, {l: "This Week", v: "this_week"}, {l: "This Month", v: "this_month"}].map(pre => (
             <TouchableOpacity
               key={pre.v}
               onPress={() => setFilters({...filters, datePreset: pre.v})}
-              className={`px-4 py-2 rounded-full border ${filters.datePreset === pre.v ? 'bg-orange-100 border-orange-200' : 'bg-white border-slate-200'}`}
+              className={`mr-2 px-4 py-2 rounded-full border ${filters.datePreset === pre.v ? 'bg-orange-100 border-orange-200' : 'bg-white border-slate-200'}`}
             >
               <Text className={`text-xs font-semibold ${filters.datePreset === pre.v ? 'text-orange-700' : 'text-slate-600'}`}>{pre.l}</Text>
             </TouchableOpacity>
           ))}
-        </View>
+        </ScrollView>
 
         {/* Dropdown Filters */}
         <View className="flex-row gap-3">
@@ -391,23 +401,30 @@ export default function ExpensesTab() {
             <Text className="text-slate-400 text-sm mt-3">No expenses matched</Text>
           </View>
         ) : (
-          <View className="p-2">
+          <View className="p-4 bg-slate-50">
             {filteredExpenses.map((exp, i) => {
               const isCredit = isCreditEntry(exp);
               return (
-                <View key={exp.expense_id || i} className="flex-row items-center justify-between p-3 border-b border-slate-100">
-                  <View className="flex-1 mr-3">
-                    <Text className="text-slate-900 font-semibold text-sm">{exp.expense_type}</Text>
-                    <Text className="text-slate-500 text-[10px] mt-0.5">Paid to: {exp.paid_to}</Text>
-                    <Text className="text-slate-500 text-[10px] mt-0.5">
-                      {new Date(exp.date_of_payment).toLocaleDateString()} • {exp.payment_type}
-                    </Text>
+                <View key={exp.expense_id || i} className="flex-row items-center justify-between p-4 mb-3 bg-white rounded-2xl shadow-sm" style={{ shadowColor: "#cbd5e1", shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.1, shadowRadius: 4, elevation: 2 }}>
+                  <View className="flex-1 mr-3 flex-row items-center gap-3">
+                    <View className={`w-10 h-10 rounded-full items-center justify-center ${isCredit ? 'bg-emerald-50' : 'bg-rose-50'}`}>
+                      <Ionicons name={isCredit ? 'arrow-down' : 'arrow-up'} size={18} color={isCredit ? '#10b981' : '#f43f5e'} />
+                    </View>
+                    <View className="flex-1">
+                      <Text className="text-slate-900 font-bold text-sm" numberOfLines={1}>{exp.expense_type}</Text>
+                      <Text className="text-slate-500 text-[11px] mt-0.5" numberOfLines={1}>{exp.paid_to ? `To: ${exp.paid_to}` : exp.description}</Text>
+                      <Text className="text-slate-400 text-[10px] mt-0.5">
+                        {new Date(exp.date_of_payment).toLocaleDateString()} • {exp.payment_type}
+                      </Text>
+                    </View>
                   </View>
-                  <View className="items-end">
-                    <Text className={`font-bold text-sm ${isCredit ? 'text-emerald-600' : 'text-rose-600'}`}>
-                      {isCredit ? '+' : '-'} ₹ {parseFloat(exp.amount).toFixed(2)}
+                  <View className="items-end ml-2">
+                    <Text className={`font-black text-base ${isCredit ? 'text-emerald-600' : 'text-rose-600'}`}>
+                      {isCredit ? '+' : '-'}₹{parseFloat(exp.amount).toFixed(2)}
                     </Text>
-                    <Text className="text-[9px] text-slate-400 mt-1">{isCredit ? 'Added' : 'Spent'}</Text>
+                    <Text className={`text-[9px] font-bold px-2 py-0.5 rounded-md mt-1 ${isCredit ? 'bg-emerald-50 text-emerald-600' : 'bg-rose-50 text-rose-600'}`}>
+                      {isCredit ? 'Added' : 'Spent'}
+                    </Text>
                   </View>
                 </View>
               );
