@@ -185,100 +185,100 @@ export default function AdminTraineeScreen() {
   useEffect(() => { if (tab === "Tasks" || tab === "Assign Task") loadTasks(); }, [tab, loadTasks]);
   const remove = (member: Member) => Alert.alert("Delete member", `Delete ${nameOf(member)}?`, [{ text: "Cancel", style: "cancel" }, { text: "Delete", style: "destructive", onPress: async () => { try { await api.delete(`/trainee-intern/${member.uuid}`); setSelected(null); loadMembers(true); } catch (error: any) { Alert.alert("Delete failed", error?.message || "Please try again."); } } }]);
   const stats = { total: members.length, active: members.filter((item) => item.status === "Active").length, trainees: members.filter((item) => item.type === "Trainee").length, interns: members.filter((item) => item.type === "Intern").length };
-    const renderMembers = () => (
-      <>
-        {/* Stats cards (like ExpensesTab) */}
-        <View className="mb-6 flex-row flex-wrap justify-between">
-          {[{ label: 'Total', value: stats.total, icon: 'people' }, { label: 'Active', value: stats.active, icon: 'checkmark' }, { label: 'Trainees', value: stats.trainees, icon: 'school' }, { label: 'Interns', value: stats.interns, icon: 'book' }].map((stat, idx) => (
-            <TouchableOpacity
-              key={String(idx)}
-              activeOpacity={0.9}
-              className="mb-3 w-[48%] overflow-hidden rounded-2xl border border-orange-100"
-              style={{
-                shadowColor: '#f97316',
-                shadowOffset: { width: 0, height: 4 },
-                shadowOpacity: 0.12,
-                shadowRadius: 10,
-                elevation: 4,
-              }}
-            >
-              <LinearGradient colors={["#ffffff", "#fff7ed"]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} className="px-4 py-4">
-                <View className="flex-row items-center mb-3">
-                  <View className="h-10 w-10 items-center justify-center rounded-xl bg-black">
-                    <Ionicons name={stat.icon as any} size={20} color="#f97316" />
-                  </View>
-                  <View className="ml-2 flex-1">
-                    <Text className="text-[10px] font-bold uppercase tracking-[0.5px] text-gray-500">{stat.label}</Text>
-                  </View>
+  const renderMembers = () => (
+    <>
+      {/* Stats cards (like ExpensesTab) */}
+      <View className="mb-6 flex-row flex-wrap justify-between">
+        {[{ label: 'Total', value: stats.total, icon: 'people' }, { label: 'Active', value: stats.active, icon: 'checkmark' }, { label: 'Trainees', value: stats.trainees, icon: 'school' }, { label: 'Interns', value: stats.interns, icon: 'book' }].map((stat, idx) => (
+          <TouchableOpacity
+            key={String(idx)}
+            activeOpacity={0.9}
+            className="mb-3 w-[48%] overflow-hidden rounded-2xl border border-orange-100"
+            style={{
+              shadowColor: '#f97316',
+              shadowOffset: { width: 0, height: 4 },
+              shadowOpacity: 0.12,
+              shadowRadius: 10,
+              elevation: 4,
+            }}
+          >
+            <LinearGradient colors={["#ffffff", "#fff7ed"]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} className="px-4 py-4">
+              <View className="flex-row items-center mb-3">
+                <View className="h-10 w-10 items-center justify-center rounded-xl bg-black">
+                  <Ionicons name={stat.icon as any} size={20} color="#f97316" />
                 </View>
-                <View className="mt-1 flex-col">
-                  <Text className="text-[22px] font-black text-black">{stat.value}</Text>
-                  <Text className={`text-[10px] font-bold mt-0.5 text-gray-400`}>{"All Time"}</Text>
-                </View>
-              </LinearGradient>
-            </TouchableOpacity>
-          ))}
-        </View>
-
-        {/* Search and filters (like ExpensesTab) */}
-        <Text className="mb-3 mt-6 text-lg font-black text-slate-900">Member Directory</Text>
-
-        {/* Members list */}
-        {loading ? (
-          <View className="items-center py-12"><ActivityIndicator color="#f97316" /></View>
-        ) : members.length === 0 ? (
-          <View className="items-center justify-center p-6 py-10">
-            <Ionicons name="people-outline" size={40} color="#cbd5e1" />
-            <Text className="text-slate-400 text-sm mt-3">No members found</Text>
-          </View>
-        ) : (
-          <View className="p-0">
-            {members.map((member, i) => (
-              <View key={member.uuid || i} className="p-4 mb-3 bg-white rounded-2xl shadow-sm flex-row items-center justify-between" style={{ shadowColor: "#cbd5e1", shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.1, shadowRadius: 4, elevation: 2 }}>
-                <View className="flex-row items-center flex-1 mr-3">
-                  <View className="w-12 h-12 rounded-full items-center justify-center bg-orange-50">
-                    <Text className="text-orange-600 font-black">{initials(nameOf(member))}</Text>
-                  </View>
-                  <View className="ml-3 flex-1">
-                    <Text className="font-bold text-slate-900">{nameOf(member)}</Text>
-                    <Text className="mt-1 text-xs text-slate-500">{member.person_id || member.personId || 'Trainee'} • {member.type || 'Trainee'}</Text>
-                    <Text className="mt-1 text-xs text-slate-400">{member.joining_date ? `Joined ${dateText(member.joining_date)}` : ''}</Text>
-                  </View>
-                </View>
-                <View className="items-end">
-                  <Text className={`text-sm font-bold ${member.status === 'Active' ? 'text-emerald-600' : 'text-slate-500'}`}>{member.status || 'Active'}</Text>
-                  <Pressable onPress={() => { setAssignmentMember(member); setAssignmentVisible(true); }} className="mt-3 items-center rounded-full border border-orange-200 px-3 py-1">
-                    <Text className="text-xs font-bold text-orange-600">{member.assigned_employee_id ? 'Reassign' : 'Assign'}</Text>
-                  </Pressable>
+                <View className="ml-2 flex-1">
+                  <Text className="text-[10px] font-bold uppercase tracking-[0.5px] text-gray-500">{stat.label}</Text>
                 </View>
               </View>
-            ))}
-          </View>
-        )}
-      </>
-    );
+              <View className="mt-1 flex-col">
+                <Text className="text-[22px] font-black text-black">{stat.value}</Text>
+                <Text className={`text-[10px] font-bold mt-0.5 text-gray-400`}>{"All Time"}</Text>
+              </View>
+            </LinearGradient>
+          </TouchableOpacity>
+        ))}
+      </View>
+
+      {/* Search and filters (like ExpensesTab) */}
+      <Text className="mb-3 mt-6 text-lg font-black text-slate-900">Member Directory</Text>
+
+      {/* Members list */}
+      {loading ? (
+        <View className="items-center py-12"><ActivityIndicator color="#f97316" /></View>
+      ) : members.length === 0 ? (
+        <View className="items-center justify-center p-6 py-10">
+          <Ionicons name="people-outline" size={40} color="#cbd5e1" />
+          <Text className="text-slate-400 text-sm mt-3">No members found</Text>
+        </View>
+      ) : (
+        <View className="p-0">
+          {members.map((member, i) => (
+            <View key={member.uuid || i} className="p-4 mb-3 bg-white rounded-2xl shadow-sm flex-row items-center justify-between" style={{ shadowColor: "#cbd5e1", shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.1, shadowRadius: 4, elevation: 2 }}>
+              <View className="flex-row items-center flex-1 mr-3">
+                <View className="w-12 h-12 rounded-full items-center justify-center bg-orange-50">
+                  <Text className="text-orange-600 font-black">{initials(nameOf(member))}</Text>
+                </View>
+                <View className="ml-3 flex-1">
+                  <Text className="font-bold text-slate-900">{nameOf(member)}</Text>
+                  <Text className="mt-1 text-xs text-slate-500">{member.person_id || member.personId || 'Trainee'} • {member.type || 'Trainee'}</Text>
+                  <Text className="mt-1 text-xs text-slate-400">{member.joining_date ? `Joined ${dateText(member.joining_date)}` : ''}</Text>
+                </View>
+              </View>
+              <View className="items-end">
+                <Text className={`text-sm font-bold ${member.status === 'Active' ? 'text-emerald-600' : 'text-slate-500'}`}>{member.status || 'Active'}</Text>
+                <Pressable onPress={() => { setAssignmentMember(member); setAssignmentVisible(true); }} className="mt-3 items-center rounded-full border border-orange-200 px-3 py-1">
+                  <Text className="text-xs font-bold text-orange-600">{member.assigned_employee_id ? 'Reassign' : 'Assign'}</Text>
+                </Pressable>
+              </View>
+            </View>
+          ))}
+        </View>
+      )}
+    </>
+  );
   const renderAttendance = () => (<><View className="mb-6 flex-row flex-wrap justify-between">{[{ label: 'Total', value: members.length, icon: 'people' }, { label: 'Present Days', value: attendance.reduce((sum, r) => sum + (r.present_days || 0), 0), icon: 'checkmark' }, { label: 'Absent Days', value: attendance.reduce((sum, r) => sum + (r.absent_days || 0), 0), icon: 'close' }].map((stat, idx) => (<TouchableOpacity key={String(idx)} activeOpacity={0.9} className="mb-3 w-[48%] overflow-hidden rounded-2xl border border-orange-100" style={{ shadowColor: '#f97316', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.12, shadowRadius: 10, elevation: 4, }}><LinearGradient colors={["#ffffff", "#fff7ed"]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} className="px-4 py-4"><View className="flex-row items-center mb-3"><View className="h-10 w-10 items-center justify-center rounded-xl bg-black"><Ionicons name={stat.icon as any} size={20} color="#f97316" /></View><View className="ml-2 flex-1"><Text className="text-[10px] font-bold uppercase tracking-[0.5px] text-gray-500">{stat.label}</Text></View></View><View className="mt-1 flex-col"><Text className="text-[22px] font-black text-black">{stat.value}</Text><Text className={`text-[10px] font-bold mt-0.5 text-gray-400`}>This Month</Text></View></LinearGradient></TouchableOpacity>))}</View><View className="mb-6">
-  <View className="bg-white border border-slate-200 rounded-2xl flex-row items-center px-4 py-2 shadow-sm mb-3">
-    <Ionicons name="search" size={16} color="#94a3b8" />
-    <TextInput
-      placeholder="Search..."
-      placeholderTextColor="#94a3b8"
-      value={search}
-      onChangeText={setSearch}
-      className="flex-1 ml-2 text-sm font-medium text-slate-800 h-10"
-    />
-  </View>
-  <ScrollView horizontal showsHorizontalScrollIndicator={false} className="flex-row gap-2 mb-3">
-    {[{ l: "All Time", v: "all" }, { l: "Today", v: "today" }, { l: "Yesterday", v: "yesterday" }, { l: "This Week", v: "this_week" }, { l: "This Month", v: "this_month" }].map(pre => (
-      <TouchableOpacity
-        key={pre.v}
-        className={'mr-2 px-4 py-2 rounded-full border ' + ('all' === pre.v ? 'bg-orange-100 border-orange-200' : 'bg-white border-slate-200')}
-      >
-        <Text className={'text-xs font-semibold ' + ('all' === pre.v ? 'text-orange-700' : 'text-slate-600')}>{pre.l}</Text>
-      </TouchableOpacity>
-    ))}
-  </ScrollView>
-</View><View className="mt-5 flex-row items-center justify-between"><View><Text className="text-xl font-black text-slate-900">Attendance</Text><Text className="mt-1 text-sm text-slate-500">This month&apos;s trainee and intern summary.</Text></View></View>{attendanceLoading ? <View className="items-center py-12"><ActivityIndicator color="#f97316" /></View> : attendance.length ? attendance.map((row, index) => <View key={row.trainee_intern_id || index} className="p-4 mb-3 bg-white rounded-2xl shadow-sm" style={{ shadowColor: "#cbd5e1", shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.1, shadowRadius: 4, elevation: 2 }}><View className="flex-row items-center"><View className="h-11 w-11 items-center justify-center rounded-2xl bg-orange-50"><Text className="font-black text-orange-600">{initials(row.trainee_name || "Trainee")}</Text></View><View className="ml-3 flex-1"><Text className="font-bold text-slate-900">{row.trainee_name || "Unnamed member"}</Text><Text className="mt-1 text-xs text-slate-500">{row.person_id || "No person ID"} - {row.type || "Trainee / Intern"}</Text></View></View><View className="mt-4 flex-row gap-3"><View className="flex-1 rounded-xl bg-emerald-50 p-3"><Text className="text-xs text-emerald-700">Present</Text><Text className="mt-1 text-xl font-black text-emerald-700">{row.present_days || 0}</Text></View><View className="flex-1 rounded-xl bg-rose-50 p-3"><Text className="text-xs text-rose-700">Absent</Text><Text className="mt-1 text-xl font-black text-rose-700">{row.absent_days || 0}</Text></View></View></View>) : <View className="mt-5 items-center rounded-3xl border border-dashed border-slate-200 bg-white p-8"><Ionicons name="calendar-outline" size={34} color="#cbd5e1" /><Text className="mt-3 font-bold text-slate-500">No attendance records this month.</Text></View>}</>);
+    <View className="bg-white border border-slate-200 rounded-2xl flex-row items-center px-4 py-2 shadow-sm mb-3">
+      <Ionicons name="search" size={16} color="#94a3b8" />
+      <TextInput
+        placeholder="Search..."
+        placeholderTextColor="#94a3b8"
+        value={search}
+        onChangeText={setSearch}
+        className="flex-1 ml-2 text-sm font-medium text-slate-800 h-10"
+      />
+    </View>
+    <ScrollView horizontal showsHorizontalScrollIndicator={false} className="flex-row gap-2 mb-3">
+      {[{ l: "All Time", v: "all" }, { l: "Today", v: "today" }, { l: "Yesterday", v: "yesterday" }, { l: "This Week", v: "this_week" }, { l: "This Month", v: "this_month" }].map(pre => (
+        <TouchableOpacity
+          key={pre.v}
+          className={'mr-2 px-4 py-2 rounded-full border ' + ('all' === pre.v ? 'bg-orange-100 border-orange-200' : 'bg-white border-slate-200')}
+        >
+          <Text className={'text-xs font-semibold ' + ('all' === pre.v ? 'text-orange-700' : 'text-slate-600')}>{pre.l}</Text>
+        </TouchableOpacity>
+      ))}
+    </ScrollView>
+  </View><View className="mt-5 flex-row items-center justify-between"><View><Text className="text-xl font-black text-slate-900">Attendance</Text><Text className="mt-1 text-sm text-slate-500">This month&apos;s trainee and intern summary.</Text></View></View>{attendanceLoading ? <View className="items-center py-12"><ActivityIndicator color="#f97316" /></View> : attendance.length ? attendance.map((row, index) => <View key={row.trainee_intern_id || index} className="p-4 mb-3 bg-white rounded-2xl shadow-sm" style={{ shadowColor: "#cbd5e1", shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.1, shadowRadius: 4, elevation: 2 }}><View className="flex-row items-center"><View className="h-11 w-11 items-center justify-center rounded-2xl bg-orange-50"><Text className="font-black text-orange-600">{initials(row.trainee_name || "Trainee")}</Text></View><View className="ml-3 flex-1"><Text className="font-bold text-slate-900">{row.trainee_name || "Unnamed member"}</Text><Text className="mt-1 text-xs text-slate-500">{row.person_id || "No person ID"} - {row.type || "Trainee / Intern"}</Text></View></View><View className="mt-4 flex-row gap-3"><View className="flex-1 rounded-xl bg-emerald-50 p-3"><Text className="text-xs text-emerald-700">Present</Text><Text className="mt-1 text-xl font-black text-emerald-700">{row.present_days || 0}</Text></View><View className="flex-1 rounded-xl bg-rose-50 p-3"><Text className="text-xs text-rose-700">Absent</Text><Text className="mt-1 text-xl font-black text-rose-700">{row.absent_days || 0}</Text></View></View></View>) : <View className="mt-5 items-center rounded-3xl border border-dashed border-slate-200 bg-white p-8"><Ionicons name="calendar-outline" size={34} color="#cbd5e1" /><Text className="mt-3 font-bold text-slate-500">No attendance records this month.</Text></View>}</>);
   const renderTasks = () => (
     <>
       {/* Stats cards for Tasks */}
@@ -313,27 +313,27 @@ export default function AdminTraineeScreen() {
           </TouchableOpacity>
         ))}
       </View><View className="mb-6">
-  <View className="bg-white border border-slate-200 rounded-2xl flex-row items-center px-4 py-2 shadow-sm mb-3">
-    <Ionicons name="search" size={16} color="#94a3b8" />
-    <TextInput
-      placeholder="Search..."
-      placeholderTextColor="#94a3b8"
-      value={search}
-      onChangeText={setSearch}
-      className="flex-1 ml-2 text-sm font-medium text-slate-800 h-10"
-    />
-  </View>
-  <ScrollView horizontal showsHorizontalScrollIndicator={false} className="flex-row gap-2 mb-3">
-    {[{ l: "All Time", v: "all" }, { l: "Today", v: "today" }, { l: "Yesterday", v: "yesterday" }, { l: "This Week", v: "this_week" }, { l: "This Month", v: "this_month" }].map(pre => (
-      <TouchableOpacity
-        key={pre.v}
-        className={'mr-2 px-4 py-2 rounded-full border ' + ('all' === pre.v ? 'bg-orange-100 border-orange-200' : 'bg-white border-slate-200')}
-      >
-        <Text className={'text-xs font-semibold ' + ('all' === pre.v ? 'text-orange-700' : 'text-slate-600')}>{pre.l}</Text>
-      </TouchableOpacity>
-    ))}
-  </ScrollView>
-</View><View className="mt-5 flex-row items-center justify-between"><View><Text className="text-xl font-black text-slate-900">Task Master</Text><Text className="mt-1 text-sm text-slate-500">Reusable tasks for trainees and interns.</Text></View></View>{taskLoading ? <View className="items-center py-12"><ActivityIndicator color="#f97316" /></View> : tasks.length ? tasks.map((task) => <View key={task.uuid} className="p-4 mb-3 bg-white rounded-2xl shadow-sm" style={{ shadowColor: "#cbd5e1", shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.1, shadowRadius: 4, elevation: 2 }}><Text className="font-bold text-slate-900">{task.task_name || "Untitled task"}</Text><Text className="mt-2 text-sm text-slate-500">{task.description || "No description"}</Text></View>) : <View className="mt-5 items-center rounded-3xl border border-dashed border-slate-200 bg-white p-8"><Ionicons name="checkbox-outline" size={34} color="#cbd5e1" /><Text className="mt-3 font-bold text-slate-500">No trainee tasks found.</Text></View>}</>);
+        <View className="bg-white border border-slate-200 rounded-2xl flex-row items-center px-4 py-2 shadow-sm mb-3">
+          <Ionicons name="search" size={16} color="#94a3b8" />
+          <TextInput
+            placeholder="Search..."
+            placeholderTextColor="#94a3b8"
+            value={search}
+            onChangeText={setSearch}
+            className="flex-1 ml-2 text-sm font-medium text-slate-800 h-10"
+          />
+        </View>
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} className="flex-row gap-2 mb-3">
+          {[{ l: "All Time", v: "all" }, { l: "Today", v: "today" }, { l: "Yesterday", v: "yesterday" }, { l: "This Week", v: "this_week" }, { l: "This Month", v: "this_month" }].map(pre => (
+            <TouchableOpacity
+              key={pre.v}
+              className={'mr-2 px-4 py-2 rounded-full border ' + ('all' === pre.v ? 'bg-orange-100 border-orange-200' : 'bg-white border-slate-200')}
+            >
+              <Text className={'text-xs font-semibold ' + ('all' === pre.v ? 'text-orange-700' : 'text-slate-600')}>{pre.l}</Text>
+            </TouchableOpacity>
+          ))}
+        </ScrollView>
+      </View><View className="mt-5 flex-row items-center justify-between"><View><Text className="text-xl font-black text-slate-900">Task Master</Text><Text className="mt-1 text-sm text-slate-500">Reusable tasks for trainees and interns.</Text></View></View>{taskLoading ? <View className="items-center py-12"><ActivityIndicator color="#f97316" /></View> : tasks.length ? tasks.map((task) => <View key={task.uuid} className="p-4 mb-3 bg-white rounded-2xl shadow-sm" style={{ shadowColor: "#cbd5e1", shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.1, shadowRadius: 4, elevation: 2 }}><Text className="font-bold text-slate-900">{task.task_name || "Untitled task"}</Text><Text className="mt-2 text-sm text-slate-500">{task.description || "No description"}</Text></View>) : <View className="mt-5 items-center rounded-3xl border border-dashed border-slate-200 bg-white p-8"><Ionicons name="checkbox-outline" size={34} color="#cbd5e1" /><Text className="mt-3 font-bold text-slate-500">No trainee tasks found.</Text></View>}</>);
   const renderTaskAssignments = () => (
     <>
       {/* Stats cards for Assign Task */}
@@ -368,58 +368,58 @@ export default function AdminTraineeScreen() {
           </TouchableOpacity>
         ))}
       </View><View className="mb-6">
-  <View className="bg-white border border-slate-200 rounded-2xl flex-row items-center px-4 py-2 shadow-sm mb-3">
-    <Ionicons name="search" size={16} color="#94a3b8" />
-    <TextInput
-      placeholder="Search..."
-      placeholderTextColor="#94a3b8"
-      value={search}
-      onChangeText={setSearch}
-      className="flex-1 ml-2 text-sm font-medium text-slate-800 h-10"
-    />
-  </View>
-  <ScrollView horizontal showsHorizontalScrollIndicator={false} className="flex-row gap-2 mb-3">
-    {[{ l: "All Time", v: "all" }, { l: "Today", v: "today" }, { l: "Yesterday", v: "yesterday" }, { l: "This Week", v: "this_week" }, { l: "This Month", v: "this_month" }].map(pre => (
-      <TouchableOpacity
-        key={pre.v}
-        className={'mr-2 px-4 py-2 rounded-full border ' + ('all' === pre.v ? 'bg-orange-100 border-orange-200' : 'bg-white border-slate-200')}
-      >
-        <Text className={'text-xs font-semibold ' + ('all' === pre.v ? 'text-orange-700' : 'text-slate-600')}>{pre.l}</Text>
-      </TouchableOpacity>
-    ))}
-  </ScrollView>
-</View><View className="mt-5 flex-row items-center justify-between"><View><Text className="text-xl font-black text-slate-900">Assigned Tasks</Text><Text className="mt-1 text-sm text-slate-500">Track work assigned to trainees and interns.</Text></View></View>{taskLoading ? <View className="items-center py-12"><ActivityIndicator color="#f97316" /></View> : taskAssignments.length ? taskAssignments.map((assignment, index) => <View key={assignment.uuid || index} className="p-4 mb-3 bg-white rounded-2xl shadow-sm" style={{ shadowColor: "#cbd5e1", shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.1, shadowRadius: 4, elevation: 2 }}><View className="flex-row items-start justify-between"><View className="flex-1"><Text className="font-bold text-slate-900">{assignment.task_name || "Untitled task"}</Text><Text className="mt-1 text-xs text-slate-500">{assignment.trainee_name || "Trainee / Intern"}</Text></View><Text className="rounded-full bg-orange-50 px-2 py-1 text-[10px] font-bold text-orange-600">{assignment.status || "Pending"}</Text></View><View className="mt-3 flex-row justify-between"><Text className="text-xs text-slate-500">Assigned: {assignment.assigned_date?.slice?.(0, 10) || "-"}</Text><Text className="text-xs font-bold text-orange-600">{assignment.progress || 0}%</Text></View></View>) : <View className="mt-5 items-center rounded-3xl border border-dashed border-slate-200 bg-white p-8"><Ionicons name="list-outline" size={34} color="#cbd5e1" /><Text className="mt-3 font-bold text-slate-500">No task assignments found.</Text></View>}</>);
+        <View className="bg-white border border-slate-200 rounded-2xl flex-row items-center px-4 py-2 shadow-sm mb-3">
+          <Ionicons name="search" size={16} color="#94a3b8" />
+          <TextInput
+            placeholder="Search..."
+            placeholderTextColor="#94a3b8"
+            value={search}
+            onChangeText={setSearch}
+            className="flex-1 ml-2 text-sm font-medium text-slate-800 h-10"
+          />
+        </View>
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} className="flex-row gap-2 mb-3">
+          {[{ l: "All Time", v: "all" }, { l: "Today", v: "today" }, { l: "Yesterday", v: "yesterday" }, { l: "This Week", v: "this_week" }, { l: "This Month", v: "this_month" }].map(pre => (
+            <TouchableOpacity
+              key={pre.v}
+              className={'mr-2 px-4 py-2 rounded-full border ' + ('all' === pre.v ? 'bg-orange-100 border-orange-200' : 'bg-white border-slate-200')}
+            >
+              <Text className={'text-xs font-semibold ' + ('all' === pre.v ? 'text-orange-700' : 'text-slate-600')}>{pre.l}</Text>
+            </TouchableOpacity>
+          ))}
+        </ScrollView>
+      </View><View className="mt-5 flex-row items-center justify-between"><View><Text className="text-xl font-black text-slate-900">Assigned Tasks</Text><Text className="mt-1 text-sm text-slate-500">Track work assigned to trainees and interns.</Text></View></View>{taskLoading ? <View className="items-center py-12"><ActivityIndicator color="#f97316" /></View> : taskAssignments.length ? taskAssignments.map((assignment, index) => <View key={assignment.uuid || index} className="p-4 mb-3 bg-white rounded-2xl shadow-sm" style={{ shadowColor: "#cbd5e1", shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.1, shadowRadius: 4, elevation: 2 }}><View className="flex-row items-start justify-between"><View className="flex-1"><Text className="font-bold text-slate-900">{assignment.task_name || "Untitled task"}</Text><Text className="mt-1 text-xs text-slate-500">{assignment.trainee_name || "Trainee / Intern"}</Text></View><Text className="rounded-full bg-orange-50 px-2 py-1 text-[10px] font-bold text-orange-600">{assignment.status || "Pending"}</Text></View><View className="mt-3 flex-row justify-between"><Text className="text-xs text-slate-500">Assigned: {assignment.assigned_date?.slice?.(0, 10) || "-"}</Text><Text className="text-xs font-bold text-orange-600">{assignment.progress || 0}%</Text></View></View>) : <View className="mt-5 items-center rounded-3xl border border-dashed border-slate-200 bg-white p-8"><Ionicons name="list-outline" size={34} color="#cbd5e1" /><Text className="mt-3 font-bold text-slate-500">No task assignments found.</Text></View>}</>);
   return <SafeAreaView edges={["top"]} style={{ flex: 1, backgroundColor: "#f8fafc" }}>
-      <View style={{
-        flexDirection: "row", alignItems: "center",
-        paddingHorizontal: 16, paddingVertical: 14,
-        backgroundColor: "#fff",
-        borderBottomWidth: 1, borderBottomColor: "#f1f5f9",
-      }}>
-        <Pressable
-          onPress={() => router.back()}
-          style={{
-            width: 38, height: 38, borderRadius: 12,
-            backgroundColor: "#f1f5f9",
-            alignItems: "center", justifyContent: "center",
-            marginRight: 12,
-          }}
-        >
-          <Ionicons name="arrow-back" size={20} color="#0f172a" />
-        </Pressable>
-        <Text style={{ fontSize: 18, fontWeight: "800", color: "#0f172a" }}>Trainee & Internship</Text>
-      </View><ScrollView className="flex-1" contentContainerStyle={{ padding: 20, paddingBottom: 120 }} refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => tab === "Attendance" ? loadAttendance() : tab === "Tasks" || tab === "Assign Task" ? loadTasks() : loadMembers(true)} tintColor="#f97316" />}><View className="flex-row items-start justify-between"><View className="flex-1 pr-3"><Text className="text-3xl font-black text-slate-900">Trainees & Interns</Text><Text className="mt-1 text-sm text-slate-500">Manage profiles, attendance, tasks, and assignments.</Text></View></View>
-<View style={{ backgroundColor: "#fff", borderBottomWidth: 1, borderBottomColor: "#f1f5f9" }}>
-  <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: 16 }}>
-    {["Members", "Attendance", "Tasks", "Assign Task"].map((item) => (
+    <View style={{
+      flexDirection: "row", alignItems: "center",
+      paddingHorizontal: 16, paddingVertical: 14,
+      backgroundColor: "#fff",
+      borderBottomWidth: 1, borderBottomColor: "#f1f5f9",
+    }}>
       <Pressable
-        key={item}
-        onPress={() => setTab(item)}
-        style={{ paddingVertical: 16, marginRight: 24, borderBottomWidth: 2, borderBottomColor: tab === item ? "#f97316" : "transparent" }}
+        onPress={() => router.back()}
+        style={{
+          width: 38, height: 38, borderRadius: 12,
+          backgroundColor: "#f1f5f9",
+          alignItems: "center", justifyContent: "center",
+          marginRight: 12,
+        }}
       >
-        <Text style={{ fontSize: 14, fontWeight: tab === item ? "700" : "600", color: tab === item ? "#f97316" : "#64748b" }}>{item}</Text>
+        <Ionicons name="arrow-back" size={20} color="#0f172a" />
       </Pressable>
-    ))}
-  </ScrollView>
-</View>{tab === "Members" ? renderMembers() : tab === "Attendance" ? renderAttendance() : tab === "Tasks" ? renderTasks() : renderTaskAssignments()}</ScrollView><TraineeForm visible={formVisible} member={editing} onClose={() => setFormVisible(false)} onSaved={() => loadMembers(true)} /><AssignmentModal visible={assignmentVisible} member={assignmentMember} employees={employees} onClose={() => setAssignmentVisible(false)} onSaved={() => loadMembers(true)} /><AttendanceModal visible={attendanceVisible} members={members} onClose={() => setAttendanceVisible(false)} onSaved={loadAttendance} /><TaskMasterModal visible={taskVisible} onClose={() => setTaskVisible(false)} onSaved={loadTasks} /><TaskAssignmentModal visible={taskAssignmentVisible} members={members} tasks={tasks} onClose={() => setTaskAssignmentVisible(false)} onSaved={loadTasks} />{selected && <DetailModal member={selected} onClose={() => setSelected(null)} onEdit={() => { setEditing(selected); setSelected(null); setFormVisible(true); }} onDelete={() => remove(selected)} />}<FAB onPress={() => { if (tab === "Members") { setEditing(null); setFormVisible(true); } else if (tab === "Attendance") { setAttendanceVisible(true); } else if (tab === "Tasks") { setTaskVisible(true); } else if (tab === "Assign Task") { setTaskAssignmentVisible(true); } }} style={{ bottom: 32 }} /></SafeAreaView>;
+      <Text style={{ fontSize: 18, fontWeight: "800", color: "#0f172a" }}>Trainee & Internship</Text>
+    </View><ScrollView className="flex-1" contentContainerStyle={{ padding: 20, paddingBottom: 120 }} refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => tab === "Attendance" ? loadAttendance() : tab === "Tasks" || tab === "Assign Task" ? loadTasks() : loadMembers(true)} tintColor="#f97316" />}><View className="flex-row items-start justify-between"></View>
+      <View style={{ backgroundColor: "#fff", borderBottomWidth: 1, marginBottom: 10, borderBottomColor: "#f1f5f9" }}>
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: 16 }}>
+          {["Members", "Attendance", "Tasks", "Assign Task"].map((item) => (
+            <Pressable
+              key={item}
+              onPress={() => setTab(item)}
+              style={{ paddingVertical: 16, marginRight: 24, borderBottomWidth: 2, borderBottomColor: tab === item ? "#f97316" : "transparent" }}
+            >
+              <Text style={{ fontSize: 14, fontWeight: tab === item ? "700" : "600", color: tab === item ? "#f97316" : "#64748b" }}>{item}</Text>
+            </Pressable>
+          ))}
+        </ScrollView>
+      </View>{tab === "Members" ? renderMembers() : tab === "Attendance" ? renderAttendance() : tab === "Tasks" ? renderTasks() : renderTaskAssignments()}</ScrollView><TraineeForm visible={formVisible} member={editing} onClose={() => setFormVisible(false)} onSaved={() => loadMembers(true)} /><AssignmentModal visible={assignmentVisible} member={assignmentMember} employees={employees} onClose={() => setAssignmentVisible(false)} onSaved={() => loadMembers(true)} /><AttendanceModal visible={attendanceVisible} members={members} onClose={() => setAttendanceVisible(false)} onSaved={loadAttendance} /><TaskMasterModal visible={taskVisible} onClose={() => setTaskVisible(false)} onSaved={loadTasks} /><TaskAssignmentModal visible={taskAssignmentVisible} members={members} tasks={tasks} onClose={() => setTaskAssignmentVisible(false)} onSaved={loadTasks} />{selected && <DetailModal member={selected} onClose={() => setSelected(null)} onEdit={() => { setEditing(selected); setSelected(null); setFormVisible(true); }} onDelete={() => remove(selected)} />}<FAB onPress={() => { if (tab === "Members") { setEditing(null); setFormVisible(true); } else if (tab === "Attendance") { setAttendanceVisible(true); } else if (tab === "Tasks") { setTaskVisible(true); } else if (tab === "Assign Task") { setTaskAssignmentVisible(true); } }} style={{ bottom: 32 }} /></SafeAreaView>;
 }
