@@ -178,13 +178,13 @@ export default function EmployeeScreen() {
           <RefreshControl
             refreshing={refreshing}
             onRefresh={() => fetchDashboard(true)}
-            tintColor="#2563eb"
+            tintColor="#f97316"
           />
         }
       >
         {loading ? (
           <View className="items-center py-24">
-            <ActivityIndicator size="large" color="#2563eb" />
+            <ActivityIndicator size="large" color="#f97316" />
             <Text className="mt-3 text-sm text-slate-500">
               Loading your dashboard...
             </Text>
@@ -620,36 +620,79 @@ export default function EmployeeScreen() {
                 projects.activeList.slice(0, 3).map((project, index) => (
                   <View
                     key={`${project.name}-${index}`}
-                    className="rounded-2xl border border-slate-200 bg-white p-4"
+                    className="overflow-hidden rounded-2xl border border-orange-100 bg-orange-50/40 p-4"
                   >
+                    {/* Project Header */}
                     <View className="flex-row items-center justify-between">
-                      <Text
-                        className="flex-1 font-bold text-slate-900"
-                        numberOfLines={1}
-                      >
-                        {project.name || "Project"}
-                      </Text>
-                      <Text className="ml-3 text-xs font-bold text-blue-600">
-                        {project.progress ?? 0}%
-                      </Text>
+                      <View className="flex-1 pr-3">
+                        <Text
+                          className="text-sm font-bold text-black"
+                          numberOfLines={1}
+                        >
+                          {project.name || "Project"}
+                        </Text>
+
+                        <Text className="mt-1 text-[10px] text-gray-400">
+                          Project progress
+                        </Text>
+                      </View>
+
+                      {/* Percentage Badge */}
+                      <View className="rounded-lg bg-white px-2.5 py-1">
+                        <Text className="text-xs font-black text-orange-500">
+                          {project.progress ?? 0}%
+                        </Text>
+                      </View>
                     </View>
-                    <View className="mt-3 h-2 overflow-hidden rounded-full bg-slate-100">
-                      <View
-                        className="h-full rounded-full bg-blue-600"
+
+                    {/* Progress Bar */}
+                    <View className="mt-3 h-2 overflow-hidden rounded-full bg-white">
+                      <LinearGradient
+                        colors={["#fb923c", "#f97316"]}
+                        start={{ x: 0, y: 0 }}
+                        end={{ x: 1, y: 0 }}
+                        className="h-full rounded-full"
                         style={{
-                          width: `${Math.min(100, Math.max(0, Number(project.progress || 0)))}%`,
+                          width: `${Math.min(
+                            100,
+                            Math.max(0, Number(project.progress || 0))
+                          )}%`,
                         }}
                       />
                     </View>
-                    <Text className="mt-2 text-xs text-slate-500">
-                      Due {project.due || "-"}
-                    </Text>
+
+                    {/* Due Date */}
+                    <View className="mt-3 flex-row items-center">
+                      <Ionicons
+                        name="calendar-outline"
+                        size={14}
+                        color="#f97316"
+                      />
+
+                      <Text className="ml-1.5 text-[11px] text-gray-500">
+                        Due {project.due || "-"}
+                      </Text>
+                    </View>
                   </View>
                 ))
               ) : (
-                <View className="rounded-2xl border border-dashed border-slate-300 bg-white p-5">
-                  <Text className="text-center text-sm text-slate-500">
-                    No active projects.
+                <View className="rounded-2xl border border-dashed border-orange-200 bg-orange-50/40 p-6">
+                  <View className="mb-2 items-center">
+                    <View className="h-12 w-12 items-center justify-center rounded-2xl bg-black">
+                      <Ionicons
+                        name="folder-outline"
+                        size={22}
+                        color="#f97316"
+                      />
+                    </View>
+                  </View>
+
+                  <Text className="text-center text-sm font-bold text-black">
+                    No active projects
+                  </Text>
+
+                  <Text className="mt-1 text-center text-xs text-gray-400">
+                    Your active projects will appear here.
                   </Text>
                 </View>
               )}
