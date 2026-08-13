@@ -14,6 +14,7 @@ import {
     ScrollView,
     Text,
     TextInput,
+    TouchableOpacity,
     View,
 } from "react-native";
 import api from "../../api";
