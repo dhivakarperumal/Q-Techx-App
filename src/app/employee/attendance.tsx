@@ -205,7 +205,7 @@ export default function AttendanceScreen() {
     <View className="flex-1 bg-slate-50">
       <TopHeader title="Attendance" subtitle="Your time and presence" />
       <ScrollView className="flex-1" contentContainerStyle={{ padding: 20, paddingBottom: 32 }} refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => fetchAttendance(true)} tintColor="#2563eb" />}>
-        <View className="flex-row items-start justify-between"><View><Text className="text-3xl font-bold text-slate-950">Attendance</Text><Text className="mt-2 text-base text-slate-500">Mark your shift and review attendance history.</Text></View><Pressable onPress={() => fetchAttendance(true)} accessibilityLabel="Refresh attendance"><Ionicons name="refresh-outline" size={22} color="#64748b" /></Pressable></View>
+       
         {successMessage ? <View className="mt-4 rounded-2xl border border-emerald-200 bg-emerald-50 p-4"><Text className="text-sm font-semibold text-emerald-700">{successMessage}</Text></View> : null}
         {error ? <View className="mt-4 flex-row rounded-2xl border border-rose-200 bg-rose-50 p-4"><Ionicons name="alert-circle-outline" size={18} color="#e11d48" /><Text className="ml-2 flex-1 text-sm text-rose-700">{error}</Text></View> : null}
         {todayHoliday ? <View className="mt-4 rounded-2xl border border-amber-200 bg-amber-50 p-4"><Text className="text-sm font-semibold text-amber-800">Today is a holiday. Attendance is blocked.</Text></View> : null}
