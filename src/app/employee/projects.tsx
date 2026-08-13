@@ -380,15 +380,15 @@ export default function EmployeeProjectsScreen() {
         }
       >
         {/* ── STATS SECTION ── */}
-        <View className="mb-6 flex-row flex-wrap justify-between">
+        <View className="mb-6 flex-row justify-between">
           {[
-            { label: "Total Assigned", value: String(projectSummary.total), sub: "All Projects", icon: "folder", color: "#f97316", bg: "#fff7ed", subColor: "text-orange-500" },
-            { label: "In Progress", value: String(projectSummary.inProgress), sub: "Ongoing", icon: "time", color: "#f97316", bg: "#fff7ed", subColor: "text-blue-500" },
-            { label: "Completed", value: String(projectSummary.completed), sub: "Done", icon: "checkmark-circle", color: "#f97316", bg: "#fff7ed", subColor: "text-emerald-500" },
+            { label: "Assigned", value: String(projectSummary.total), sub: "Total", icon: "folder", color: "#f97316", bg: "#fff7ed", subColor: "text-orange-500" },
+            { label: "Active", value: String(projectSummary.inProgress), sub: "Ongoing", icon: "time", color: "#f97316", bg: "#fff7ed", subColor: "text-blue-500" },
+            { label: "Done", value: String(projectSummary.completed), sub: "Completed", icon: "checkmark-circle", color: "#f97316", bg: "#fff7ed", subColor: "text-emerald-500" },
           ].map((stat, idx) => (
             <View
               key={idx}
-              className={`mb-3 ${idx === 2 ? "w-full" : "w-[48%]"} overflow-hidden rounded-2xl bg-white border border-orange-100`}
+              className="w-[32%] overflow-hidden rounded-2xl bg-white border border-orange-100"
               style={{
                 shadowColor: "#f97316",
                 shadowOffset: { width: 0, height: 4 },
@@ -401,23 +401,21 @@ export default function EmployeeProjectsScreen() {
                 colors={["#ffffff", "#fff7ed"]}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 1 }}
-                style={{ paddingHorizontal: 16, paddingVertical: 16 }}
+                style={{ paddingHorizontal: 8, paddingVertical: 12 }}
               >
-                <View className="flex-row items-center mb-3">
-                  <View className="h-10 w-10 items-center justify-center rounded-xl bg-black">
-                    <Ionicons name={stat.icon as any} size={20} color="#f97316" />
+                <View className="flex-col items-start mb-2">
+                  <View className="h-8 w-8 items-center justify-center rounded-xl bg-black mb-2">
+                    <Ionicons name={stat.icon as any} size={16} color="#f97316" />
                   </View>
-                  <View className="ml-2 flex-1">
-                    <Text className="text-[10px] font-bold uppercase tracking-[0.5px] text-gray-500" numberOfLines={2}>
-                      {stat.label}
-                    </Text>
-                  </View>
+                  <Text className="text-[10px] font-bold uppercase tracking-[0.5px] text-gray-500" numberOfLines={1}>
+                    {stat.label}
+                  </Text>
                 </View>
-                <View className="flex-row items-baseline justify-between">
-                  <Text className="text-[22px] font-black text-black">
+                <View className="flex-col items-start">
+                  <Text className="text-xl font-black text-black">
                     {stat.value}
                   </Text>
-                  <Text className={`text-[10px] font-bold ${stat.subColor || "text-gray-400"}`}>
+                  <Text className={`text-[9px] font-bold ${stat.subColor || "text-gray-400"}`}>
                     {stat.sub}
                   </Text>
                 </View>

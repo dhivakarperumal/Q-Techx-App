@@ -216,15 +216,15 @@ export default function AttendanceScreen() {
         {!todayRecord?.check_in_time && <View className="mt-4 rounded-2xl border border-slate-200 bg-white p-4"><Text className="text-base font-bold text-slate-900">Office verification</Text><Text className="mt-1 text-sm text-slate-500">You must be within {ALLOWED_RADIUS_METERS}m of the office to clock in.</Text><Pressable onPress={handleLocation} disabled={locationLoading || todayHoliday || approvedLeaveToday} className="mt-4 flex-row items-center justify-center rounded-xl border border-blue-200 bg-blue-50 py-3 disabled:opacity-50">{locationLoading ? <ActivityIndicator color="#2563eb" /> : <><Ionicons name="location-outline" size={18} color="#2563eb" /><Text className="ml-2 font-bold text-blue-700">{distance === null ? "Verify my location" : `${Math.round(distance)}m from office`}</Text></>}</Pressable>{locationText ? <Text className="mt-3 text-xs text-slate-500">{locationText}</Text> : null}</View>}
 
         {/* ── STATS SECTION ── */}
-        <View className="mt-6 mb-6 flex-row flex-wrap justify-between">
+        <View className="mt-6 mb-6 flex-row justify-between">
           {[
-            { label: "Total Records", value: String(history.length), sub: "All Logs", icon: "document-text", color: "#f97316", bg: "#fff7ed", subColor: "text-orange-500" },
+            { label: "Records", value: String(history.length), sub: "Total", icon: "document-text", color: "#f97316", bg: "#fff7ed", subColor: "text-orange-500" },
             { label: "Present", value: String(presentDays), sub: "On Time", icon: "checkmark-circle", color: "#f97316", bg: "#fff7ed", subColor: "text-emerald-500" },
-            { label: "Absent/Leave", value: String(Math.max(history.length - presentDays, 0)), sub: "Missed", icon: "close-circle", color: "#f97316", bg: "#fff7ed", subColor: "text-red-500" },
+            { label: "Absent", value: String(Math.max(history.length - presentDays, 0)), sub: "Missed", icon: "close-circle", color: "#f97316", bg: "#fff7ed", subColor: "text-red-500" },
           ].map((stat, idx) => (
             <View
               key={idx}
-              className={`mb-3 ${idx === 2 ? "w-full" : "w-[48%]"} overflow-hidden rounded-2xl bg-white border border-orange-100`}
+              className="w-[32%] overflow-hidden rounded-2xl bg-white border border-orange-100"
               style={{
                 shadowColor: "#f97316",
                 shadowOffset: { width: 0, height: 4 },
@@ -237,23 +237,21 @@ export default function AttendanceScreen() {
                 colors={["#ffffff", "#fff7ed"]}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 1 }}
-                style={{ paddingHorizontal: 16, paddingVertical: 16 }}
+                style={{ paddingHorizontal: 8, paddingVertical: 12 }}
               >
-                <View className="flex-row items-center mb-3">
-                  <View className="h-10 w-10 items-center justify-center rounded-xl bg-black">
-                    <Ionicons name={stat.icon as any} size={20} color="#f97316" />
+                <View className="flex-col items-start mb-2">
+                  <View className="h-8 w-8 items-center justify-center rounded-xl bg-black mb-2">
+                    <Ionicons name={stat.icon as any} size={16} color="#f97316" />
                   </View>
-                  <View className="ml-2 flex-1">
-                    <Text className="text-[10px] font-bold uppercase tracking-[0.5px] text-gray-500" numberOfLines={2}>
-                      {stat.label}
-                    </Text>
-                  </View>
+                  <Text className="text-[10px] font-bold uppercase tracking-[0.5px] text-gray-500" numberOfLines={1}>
+                    {stat.label}
+                  </Text>
                 </View>
-                <View className="flex-row items-baseline justify-between">
-                  <Text className="text-[22px] font-black text-black">
+                <View className="flex-col items-start">
+                  <Text className="text-xl font-black text-black">
                     {stat.value}
                   </Text>
-                  <Text className={`text-[10px] font-bold ${stat.subColor || "text-gray-400"}`}>
+                  <Text className={`text-[9px] font-bold ${stat.subColor || "text-gray-400"}`}>
                     {stat.sub}
                   </Text>
                 </View>

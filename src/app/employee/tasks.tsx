@@ -715,6 +715,50 @@ export default function EmployeeTasksScreen() {
           />
         }
       >
+        {/* ── STATS SECTION ── */}
+        <View className="mb-6 flex-row justify-between">
+          {[
+            { label: "Tasks", value: String(taskSummary.total), sub: "Total", icon: "checkbox", color: "#f97316", bg: "#fff7ed", subColor: "text-orange-500" },
+            { label: "Active", value: String(taskSummary.inProgress), sub: "Ongoing", icon: "time", color: "#f97316", bg: "#fff7ed", subColor: "text-blue-500" },
+            { label: "Done", value: String(taskSummary.completed), sub: "Completed", icon: "checkmark-circle", color: "#f97316", bg: "#fff7ed", subColor: "text-emerald-500" },
+          ].map((stat, idx) => (
+            <View
+              key={idx}
+              className="w-[32%] overflow-hidden rounded-2xl bg-white border border-orange-100"
+              style={{
+                shadowColor: "#f97316",
+                shadowOffset: { width: 0, height: 4 },
+                shadowOpacity: 0.12,
+                shadowRadius: 10,
+                elevation: 4,
+              }}
+            >
+              <LinearGradient
+                colors={["#ffffff", "#fff7ed"]}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+                style={{ paddingHorizontal: 8, paddingVertical: 12 }}
+              >
+                <View className="flex-col items-start mb-2">
+                  <View className="h-8 w-8 items-center justify-center rounded-xl bg-black mb-2">
+                    <Ionicons name={stat.icon as any} size={16} color="#f97316" />
+                  </View>
+                  <Text className="text-[10px] font-bold uppercase tracking-[0.5px] text-gray-500" numberOfLines={1}>
+                    {stat.label}
+                  </Text>
+                </View>
+                <View className="flex-col items-start">
+                  <Text className="text-xl font-black text-black">
+                    {stat.value}
+                  </Text>
+                  <Text className={`text-[9px] font-bold ${stat.subColor || "text-gray-400"}`}>
+                    {stat.sub}
+                  </Text>
+                </View>
+              </LinearGradient>
+            </View>
+          ))}
+        </View>
 
         {/* Filter & Search Bar */}
         <View className="mb-4 flex-row items-center gap-3">
