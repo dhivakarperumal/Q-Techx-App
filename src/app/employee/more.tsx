@@ -1,18 +1,16 @@
 import { Ionicons } from "@expo/vector-icons";
+import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 import {
-  Alert,
-  Pressable,
-  ScrollView,
-  Text,
-  TouchableOpacity,
-  View,
+    ScrollView,
+    Text,
+    TouchableOpacity,
+    View
 } from "react-native";
 import { useAuth } from "../../auth/AuthContext";
-import { TopHeader } from "../../components/TopHeader";
-import { LinearGradient } from "expo-linear-gradient";
-import { useCustomAlert } from "../../context/CustomAlertContext";
 import { BottomHome } from "../../components/BottomHome";
+import { TopHeader } from "../../components/TopHeader";
+import { useCustomAlert } from "../../context/CustomAlertContext";
 
 export default function EmployeeMoreScreen() {
   const router = useRouter();
@@ -32,28 +30,18 @@ export default function EmployeeMoreScreen() {
   const avatarLetter = displayName.charAt(0).toUpperCase();
 
   return (
-    <View className="flex-1 bg-[#F9FAFB]">
-      <TopHeader />
+    <View className="flex-1 bg-slate-50">
+      <TopHeader title="More" subtitle="Account settings and preferences" />
 
       <ScrollView
         className="flex-1"
-        contentContainerStyle={{ paddingBottom: 120, paddingTop: 8 }}
+        contentContainerStyle={{ paddingBottom: 120, paddingHorizontal: 0 }}
       >
-        {/* ── HEADER ── */}
-        <View className="px-5 mb-6">
-          <Text className="text-slate-900 text-3xl font-black tracking-tight">
-            More
-          </Text>
-          <Text className="text-slate-500 text-xs mt-1">
-            Account settings and preferences
-          </Text>
-        </View>
-
         {/* ── PROFILE CARD ── */}
         <TouchableOpacity
           activeOpacity={0.85}
           onPress={() => router.push("/employee/profile")}
-          className="mx-5 mb-6 bg-white rounded-[24px] p-5 border border-slate-100 shadow-sm flex-row items-center"
+          className="mx-5 mt-6 mb-6 bg-white rounded-[24px] p-5 border border-slate-100 shadow-sm flex-row items-center"
         >
           <View className="w-16 h-16 rounded-full bg-orange-500 items-center justify-center mr-4 shadow-sm">
             <Text className="text-2xl font-black text-white">
@@ -77,17 +65,8 @@ export default function EmployeeMoreScreen() {
         </TouchableOpacity>
 
         {/* ── FEATURE CARDS — single column full width ── */}
-        <View style={{ paddingHorizontal: 20, marginBottom: 8 }}>
-          <Text
-            style={{
-              fontSize: 11,
-              fontWeight: "700",
-              letterSpacing: 1.4,
-              textTransform: "uppercase",
-              color: "#94a3b8",
-              marginBottom: 14,
-            }}
-          >
+        <View className="mt-7 px-5">
+          <Text className="mb-4 text-[11px] font-bold uppercase tracking-[1.4px] text-slate-400">
             Features
           </Text>
 
@@ -145,7 +124,11 @@ export default function EmployeeMoreScreen() {
               className="bg-white rounded-[20px] p-[18px] flex-row items-center border border-slate-100 shadow-sm"
             >
               <View className="w-[52px] h-[52px] rounded-2xl bg-orange-50 items-center justify-center">
-                <Ionicons name="calendar-number-outline" size={26} color="#f97316" />
+                <Ionicons
+                  name="calendar-number-outline"
+                  size={26}
+                  color="#f97316"
+                />
               </View>
               <View className="flex-1 ml-4">
                 <Text className="text-orange-500 text-[10px] font-bold tracking-[1px] uppercase">
@@ -210,28 +193,24 @@ export default function EmployeeMoreScreen() {
         </View>
 
         {/* ── LOG OUT ── */}
-        <View className="mx-5 mt-10">
+        <View className="mx-5 mt-10 mb-6">
           <TouchableOpacity
             activeOpacity={0.85}
             onPress={() =>
-              showAlert(
-                "Log out",
-                "Are you sure you want to log out?",
-                [
-                  {
-                    text: "Cancel",
-                    style: "cancel",
+              showAlert("Log out", "Are you sure you want to log out?", [
+                {
+                  text: "Cancel",
+                  style: "cancel",
+                },
+                {
+                  text: "Log out",
+                  style: "destructive",
+                  onPress: async () => {
+                    await logout();
+                    router.replace("/login");
                   },
-                  {
-                    text: "Log out",
-                    style: "destructive",
-                    onPress: async () => {
-                      await logout();
-                      router.replace("/login");
-                    },
-                  },
-                ],
-              )
+                },
+              ])
             }
             className="overflow-hidden rounded-[24px] border border-orange-100"
             style={{
@@ -249,11 +228,7 @@ export default function EmployeeMoreScreen() {
               className="p-5 flex-row items-center"
             >
               <View className="h-11 w-11 rounded-2xl bg-orange-100 items-center justify-center mr-4">
-                <Ionicons
-                  name="log-out-outline"
-                  size={21}
-                  color="#f97316"
-                />
+                <Ionicons name="log-out-outline" size={21} color="#f97316" />
               </View>
 
               <View className="flex-1">
@@ -266,11 +241,7 @@ export default function EmployeeMoreScreen() {
               </View>
 
               <View className="h-9 w-9 rounded-full bg-orange-50 items-center justify-center">
-                <Ionicons
-                  name="chevron-forward"
-                  size={18}
-                  color="#f97316"
-                />
+                <Ionicons name="chevron-forward" size={18} color="#f97316" />
               </View>
             </LinearGradient>
           </TouchableOpacity>

@@ -525,27 +525,30 @@ export default function EmployeeLeaveScreen() {
         onRequestClose={() => setShowApply(false)}
       >
         <View className="flex-1 justify-end bg-black/40">
-          <View className="max-h-[92%] overflow-hidden rounded-t-[28px] bg-[#f2f2f2] pb-8 pt-5">
-            <View className="mb-4 flex-row items-center justify-between rounded-t-[26px] bg-[#111827] px-5 py-4">
-              <View className="flex-1 pr-0">
-                <Text className="text-[16px] font-black text-[#f97316]">
+          <View className="max-h-[92%] w-full overflow-hidden rounded-t-3xl bg-white pt-5">
+            <View className="mb-5 flex-row items-center justify-between bg-white px-5 py-0">
+              <View className="flex-1">
+                <Text className="text-base font-black text-slate-900">
                   Apply for leave
                 </Text>
-                <Text className="mt-1 text-[15px] text-slate-200">
+                <Text className="mt-0.5 text-sm text-slate-500">
                   Submit a request for approval.
                 </Text>
               </View>
               <Pressable
                 onPress={() => setShowApply(false)}
-                className="h-11 w-11 items-center justify-center rounded-full bg-white"
+                className="h-10 w-10 items-center justify-center rounded-full bg-slate-100"
               >
-                <Ionicons name="close" size={24} color="#1f2937" />
+                <Ionicons name="close" size={22} color="#64748b" />
               </Pressable>
             </View>
 
+            <View className="h-px bg-slate-200 mb-4" />
+
             <ScrollView
-              className="mt-2 px-0"
+              className="mt-0 px-0"
               keyboardShouldPersistTaps="handled"
+              contentContainerStyle={{ paddingBottom: 20 }}
             >
               <Text className="mb-2 px-5 text-[12px] font-black uppercase tracking-[2px] text-slate-500">
                 Leave type
@@ -659,7 +662,7 @@ export default function EmployeeLeaveScreen() {
               <Pressable
                 disabled={submitting}
                 onPress={submitLeave}
-                className="mx-5 mt-5 items-center rounded-xl bg-[#f97316] py-4 active:bg-[#ea580c]"
+                className="mx-5 mb-4 mt-5 items-center rounded-xl bg-[#f97316] py-4 active:bg-[#ea580c]"
               >
                 {submitting ? (
                   <ActivityIndicator color="#fff" />
