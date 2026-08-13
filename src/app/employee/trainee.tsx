@@ -127,20 +127,20 @@ function TaskMasterModal({
       <View
         style={{
           flex: 1,
-          justifyContent: "center",
-          backgroundColor: "rgba(15, 23, 42, 0.7)",
-          paddingHorizontal: 18,
+          justifyContent: "flex-end",
+          backgroundColor: "rgba(15, 23, 42, 0.22)",
+          paddingBottom: 0,
         }}
       >
         <View
           style={{
-            backgroundColor: "#111827",
-            borderRadius: 24,
-            paddingHorizontal: 22,
-            paddingTop: 20,
-            paddingBottom: 18,
+            backgroundColor: "#ffffff",
+            borderTopLeftRadius: 24,
+            borderTopRightRadius: 24,
             borderWidth: 1,
             borderColor: "rgba(148, 163, 184, 0.18)",
+            paddingTop: 20,
+            paddingBottom: 18,
           }}
         >
           <View
@@ -149,9 +149,10 @@ function TaskMasterModal({
               alignItems: "center",
               justifyContent: "space-between",
               marginBottom: 18,
+              paddingHorizontal: 16,
             }}
           >
-            <Text style={{ fontSize: 26, fontWeight: "800", color: "#f8fafc" }}>
+            <Text style={{ fontSize: 26, fontWeight: "800", color: "#0f172a" }}>
               Add New Task
             </Text>
             <Pressable
@@ -162,18 +163,19 @@ function TaskMasterModal({
                 borderRadius: 999,
                 borderWidth: 1.5,
                 borderColor: "#e2e8f0",
+                backgroundColor: "#f8fafc",
                 alignItems: "center",
                 justifyContent: "center",
               }}
             >
-              <Ionicons name="close" size={20} color="#f8fafc" />
+              <Ionicons name="close" size={20} color="#334155" />
             </Pressable>
           </View>
 
-          <View style={{ marginBottom: 18 }}>
+          <View style={{ marginBottom: 18, paddingHorizontal: 16 }}>
             <Text
               style={{
-                color: "#f8fafc",
+                color: "#334155",
                 fontSize: 16,
                 fontWeight: "700",
                 marginBottom: 10,
@@ -189,20 +191,20 @@ function TaskMasterModal({
               style={{
                 height: 50,
                 borderRadius: 14,
-                backgroundColor: "rgba(148, 163, 184, 0.08)",
+                backgroundColor: "#f8fafc",
                 borderWidth: 1,
-                borderColor: "rgba(148, 163, 184, 0.2)",
-                color: "#f8fafc",
+                borderColor: "#dbe3ee",
+                color: "#0f172a",
                 paddingHorizontal: 16,
                 fontSize: 16,
               }}
             />
           </View>
 
-          <View style={{ marginBottom: 18 }}>
+          <View style={{ marginBottom: 18, paddingHorizontal: 16 }}>
             <Text
               style={{
-                color: "#f8fafc",
+                color: "#334155",
                 fontSize: 16,
                 fontWeight: "700",
                 marginBottom: 10,
@@ -221,10 +223,10 @@ function TaskMasterModal({
                 minHeight: 110,
                 maxHeight: 170,
                 borderRadius: 14,
-                backgroundColor: "rgba(148, 163, 184, 0.08)",
+                backgroundColor: "#f8fafc",
                 borderWidth: 1,
-                borderColor: "rgba(148, 163, 184, 0.2)",
-                color: "#f8fafc",
+                borderColor: "#dbe3ee",
+                color: "#0f172a",
                 paddingHorizontal: 16,
                 paddingVertical: 14,
                 textAlignVertical: "top",
@@ -233,10 +235,10 @@ function TaskMasterModal({
             />
           </View>
 
-          <View style={{ marginBottom: 22 }}>
+          <View style={{ marginBottom: 22, paddingHorizontal: 16 }}>
             <Text
               style={{
-                color: "#f8fafc",
+                color: "#334155",
                 fontSize: 18,
                 fontWeight: "700",
                 marginBottom: 10,
@@ -253,8 +255,8 @@ function TaskMasterModal({
                 borderRadius: 14,
                 borderWidth: 1,
                 borderStyle: "dashed",
-                borderColor: "rgba(148, 163, 184, 0.5)",
-                backgroundColor: "rgba(148, 163, 184, 0.04)",
+                borderColor: "#d1d5db",
+                backgroundColor: "#f8fafc",
                 paddingVertical: 14,
                 paddingHorizontal: 16,
               }}
@@ -262,7 +264,7 @@ function TaskMasterModal({
               <Text
                 style={{
                   flex: 1,
-                  color: documentFile ? "#f8fafc" : "#9ca3af",
+                  color: documentFile ? "#0f172a" : "#9ca3af",
                   fontSize: 16,
                 }}
               >
@@ -272,7 +274,7 @@ function TaskMasterModal({
               </Text>
               <View
                 style={{
-                  backgroundColor: "rgba(255,255,255,0.08)",
+                  backgroundColor: "#f1f5f9",
                   borderRadius: 10,
                   paddingVertical: 8,
                   paddingHorizontal: 10,
@@ -281,7 +283,7 @@ function TaskMasterModal({
                 <Ionicons
                   name="document-attach-outline"
                   size={18}
-                  color="#f8fafc"
+                  color="#334155"
                 />
               </View>
             </Pressable>
@@ -292,6 +294,7 @@ function TaskMasterModal({
               flexDirection: "row",
               justifyContent: "flex-end",
               gap: 12,
+              paddingHorizontal: 16,
             }}
           >
             <Pressable
@@ -301,14 +304,14 @@ function TaskMasterModal({
                 paddingVertical: 15,
                 paddingHorizontal: 24,
                 borderRadius: 14,
-                backgroundColor: "#1e293b",
+                backgroundColor: "#fff",
                 borderWidth: 1,
-                borderColor: "rgba(148, 163, 184, 0.2)",
+                borderColor: "#dbe3ee",
               }}
             >
               <Text
                 style={{
-                  color: "#f8fafc",
+                  color: "#0f172a",
                   textAlign: "center",
                   fontSize: 16,
                   fontWeight: "700",
@@ -326,7 +329,7 @@ function TaskMasterModal({
                 paddingVertical: 15,
                 paddingHorizontal: 24,
                 borderRadius: 14,
-                backgroundColor: saving ? "#c084fc" : "#f97316",
+                backgroundColor: saving ? "#f59e0b" : "#f97316",
               }}
             >
               <Text
@@ -662,29 +665,7 @@ function TaskAssignmentModal({
                 paddingHorizontal: 0,
               }}
             >
-              <Pressable
-                onPress={closeModal}
-                style={{
-                  minWidth: 120,
-                  paddingVertical: 14,
-                  paddingHorizontal: 20,
-                  borderRadius: 14,
-                  backgroundColor: "#1e293b",
-                  borderWidth: 1,
-                  borderColor: "rgba(148, 163, 184, 0.2)",
-                }}
-              >
-                <Text
-                  style={{
-                    color: "#f8fafc",
-                    textAlign: "center",
-                    fontSize: 16,
-                    fontWeight: "700",
-                  }}
-                >
-                  Cancel
-                </Text>
-              </Pressable>
+            
 
               <Pressable
                 disabled={saving}
@@ -1309,7 +1290,8 @@ export default function TraineeScreen() {
                   }}
                 >
                   <Text style={{ fontSize: 12, color: "#64748b" }}>
-                    Assigned: {assignment.assigned_date?.slice?.(0, 10) || "-"} {assignment.assigned_time || ""}
+                    Assigned: {assignment.assigned_date?.slice?.(0, 10) || "-"}{" "}
+                    {assignment.assigned_time || ""}
                   </Text>
                   <Text
                     style={{
