@@ -34,31 +34,35 @@ export default function ProfileScreen() {
 
   return (
     <View className="flex-1 bg-[#F9FAFB]">
-      <ScrollView className="flex-1" contentContainerClassName="pb-32">
-        
-        {/* ── ORANGE HEADER BANNER ── */}
-        <View
-          style={{
-            backgroundColor: '#f97316',
-            paddingTop: 56,
-            paddingBottom: 80,
-            paddingHorizontal: 20,
-          }}
-        >
-          {/* Back + Edit row */}
-          <View className="flex-row items-center justify-between mb-2">
-            <TouchableOpacity
-              onPress={() => router.back()}
-              className="w-9 h-9 bg-white/20 rounded-full items-center justify-center"
-            >
-              <Ionicons name="arrow-back" size={20} color="#fff" />
-            </TouchableOpacity>
-            <Text className="text-white font-black text-lg">Profile</Text>
-            <TouchableOpacity className="w-9 h-9 bg-white/20 rounded-full items-center justify-center">
-              <Ionicons name="share-outline" size={20} color="#fff" />
-            </TouchableOpacity>
-          </View>
+      {/* ── FIXED ORANGE HEADER ── */}
+      <View
+        style={{
+          backgroundColor: '#f97316',
+          paddingTop: 56,
+          paddingBottom: 16,
+          paddingHorizontal: 20,
+          zIndex: 10,
+        }}
+      >
+        {/* Back + Edit row */}
+        <View className="flex-row items-center justify-between">
+          <TouchableOpacity
+            onPress={() => router.back()}
+            className="w-9 h-9 bg-white/20 rounded-full items-center justify-center"
+          >
+            <Ionicons name="arrow-back" size={20} color="#fff" />
+          </TouchableOpacity>
+          <Text className="text-white font-black text-lg">Profile</Text>
+          <TouchableOpacity className="w-9 h-9 bg-white/20 rounded-full items-center justify-center">
+            <Ionicons name="share-outline" size={20} color="#fff" />
+          </TouchableOpacity>
         </View>
+      </View>
+
+      <ScrollView className="flex-1" contentContainerStyle={{ paddingBottom: 120 }}>
+        
+        {/* ── ORANGE BACKGROUND EXTENSION ── */}
+        <View style={{ backgroundColor: '#f97316', height: 80 }} />
 
         {/* ── AVATAR (overlapping banner) ── */}
         <View className="items-center" style={{ marginTop: -60 }}>

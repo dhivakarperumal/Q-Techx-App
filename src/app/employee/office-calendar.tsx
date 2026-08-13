@@ -257,15 +257,7 @@ export default function OfficeCalendarScreen() {
         contentContainerStyle={{ padding: 20, paddingBottom: 32 }}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => fetchEvents(true)} />}
       >
-        <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
-          <View style={{ flex: 1 }}>
-            <Text style={{ fontSize: 28, fontWeight: "800", color: "#0f172a" }}>Office Calendar</Text>
-            <Text style={{ marginTop: 6, fontSize: 15, color: "#64748b" }}>Company-wide events, holidays and deadlines.</Text>
-          </View>
-          <Pressable onPress={() => fetchEvents(true)} accessibilityLabel="Refresh office calendar" style={{ padding: 10, borderRadius: 12, backgroundColor: "#ffedd5" }}>
-            <Ionicons name="refresh-outline" size={22} color="#f97316" />
-          </Pressable>
-        </View>
+        
 
         <View style={{ marginTop: 20, borderRadius: 20, backgroundColor: "#fff", borderWidth: 1, borderColor: "#e2e8f0", padding: 16, shadowColor: "#000", shadowOpacity: 0.05, shadowRadius: 8, elevation: 2 }}>
           <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: 14 }}>
