@@ -3,17 +3,17 @@ import * as DocumentPicker from "expo-document-picker";
 import { useRouter } from "expo-router";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
-  ActivityIndicator,
-  Alert,
-  Image,
-  Modal,
-  Pressable,
-  RefreshControl,
-  ScrollView,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  View,
+    ActivityIndicator,
+    Alert,
+    Image,
+    Modal,
+    Pressable,
+    RefreshControl,
+    ScrollView,
+    Text,
+    TextInput,
+    TouchableOpacity,
+    View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
@@ -906,13 +906,13 @@ export default function ProjectPlansScreen() {
         onRequestClose={closeModal}
       >
         <View className="flex-1 justify-end bg-black/40">
-          <View className="max-h-[92%] rounded-t-[28px] bg-white px-5 pb-8 pt-5">
-            <View className="mb-4 flex-row items-center justify-between">
+          <View className="max-h-[92%] rounded-t-[28px] bg-white overflow-hidden">
+            <View className="bg-black px-5 pb-6 pt-4 flex-row items-center justify-between">
               <View>
-                <Text className="text-xl font-black text-slate-900">
+                <Text className="text-lg font-black text-orange-500">
                   {editPlanId ? "Edit Project Plan" : "Add Project Plan"}
                 </Text>
-                <Text className="mt-1 text-xs text-slate-500">
+                <Text className="mt-1 text-xs text-white">
                   {editPlanId
                     ? "Update project delivery details"
                     : "Configure project delivery details"}
@@ -921,14 +921,15 @@ export default function ProjectPlansScreen() {
               <Pressable
                 accessibilityLabel="Close"
                 onPress={closeModal}
-                className="h-9 w-9 items-center justify-center rounded-full bg-slate-100"
+                className="h-9 w-9 items-center justify-center rounded-full bg-orange-100"
               >
-                <Ionicons name="close" size={20} color="#64748b" />
+                <Ionicons name="close" size={20} color="#f97316" />
               </Pressable>
             </View>
             <ScrollView
               keyboardShouldPersistTaps="handled"
               showsVerticalScrollIndicator={false}
+              contentContainerStyle={{ padding: 20, paddingBottom: 40 }}
             >
               <Text className="mb-3 text-sm font-black text-slate-900">
                 Basic information
