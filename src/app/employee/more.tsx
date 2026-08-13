@@ -39,15 +39,7 @@ export default function EmployeeMoreScreen() {
         className="flex-1"
         contentContainerStyle={{ paddingBottom: 120, paddingTop: 8 }}
       >
-        {/* ── HEADER ── */}
-        <View className="px-5 mb-6">
-          <Text className="text-slate-900 text-3xl font-black tracking-tight">
-            More
-          </Text>
-          <Text className="text-slate-500 text-xs mt-1">
-            Account settings and preferences
-          </Text>
-        </View>
+        
 
         {/* ── PROFILE CARD ── */}
         <TouchableOpacity
