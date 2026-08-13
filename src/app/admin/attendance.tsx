@@ -1,11 +1,10 @@
 import { Ionicons } from "@expo/vector-icons";
+import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 import React, { useCallback, useEffect, useState } from "react";
 import { ActivityIndicator, Alert, Modal, Pressable, RefreshControl, ScrollView, Text, TextInput, View } from "react-native";
-import api from "../../api";
-import { AdminBottomBar } from "../../components/admin-bottom-bar";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { LinearGradient } from "expo-linear-gradient";
+import api from "../../api";
 import { FAB } from "../../components/FAB";
 
 type Employee = { employee_id: string | number; employee_code?: string; first_name?: string; last_name?: string };
@@ -76,7 +75,42 @@ export default function AdminAttendanceScreen() {
   useEffect(() => { const [start, end] = resolveDates(); setStartDate(start); setEndDate(end); }, [resolveDates]);
   const loadData = useCallback(async (refresh = false) => { if (refresh) setRefreshing(true); else setLoading(true); try { const [employeeResponse, summaryResponse] = await Promise.all([api.get("/employees?limit=200"), api.get(`/attendance/summary?startDate=${startDate}&endDate=${endDate}`)]); const employeeData = employeeResponse.data?.data || employeeResponse.data?.employees || []; setEmployees(employeeData); setRows(summaryResponse.data?.data || []); } catch (error: any) { Alert.alert("Unable to load attendance", error?.message || "Please try again."); } finally { setLoading(false); setRefreshing(false); } }, [startDate, endDate]);
   useEffect(() => { if (startDate && endDate) loadData(); }, [startDate, endDate, loadData]);
-  const present = rows.filter((row) => row.today_status === "Present").length; const absent = rows.filter((row) => row.today_status === "Absent").length; const leave = rows.filter((row) => ["Leave", "On Leave"].includes(row.today_status || "")).length; const late = rows.filter((row) => row.late_entry && !["No", "0h 0m", "--"].includes(row.late_entry)).length; const singleDay = startDate === endDate;
+  const toNumber = (value: unknown) => {
+    const numeric = Number(value);
+    return Number.isFinite(numeric) ? numeric : 0;
+  };
+  const normalizeStatus = (value?: string | null) => {
+    const status = String(value ?? "").trim();
+    if (!status) return "";
+    const clean = status.replace(/\s+\d+$/, "").trim();
+    const normalized = clean.toLowerCase().replace(/_/g, " ");
+    if (["present", "p"].includes(normalized)) return "Present";
+    if (["absent", "a", "not present", "notpresent"].includes(normalized)) return "Absent";
+    if (["leave", "on leave", "annual leave", "holiday"].includes(normalized)) return "Leave";
+    if (["half day", "half-day", "halfday"].includes(normalized)) return "Half Day";
+    return clean || status;
+  };
+  const getRowCount = (row: AttendanceRow, type: "present" | "absent" | "leave" | "late") => {
+    const status = normalizeStatus(row.today_status);
+    if (type === "present") {
+      const count = toNumber((row as any).present_days); if (count > 0) return count; if (status === "Present") return 1; return 0;
+    }
+    if (type === "absent") {
+      const count = toNumber((row as any).absent_days); if (count > 0) return count; if (status === "Absent") return 1; return 0;
+    }
+    if (type === "leave") {
+      const count = toNumber((row as any).leave_days); if (count > 0) return count; if (["Leave", "On Leave"].includes(status)) return 1; return 0;
+    }
+    const count = toNumber((row as any).late_days); if (count > 0) return count;
+    if (row.late_entry && !["No", "0h 0m", "--", ""].includes(String(row.late_entry).trim())) return 1;
+    return 0;
+  };
+  const present = rows.reduce((total, row) => total + getRowCount(row, "present"), 0);
+  const absent = rows.reduce((total, row) => total + getRowCount(row, "absent"), 0);
+  const leave = rows.reduce((total, row) => total + getRowCount(row, "leave"), 0);
+  const late = rows.reduce((total, row) => total + getRowCount(row, "late"), 0);
+  const summaryTotal = Math.max(present + absent + leave, 1);
+  const singleDay = startDate === endDate;
   return <SafeAreaView edges={["top"]} style={{ flex: 1, backgroundColor: "#F9FAFB" }}>
       <View style={{
         flexDirection: "row", alignItems: "center",
