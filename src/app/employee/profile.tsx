@@ -5,14 +5,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from '../../auth/AuthContext';
 
-const infoRows = [
-  { label: 'Full Name', value: 'Employee', icon: 'person-outline' },
-  { label: 'Email', value: 'employee@company.com', icon: 'mail-outline' },
-  { label: 'Phone', value: '+91 98765 43210', icon: 'call-outline' },
-  { label: 'Department', value: 'Operations', icon: 'briefcase-outline' },
-  { label: 'Member Since', value: 'Jan 10, 2024', icon: 'calendar-outline' },
-  { label: 'Location', value: 'Chennai, India', icon: 'location-outline' },
-];
+
 
 const quickStats = [
   { label: 'Projects', value: '4', icon: 'folder', color: '#3b82f6', bg: 'bg-blue-50' },
@@ -27,9 +20,27 @@ export default function EmployeeProfileScreen() {
   const rawName = (user?.name as string) || (user?.full_name as string) || 'Employee';
   const userEmail = (user?.email as string) || 'employee@company.com';
   const userRole = (user?.role as string)?.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase()) || 'Employee';
+  const userPhone = (user?.phone as string) || 'Not provided';
+  const userDepartment = (user?.department as string) || (user?.team as string) || (user?.department_name as string) || 'N/A';
+  const userJoinDate = user?.created_at
+    ? new Date(user.created_at).toLocaleDateString()
+    : user?.joined_at
+      ? new Date(user.joined_at).toLocaleDateString()
+      : 'N/A';
+  const userLocation = (user?.location as string) || 'Chennai, India';
+
   const capitalise = (str: string) => str.replace(/\b\w/g, c => c.toUpperCase());
   const displayName = capitalise(rawName);
   const avatarLetter = displayName.charAt(0).toUpperCase();
+
+  const infoRows = [
+    { label: 'Full Name', value: displayName, icon: 'person-outline' },
+    { label: 'Email', value: userEmail, icon: 'mail-outline' },
+    { label: 'Phone', value: userPhone, icon: 'call-outline' },
+    { label: 'Department', value: userDepartment, icon: 'briefcase-outline' },
+    { label: 'Member Since', value: userJoinDate, icon: 'calendar-outline' },
+    { label: 'Location', value: userLocation, icon: 'location-outline' },
+  ];
 
   return (
     <View className="flex-1 bg-[#F9FAFB]">
@@ -93,19 +104,6 @@ export default function EmployeeProfileScreen() {
           <View className="bg-slate-100 px-4 py-1.5 rounded-full">
             <Text className="text-slate-700 font-semibold text-xs">{userRole}</Text>
           </View>
-        </View>
-
-        {/* ── QUICK STATS ROW ── */}
-        <View className="flex-row justify-center gap-4 mx-5 mt-6 mb-6">
-          {quickStats.map((s, idx) => (
-            <View key={idx} className="flex-1 bg-white rounded-[20px] p-4 items-center border border-slate-100 shadow-sm">
-              <View className={`w-10 h-10 rounded-[12px] ${s.bg} items-center justify-center mb-2`}>
-                <Ionicons name={s.icon as any} size={20} color={s.color} />
-              </View>
-              <Text className="text-slate-900 font-black text-xl">{s.value}</Text>
-              <Text className="text-slate-500 text-[10px] font-medium mt-0.5">{s.label}</Text>
-            </View>
-          ))}
         </View>
 
         {/* ── PERSONAL INFORMATION CARD ── */}
