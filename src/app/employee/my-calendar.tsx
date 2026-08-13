@@ -1,6 +1,6 @@
 import { Ionicons } from "@expo/vector-icons";
 import * as DocumentPicker from "expo-document-picker";
-import { useFocusEffect } from "expo-router";
+import { useFocusEffect, useRouter } from "expo-router";
 import type { ReactNode } from "react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
@@ -17,6 +17,7 @@ import {
     TouchableOpacity,
     View,
 } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import api from "../../api";
 import { useAuth } from "../../auth/AuthContext";
 import { BottomHome } from "../../components/BottomHome";
@@ -282,6 +283,7 @@ function EventDetails({ event, onClose }: { event: MyEvent | null; onClose: () =
 }
 
 export default function MyCalendarScreen() {
+  const router = useRouter();
   const { user } = useAuth();
   const now = new Date();
   const [events, setEvents] = useState<MyEvent[]>([]);
@@ -340,14 +342,32 @@ export default function MyCalendarScreen() {
     return <Pressable onPress={() => openEvent(event)} accessibilityLabel={`View details for ${eventName(event)}`} style={{ flexDirection: "row", alignItems: "center", borderRadius: 16, borderWidth: 1, borderColor: "#e2e8f0", backgroundColor: "#fff", padding: 14 }}><View style={{ width: 44, height: 44, borderRadius: 12, backgroundColor: `${color}18`, alignItems: "center", justifyContent: "center" }}><Ionicons name="calendar-outline" size={22} color={color} /></View><View style={{ flex: 1, marginLeft: 12 }}><Text style={{ fontSize: 15, fontWeight: "700", color: "#0f172a" }}>{eventName(event)}</Text><Text style={{ marginTop: 3, fontSize: 12, fontWeight: "700", color }}>{eventType(event)}</Text><Text style={{ marginTop: 3, fontSize: 12, color: "#64748b" }}>{formatDate(event.planDate)} · {event.startTime || "All day"}{event.endTime ? ` - ${event.endTime}` : ""}</Text></View><Ionicons name="chevron-forward" size={18} color="#94a3b8" /></Pressable>;
   };
 
-  return <View style={{ flex: 1, backgroundColor: "#f8fafc" }}>
-    <TopHeader title="My Calendar" subtitle="Plan your day and track your events" />
+  return <SafeAreaView style={{ flex: 1, backgroundColor: "#f8fafc" }} edges={["top"]}>
+      <View style={{
+        flexDirection: "row", alignItems: "center",
+        paddingHorizontal: 16, paddingVertical: 14,
+        backgroundColor: "#fff",
+        borderBottomWidth: 1, borderBottomColor: "#f1f5f9",
+      }}>
+        <Pressable
+          onPress={() => router.back()}
+          style={{
+            width: 38, height: 38, borderRadius: 12,
+            backgroundColor: "#f8fafc",
+            alignItems: "center", justifyContent: "center",
+            marginRight: 12,
+          }}
+        >
+          <Ionicons name="arrow-back" size={20} color="#0f172a" />
+        </Pressable>
+        <Text style={{ fontSize: 18, fontWeight: "800", color: "#0f172a" }}>My Calendar</Text>
+      </View>
     <ScrollView style={{ flex: 1 }} contentContainerStyle={{ padding: 20, paddingBottom: 32 }} refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => fetchEvents(true)} />}>
       <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: 10 }}><View style={{ flex: 1 }}><Text style={{ fontSize: 28, fontWeight: "800", color: "#0f172a" }}>My Calendar</Text><Text style={{ marginTop: 6, fontSize: 15, color: "#64748b" }}>Your personal plans, tasks and daily schedule.</Text></View><View style={{ flexDirection: "row", gap: 8 }}><Pressable onPress={() => fetchEvents(true)} accessibilityLabel="Refresh my calendar" style={{ padding: 10, borderRadius: 12, backgroundColor: "#ffedd5" }}><Ionicons name="refresh-outline" size={22} color="#f97316" /></Pressable></View></View>
       <View style={{ flexDirection: "row", marginTop: 20, borderRadius: 12, backgroundColor: "#e2e8f0", padding: 3 }}>{(["Month", "Week", "Day", "Agenda"] as ViewMode[]).map((mode) => <Pressable key={mode} onPress={() => setViewMode(mode)} style={{ flex: 1, alignItems: "center", borderRadius: 9, backgroundColor: viewMode === mode ? "#fff" : "transparent", paddingVertical: 9 }}><Text style={{ color: viewMode === mode ? "#f97316" : "#64748b", fontSize: 12, fontWeight: "700" }}>{mode}</Text></Pressable>)}</View>
 
       {viewMode !== "Agenda" && <View style={{ marginTop: 16, borderRadius: 20, borderWidth: 1, borderColor: "#e2e8f0", backgroundColor: "#fff", padding: 16 }}><View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: 14 }}><Pressable onPress={() => viewMode === "Day" ? setSelectedDate((current) => new Date(current.getFullYear(), current.getMonth(), current.getDate() - 1)) : viewMode === "Week" ? setSelectedDate((current) => new Date(current.getFullYear(), current.getMonth(), current.getDate() - 7)) : changeMonth(-1)} style={{ padding: 6 }}><Ionicons name="chevron-back" size={20} color="#475569" /></Pressable><Text style={{ fontSize: 17, fontWeight: "800", color: "#0f172a" }}>{viewMode === "Day" ? selectedDate.toLocaleDateString(undefined, { weekday: "long", month: "long", day: "numeric" }) : viewMode === "Week" ? `${weekDays[0].toLocaleDateString(undefined, { month: "short", day: "numeric" })} - ${weekDays[6].toLocaleDateString(undefined, { month: "short", day: "numeric" })}` : month.toLocaleDateString(undefined, { month: "long", year: "numeric" })}</Text><Pressable onPress={() => viewMode === "Day" ? setSelectedDate((current) => new Date(current.getFullYear(), current.getMonth(), current.getDate() + 1)) : viewMode === "Week" ? setSelectedDate((current) => new Date(current.getFullYear(), current.getMonth(), current.getDate() + 7)) : changeMonth(1)} style={{ padding: 6 }}><Ionicons name="chevron-forward" size={20} color="#475569" /></Pressable></View>
-        {viewMode === "Month" && <><View style={{ flexDirection: "row", marginBottom: 6 }}>{["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"].map((day) => <Text key={day} style={{ flex: 1, textAlign: "center", fontSize: 11, fontWeight: "700", color: "#94a3b8" }}>{day}</Text>)}</View><View style={{ flexDirection: "row", flexWrap: "wrap" }}>{monthDays.map((day, index) => { const marked = day ? eventsForDay(day).length > 0 : false; const selected = day ? dateKey(day) === dateKey(selectedDate) : false; return <Pressable key={day ? dateKey(day) : `empty-${index}`} disabled={!day} onPress={() => day && setSelectedDate(day)} style={{ width: `${100 / 7}%`, aspectRatio: 1, alignItems: "center", justifyContent: "center" }}>{day && <View style={{ width: 34, height: 34, borderRadius: 17, alignItems: "center", justifyContent: "center", backgroundColor: selected ? "#f97316" : marked ? "#ffedd5" : "transparent" }}><Text style={{ color: selected ? "#fff" : marked ? "#f97316" : "#334155", fontWeight: selected ? "800" : "500" }}>{day.getDate()}</Text>{marked && !selected && <View style={{ position: "absolute", bottom: 3, width: 4, height: 4, borderRadius: 2, backgroundColor: "#f97316" }} />}</View>}</Pressable>; })}</View></>}
+        {viewMode === "Month" && <><View style={{ flexDirection: "row", marginBottom: 6 }}>{["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"].map((day) => <Text key={day} style={{ flex: 1, textAlign: "center", fontSize: 11, fontWeight: "700", color: "#94a3b8" }}>{day}</Text>)}</View><View style={{ flexDirection: "row", flexWrap: "wrap" }}>{monthDays.map((day, index) => { const marked = day ? eventsForDay(day).length > 0 : false; const selected = day ? dateKey(day) === dateKey(selectedDate) : false; return <Pressable key={day ? dateKey(day) : `empty-${index}`} disabled={!day} onPress={() => day && setSelectedDate(day)} style={{ width: `${100 / 7}%`, aspectRatio: 1, alignItems: "center", justifyContent: "center" }}>{day && <View style={{ width: 34, height: 34, borderRadius: 17, alignItems: "center", justifyContent: "center", backgroundColor: selected ? "#f97316" : marked ? "#ffedd5" : "transparent" }}><Text style={{ color: selected ? "#fff" : marked ? "#f97316" : "#334155", fontWeight: selected ? "800" : "500" }}>{day.getDate()}</Text>{marked && !selected && <View style={{ position: "absolute", bottom: 3, width: 4, height: 4, borderRadius: 2, backgroundColor: "#f97316" }} />}</View></Pressable>; })}</View></>}
         {viewMode === "Week" && <View style={{ gap: 8 }}>{weekDays.map((day) => <Pressable key={dateKey(day)} onPress={() => setSelectedDate(day)} style={{ flexDirection: "row", alignItems: "center", borderRadius: 12, backgroundColor: dateKey(day) === dateKey(selectedDate) ? "#ffedd5" : "#f8fafc", padding: 10 }}><Text style={{ width: 76, fontWeight: "700", color: "#475569" }}>{day.toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric" })}</Text><Text style={{ flex: 1, color: "#64748b" }}>{eventsForDay(day).map(eventName).join(", ") || "No events"}</Text><Text style={{ color: "#f97316", fontWeight: "700" }}>{eventsForDay(day).length || ""}</Text></Pressable>)}</View>}
         {viewMode === "Day" && <View style={{ gap: 10 }}>{dayEvents.length ? dayEvents.map((event) => <EventCard key={event.id || event._id || eventName(event)} event={event} />) : <Text style={{ paddingVertical: 30, textAlign: "center", color: "#64748b" }}>No events for this day.</Text>}</View>}
       </View>}
@@ -355,9 +375,8 @@ export default function MyCalendarScreen() {
       <Text style={{ marginTop: 24, marginBottom: 12, fontSize: 11, fontWeight: "700", letterSpacing: 1.2, textTransform: "uppercase", color: "#94a3b8" }}>{viewMode === "Agenda" ? "Upcoming events" : "Selected day schedule"}</Text>
       {loading ? <View style={{ alignItems: "center", paddingVertical: 40 }}><ActivityIndicator size="large" color="#f97316" /></View> : error ? <View style={{ alignItems: "center", paddingVertical: 40 }}><Text style={{ color: "#64748b", textAlign: "center" }}>{error}</Text><Pressable onPress={() => fetchEvents()} style={{ marginTop: 14, borderRadius: 10, backgroundColor: "#f97316", paddingHorizontal: 16, paddingVertical: 10 }}><Text style={{ color: "#fff", fontWeight: "700" }}>Try again</Text></Pressable></View> : viewMode === "Agenda" ? (monthEvents.length ? <View style={{ gap: 10 }}>{monthEvents.map((event, index) => <EventCard key={event.id || event._id || `${eventName(event)}-${index}`} event={event} />)}</View> : <Text style={{ paddingVertical: 30, textAlign: "center", color: "#64748b" }}>No events in this month.</Text>) : (dayEvents.length ? <View style={{ gap: 10 }}>{dayEvents.map((event) => <EventCard key={event.id || event._id || eventName(event)} event={event} />)}</View> : <Text style={{ paddingVertical: 30, textAlign: "center", color: "#64748b" }}>No events for this day.</Text>)}
     </ScrollView>
-    <BottomHome />
-    <FAB onPress={() => setShowCreateModal(true)} style={{ bottom: 100 }} />
+    <FAB onPress={() => setShowCreateModal(true)} style={{ bottom: 24 }} />
     <CreateEventModal visible={showCreateModal} initialDate={selectedDate} userId={currentUserId} onClose={() => setShowCreateModal(false)} onSaved={() => fetchEvents(true)} />
     <EventDetails event={selectedEvent} onClose={() => setSelectedEvent(null)} />
-  </View>;
+  </SafeAreaView>;
 }

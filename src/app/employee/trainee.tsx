@@ -1,6 +1,7 @@
 import { Ionicons } from "@expo/vector-icons";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import * as DocumentPicker from "expo-document-picker";
+import { useRouter } from "expo-router";
 import { useCallback, useEffect, useState } from "react";
 import {
   ActivityIndicator,
@@ -12,6 +13,7 @@ import {
   TextInput,
   View,
 } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import api from "../../api";
 import { useAuth } from "../../auth/AuthContext";
 import { BottomHome } from "../../components/BottomHome";
@@ -848,6 +850,7 @@ function TaskAssignmentModal({
 }
 
 export default function TraineeScreen() {
+  const router = useRouter();
   const { user } = useAuth();
   const [members, setMembers] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -1038,11 +1041,26 @@ export default function TraineeScreen() {
   ];
 
   return (
-    <View style={{ flex: 1, backgroundColor: "#f8fafc" }}>
-      <TopHeader
-        title="Trainee & Internship"
-        subtitle="Your assigned trainees"
-      />
+    <SafeAreaView style={{ flex: 1, backgroundColor: "#f8fafc" }} edges={["top"]}>
+      <View style={{
+        flexDirection: "row", alignItems: "center",
+        paddingHorizontal: 16, paddingVertical: 14,
+        backgroundColor: "#fff",
+        borderBottomWidth: 1, borderBottomColor: "#f1f5f9",
+      }}>
+        <Pressable
+          onPress={() => router.back()}
+          style={{
+            width: 38, height: 38, borderRadius: 12,
+            backgroundColor: "#f8fafc",
+            alignItems: "center", justifyContent: "center",
+            marginRight: 12,
+          }}
+        >
+          <Ionicons name="arrow-back" size={20} color="#0f172a" />
+        </Pressable>
+        <Text style={{ fontSize: 18, fontWeight: "800", color: "#0f172a" }}>Trainee & Internship</Text>
+      </View>
       <ScrollView
         style={{ flex: 1 }}
         contentContainerStyle={{ padding: 20, paddingBottom: 32 }}
@@ -1482,7 +1500,6 @@ export default function TraineeScreen() {
           </View>
         )}
       </ScrollView>
-      <BottomHome />
       <TaskMasterModal
         visible={taskVisible}
         employeeId={employeeId}
@@ -1497,6 +1514,6 @@ export default function TraineeScreen() {
         onClose={() => setTaskAssignmentVisible(false)} 
         onSaved={loadTasks} 
       />
-    </View>
+    </SafeAreaView>
   );
 }
