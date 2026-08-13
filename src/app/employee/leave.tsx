@@ -391,11 +391,11 @@ export default function EmployeeLeaveScreen() {
               return (
                 <View
                   key={leave.id}
-                  className="overflow-hidden rounded-[24px] border border-orange-100 bg-gradient-to-br from-white via-orange-50/60 to-white p-4 shadow-sm shadow-orange-100"
+                  className="mb-4 overflow-hidden rounded-[24px] border border-orange-200 bg-white p-5"
                   style={{
                     shadowColor: "#f97316",
-                    shadowOffset: { width: 0, height: 8 },
-                    shadowOpacity: 0.08,
+                    shadowOffset: { width: 0, height: 6 },
+                    shadowOpacity: 0.15,
                     shadowRadius: 16,
                     elevation: 4,
                   }}

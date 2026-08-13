@@ -531,7 +531,14 @@ export default function EmployeeProjectsScreen() {
                 onPress={() =>
                   router.push(`/employee/projects/${project.uuid}` as any)
                 }
-                className="overflow-hidden rounded-[24px] border border-slate-200 bg-white p-0 shadow-sm active:bg-slate-50"
+                className="mb-4 overflow-hidden rounded-[24px] border border-orange-200 bg-white p-0 active:opacity-90"
+                style={{
+                  shadowColor: "#f97316",
+                  shadowOffset: { width: 0, height: 6 },
+                  shadowOpacity: 0.15,
+                  shadowRadius: 16,
+                  elevation: 4,
+                }}
               >
                 <View className="border-b border-slate-100 bg-slate-50/80 px-4 py-4">
                   <View className="flex-row items-start justify-between">
