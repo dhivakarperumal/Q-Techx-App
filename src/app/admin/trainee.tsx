@@ -121,25 +121,75 @@ type AttendanceRow = { trainee_intern_id?: string; trainee_name?: string; person
 type AttendanceDetail = { id?: string; attendance_date?: string; date?: string; check_in_time?: string; check_out_time?: string; attendance_status?: string; location?: string };
 const attendanceDate = () => { const date = new Date(); return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`; };
 
+const calculateMetrics = (checkIn: string, checkOut: string) => {
+  const parseTime = (value: string) => {
+    if (!value) return null;
+    const [hours, minutes] = value.split(':').map(Number);
+    return hours * 60 + minutes;
+  };
+  const officeCheckIn = parseTime('09:30');
+  const officeCheckOut = parseTime('18:00');
+  const checkInMinutes = parseTime(checkIn);
+  const checkOutMinutes = parseTime(checkOut);
+  let workingHours = '0h 0m', lateEntry = 'No', earlyExit = 'No', overtime = 'No';
+  if (checkInMinutes !== null && checkOutMinutes !== null) {
+    const durationMinutes = Math.max(0, checkOutMinutes - checkInMinutes);
+    workingHours = `${Math.floor(durationMinutes / 60)}h ${durationMinutes % 60}m`;
+  }
+  if (checkInMinutes !== null) {
+    const lateBy = checkInMinutes - officeCheckIn!;
+    if (lateBy > 0) lateEntry = `${Math.floor(lateBy / 60)}h ${lateBy % 60}m`;
+  }
+  if (checkOutMinutes !== null) {
+    const exitBefore = officeCheckOut! - checkOutMinutes;
+    if (exitBefore > 0) earlyExit = `${Math.floor(exitBefore / 60)}h ${exitBefore % 60}m`;
+  }
+  if (checkOutMinutes !== null) {
+    const overtimeMinutes = Math.max(0, checkOutMinutes - officeCheckOut!);
+    if (overtimeMinutes > 0) overtime = `${Math.floor(overtimeMinutes / 60)}h ${overtimeMinutes % 60}m`;
+  }
+  return { working_hours: workingHours, late_entry: lateEntry, early_exit: earlyExit, overtime };
+};
+
 function AttendanceModal({ visible, members, onClose, onSaved }: { visible: boolean; members: Member[]; onClose: () => void; onSaved: () => void }) {
   const [form, setForm] = useState({ trainee_intern_id: "", date: attendanceDate(), check_in_time: "", check_out_time: "", attendance_status: "Present", location: "" });
+  const [metrics, setMetrics] = useState({ working_hours: '0h 0m', late_entry: 'No', early_exit: 'No', overtime: 'No' });
   const [saving, setSaving] = useState(false);
-  const set = (key: string, value: string) => setForm((current) => ({ ...current, [key]: value }));
+  const set = (key: string, value: string) => {
+    const updated = { ...form, [key]: value };
+    setForm(updated);
+    if (key === 'check_in_time' || key === 'check_out_time') {
+      setMetrics(calculateMetrics(updated.check_in_time, updated.check_out_time));
+    }
+  };
   useEffect(() => { if (visible) setForm((current) => ({ ...current, date: attendanceDate() })); }, [visible]);
   const save = async () => {
     if (!form.trainee_intern_id) return Alert.alert("Required field", "Please select a trainee or intern.");
     if (!form.date) return Alert.alert("Required field", "Please enter the attendance date.");
     setSaving(true);
     try {
-      await api.post("/trainee-intern-attendance", form);
+      await api.post("/trainee-intern-attendance", {
+        trainee_intern_id: form.trainee_intern_id,
+        date: form.date,
+        check_in_time: form.check_in_time,
+        check_out_time: form.check_out_time,
+        working_hours: metrics.working_hours,
+        late_entry: metrics.late_entry,
+        early_exit: metrics.early_exit,
+        overtime: metrics.overtime,
+        attendance_status: form.attendance_status,
+        location: form.location,
+      });
       Alert.alert("Saved", "Trainee/intern attendance recorded successfully.");
+      setForm({ trainee_intern_id: "", date: attendanceDate(), check_in_time: "", check_out_time: "", attendance_status: "Present", location: "" });
+      setMetrics({ working_hours: '0h 0m', late_entry: 'No', early_exit: 'No', overtime: 'No' });
       onSaved();
       onClose();
     } catch (error: any) {
       Alert.alert("Unable to save attendance", error?.message || "Please try again.");
     } finally { setSaving(false); }
   };
-  return <Modal visible={visible} animationType="slide" onRequestClose={onClose}><View className="flex-1 bg-[#f8fafc]"><View className="bg-black pt-4 px-6 pb-6"><View className="w-12 h-1.5 bg-slate-700 rounded-full mx-auto mb-4" /><View className="flex-row justify-between items-center"><View><Text className="text-lg font-black text-orange-500">Mark Attendance</Text><Text className="mt-1 text-xs text-white/70">Create or update a trainee/intern record.</Text></View><Pressable onPress={onClose}><Ionicons name="close-circle" size={28} color="#f97316" /></Pressable></View></View><ScrollView contentContainerStyle={{ padding: 20, paddingBottom: 40, paddingTop: 10 }}><View className="rounded-3xl border border-slate-100 bg-white p-4 shadow-sm"><Text className="mb-3 text-xs font-bold text-slate-500">Trainee / Intern</Text><ScrollView horizontal showsHorizontalScrollIndicator={false} className="mb-4">{members.map((member) => <Pressable key={String(member.uuid)} onPress={() => set("trainee_intern_id", String(member.uuid))} className={`mr-2 rounded-full border px-3 py-2 ${form.trainee_intern_id === String(member.uuid) ? "border-orange-500 bg-orange-50" : "border-slate-200 bg-white"}`}><Text className={`text-xs font-bold ${form.trainee_intern_id === String(member.uuid) ? "text-orange-600" : "text-slate-500"}`}>{nameOf(member)}</Text></Pressable>)}</ScrollView><Field label="Date (YYYY-MM-DD)" value={form.date} onChange={(value) => set("date", value)} /><Text className="mb-2 text-xs font-bold text-slate-500">Attendance Status</Text><View className="mb-3 flex-row flex-wrap gap-2">{["Present", "Absent"].map((status) => <Pressable key={status} onPress={() => set("attendance_status", status)} className={`rounded-full border px-3 py-2 ${form.attendance_status === status ? "border-orange-500 bg-orange-50" : "border-slate-200"}`}><Text className={`text-xs font-bold ${form.attendance_status === status ? "text-orange-600" : "text-slate-500"}`}>{status}</Text></Pressable>)}</View><Field label="Check-in Time (HH:MM)" value={form.check_in_time} onChange={(value) => set("check_in_time", value)} placeholder="09:30" /><Field label="Check-out Time (HH:MM)" value={form.check_out_time} onChange={(value) => set("check_out_time", value)} placeholder="18:00" /><Field label="Location" value={form.location} onChange={(value) => set("location", value)} placeholder="Optional location" /><Pressable disabled={saving} onPress={save} className="mt-2 items-center rounded-xl bg-orange-500 py-3 disabled:opacity-50"><Text className="font-bold text-white">{saving ? "Saving..." : "Save / Update"}</Text></Pressable></View></ScrollView></View></Modal>;
+  return <Modal visible={visible} animationType="slide" onRequestClose={onClose}><View className="flex-1 bg-[#f8fafc]"><View className="bg-black pt-4 px-6 pb-6"><View className="w-12 h-1.5 bg-slate-700 rounded-full mx-auto mb-4" /><View className="flex-row justify-between items-center"><View><Text className="text-lg font-black text-orange-500">Mark Attendance</Text><Text className="mt-1 text-xs text-white/70">Create or update a trainee/intern record.</Text></View><Pressable onPress={onClose}><Ionicons name="close-circle" size={28} color="#f97316" /></Pressable></View></View><ScrollView contentContainerStyle={{ padding: 20, paddingBottom: 40, paddingTop: 10 }}><View className="rounded-3xl border border-slate-100 bg-white p-4 shadow-sm"><Text className="mb-3 text-xs font-bold text-slate-500">Trainee / Intern</Text><ScrollView horizontal showsHorizontalScrollIndicator={false} className="mb-4">{members.map((member) => <Pressable key={String(member.uuid)} onPress={() => set("trainee_intern_id", String(member.uuid))} className={`mr-2 rounded-full border px-3 py-2 ${form.trainee_intern_id === String(member.uuid) ? "border-orange-500 bg-orange-50" : "border-slate-200 bg-white"}`}><Text className={`text-xs font-bold ${form.trainee_intern_id === String(member.uuid) ? "text-orange-600" : "text-slate-500"}`}>{nameOf(member)}</Text></Pressable>)}</ScrollView><Field label="Date (YYYY-MM-DD)" value={form.date} onChange={(value) => set("date", value)} /><Text className="mb-2 text-xs font-bold text-slate-500">Attendance Status</Text><View className="mb-3 flex-row flex-wrap gap-2">{["Present", "Absent"].map((status) => <Pressable key={status} onPress={() => set("attendance_status", status)} className={`rounded-full border px-3 py-2 ${form.attendance_status === status ? "border-orange-500 bg-orange-50" : "border-slate-200"}`}><Text className={`text-xs font-bold ${form.attendance_status === status ? "text-orange-600" : "text-slate-500"}`}>{status}</Text></Pressable>)}</View><Field label="Check-in Time" value={form.check_in_time} onChange={(value) => set("check_in_time", value)} placeholder="HH:MM" /><Field label="Check-out Time" value={form.check_out_time} onChange={(value) => set("check_out_time", value)} placeholder="HH:MM" /><View className="mb-3 rounded-2xl border border-slate-100 bg-slate-50 p-3"><View className="flex-row flex-wrap gap-2"><View className="flex-1"><Text className="text-xs text-slate-500">Working Hours</Text><Text className="mt-1 font-bold text-slate-900">{metrics.working_hours}</Text></View><View className="flex-1"><Text className="text-xs text-slate-500">Late Entry</Text><Text className="mt-1 font-bold text-slate-900">{metrics.late_entry}</Text></View><View className="flex-1"><Text className="text-xs text-slate-500">Early Exit</Text><Text className="mt-1 font-bold text-slate-900">{metrics.early_exit}</Text></View><View className="flex-1"><Text className="text-xs text-slate-500">Overtime</Text><Text className="mt-1 font-bold text-slate-900">{metrics.overtime}</Text></View></View></View><Field label="Check-in Time (HH:MM)" value={form.check_in_time} onChange={(value) => set("check_in_time", value)} placeholder="09:30" /><Field label="Check-out Time (HH:MM)" value={form.check_out_time} onChange={(value) => set("check_out_time", value)} placeholder="18:00" /><Field label="Location" value={form.location} onChange={(value) => set("location", value)} placeholder="Optional location" /><Pressable disabled={saving} onPress={save} className="mt-2 items-center rounded-xl bg-orange-500 py-3 disabled:opacity-50"><Text className="font-bold text-white">{saving ? "Saving..." : "Save / Update"}</Text></Pressable></View></ScrollView></View></Modal>;
 }
 
 function AttendanceDetailModal({ visible, member, attendanceRecords, onClose }: { visible: boolean; member: AttendanceRow | null; attendanceRecords: AttendanceDetail[]; onClose: () => void }) {
@@ -235,7 +285,21 @@ export default function AdminTraineeScreen() {
   const loadMembers = useCallback(async (refresh = false) => { if (refresh) setRefreshing(true); else setLoading(true); try { const query = new URLSearchParams({ page: "1", limit: "100" }); if (search) query.set("search", search); if (type !== "All") query.set("type", type); if (status !== "All") query.set("status", status); const membersResponse = await api.get(`/trainee-intern?${query.toString()}`); setMembers(membersResponse.data?.data || []); try { const employeesResponse = await api.get("/trainee-assignments/available-employees"); setEmployees(employeesResponse.data?.data || []); } catch { const employeesResponse = await api.get("/employees?limit=200"); setEmployees(employeesResponse.data?.data || employeesResponse.data?.employees || []); } } catch (error: any) { Alert.alert("Unable to load members", error?.message || "Please try again."); } finally { setLoading(false); setRefreshing(false); } }, [search, type, status]);
   useEffect(() => { loadMembers(); }, [loadMembers]);
   const loadAttendance = useCallback(async () => { setAttendanceLoading(true); try { const response = await api.get(`/trainee-intern-attendance/summary?month=${selectedMonth}&year=${selectedYear}`); setAttendance(response.data?.data || []); } catch (error: any) { Alert.alert("Unable to load attendance", error?.message || "Please try again."); } finally { setAttendanceLoading(false); } }, [selectedMonth, selectedYear]);
-  const loadAttendanceDetails = useCallback(async (memberId: string) => { setAttendanceLoading(true); try { const response = await api.get(`/trainee-intern-attendance?trainee_intern_id=${memberId}&month=${selectedMonth}&year=${selectedYear}`); setAttendanceDetails(response.data?.data || []); } catch (error: any) { Alert.alert("Unable to load records", error?.message || "Please try again."); } finally { setAttendanceLoading(false); } }, [selectedMonth, selectedYear]);
+  const loadAttendanceDetails = useCallback(async (memberId: string) => {
+    setAttendanceLoading(true);
+    try {
+      const response = await api.get(`/trainee-intern-attendance?trainee_intern_id=${memberId}&month=${selectedMonth}&year=${selectedYear}`);
+      setAttendanceDetails(response.data?.data || []);
+    } catch (error: any) {
+      if (error?.response?.status === 404) {
+        setAttendanceDetails([]);
+      } else {
+        Alert.alert("Unable to load records", error?.message || "Please try again.");
+      }
+    } finally {
+      setAttendanceLoading(false);
+    }
+  }, [selectedMonth, selectedYear]);
   useEffect(() => { if (tab === "Attendance") loadAttendance(); }, [tab, loadAttendance]);
   const loadTasks = useCallback(async () => { setTaskLoading(true); try { const [tasksResponse, assignmentsResponse] = await Promise.all([api.get("/trainee-tasks"), api.get("/trainee-task-assignments")]); const taskData = tasksResponse.data?.data ?? tasksResponse.data; setTasks(Array.isArray(taskData) ? taskData : taskData?.tasks || []); const assignmentData = assignmentsResponse.data?.data ?? assignmentsResponse.data; setTaskAssignments(Array.isArray(assignmentData) ? assignmentData : assignmentData?.assignments || []); } catch (error: any) { Alert.alert("Unable to load tasks", error?.message || "Please try again."); } finally { setTaskLoading(false); } }, []);
   useEffect(() => { if (tab === "Tasks" || tab === "Assign Task") loadTasks(); }, [tab, loadTasks]);
@@ -418,7 +482,7 @@ export default function AdminTraineeScreen() {
                 {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].map((month) => (
                   <Pressable
                     key={month}
-                    onPress={() => setSelectedMonth(month)}
+                    onPress={() => { setSelectedMonth(month); setAttendanceDetailVisible(false); }}
                     className={`px-3 py-1.5 rounded-full border ${selectedMonth === month ? 'border-orange-500 bg-orange-50' : 'border-slate-200 bg-white'}`}
                   >
                     <Text className={`text-xs font-bold ${selectedMonth === month ? 'text-orange-600' : 'text-slate-500'}`}>
@@ -434,7 +498,7 @@ export default function AdminTraineeScreen() {
                 {[selectedYear - 1, selectedYear, selectedYear + 1].map((year) => (
                   <Pressable
                     key={year}
-                    onPress={() => setSelectedYear(year)}
+                    onPress={() => { setSelectedYear(year); setAttendanceDetailVisible(false); }}
                     className={`px-3 py-1.5 rounded-full border ${selectedYear === year ? 'border-orange-500 bg-orange-50' : 'border-slate-200 bg-white'}`}
                   >
                     <Text className={`text-xs font-bold ${selectedYear === year ? 'text-orange-600' : 'text-slate-500'}`}>{year}</Text>
