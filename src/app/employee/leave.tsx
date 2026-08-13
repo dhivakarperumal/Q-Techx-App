@@ -1,4 +1,5 @@
 import { Ionicons } from "@expo/vector-icons";
+import DateTimePicker from "@react-native-community/datetimepicker";
 import { LinearGradient } from "expo-linear-gradient";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
@@ -64,6 +65,8 @@ export default function EmployeeLeaveScreen() {
   const [statusFilter, setStatusFilter] = useState("All");
   const [showApply, setShowApply] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [showFromDatePicker, setShowFromDatePicker] = useState(false);
+  const [showToDatePicker, setShowToDatePicker] = useState(false);
   const [form, setForm] = useState({
     leave_type: "Casual Leave",
     from_date: "",
@@ -72,6 +75,13 @@ export default function EmployeeLeaveScreen() {
     half_day_type: "Morning",
     reason: "",
   });
+
+  const formatPickerDate = (date: Date) => {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    const day = String(date.getDate()).padStart(2, "0");
+    return `${year}-${month}-${day}`;
+  };
 
   const fetchLeaveData = useCallback(async (isRefresh = false) => {
     try {
@@ -262,46 +272,50 @@ export default function EmployeeLeaveScreen() {
           ].map((stat, idx) => (
             <View
               key={idx}
-              className="w-[32%] overflow-hidden rounded-2xl bg-white border border-orange-100"
+              className="w-[32%] overflow-hidden rounded-[22px] border border-slate-200 bg-[#f5f5f5]"
               style={{
-                shadowColor: "#f97316",
-                shadowOffset: { width: 0, height: 4 },
-                shadowOpacity: 0.12,
-                shadowRadius: 10,
-                elevation: 4,
+                shadowColor: "#000000",
+                shadowOffset: { width: 0, height: 2 },
+                shadowOpacity: 0.04,
+                shadowRadius: 8,
+                elevation: 2,
               }}
             >
               <LinearGradient
-                colors={["#ffffff", "#fff7ed"]}
+                colors={["#f5f5f5", "#f5f5f5"]}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 1 }}
-                style={{ paddingHorizontal: 8, paddingVertical: 12 }}
+                style={{ paddingHorizontal: 10, paddingVertical: 14 }}
               >
-                <View className="flex-col items-start mb-2">
-                  <View className="h-8 w-8 items-center justify-center rounded-xl bg-black mb-2">
+                <View className="mb-3 flex-row items-center justify-between">
+                  <View className="h-9 w-9 items-center justify-center rounded-xl bg-[#171717]">
                     <Ionicons
                       name={stat.icon as any}
-                      size={16}
+                      size={18}
                       color="#f97316"
                     />
                   </View>
-                  <Text
-                    className="text-[10px] font-bold uppercase tracking-[0.5px] text-gray-500"
-                    numberOfLines={1}
-                  >
-                    {stat.label}
-                  </Text>
+                  {idx === 2 && (
+                    <View className="h-5 w-5 items-center justify-center rounded-full bg-[#22c55e]">
+                      <Ionicons name="checkmark" size={12} color="#fff" />
+                    </View>
+                  )}
                 </View>
-                <View className="flex-col items-start">
-                  <Text className="text-xl font-black text-black">
-                    {stat.value}
-                  </Text>
-                  <Text
-                    className={`text-[9px] font-bold ${stat.subColor || "text-gray-400"}`}
-                  >
-                    {stat.sub}
-                  </Text>
-                </View>
+
+                <Text
+                  className="text-[10px] font-black uppercase tracking-[1.2px] text-slate-500"
+                  numberOfLines={1}
+                >
+                  {stat.label}
+                </Text>
+                <Text className="mt-2 text-[28px] font-black text-slate-900">
+                  {stat.value}
+                </Text>
+                <Text
+                  className={`mt-1 text-[11px] font-semibold ${stat.subColor || "text-slate-500"}`}
+                >
+                  {stat.sub}
+                </Text>
               </LinearGradient>
             </View>
           ))}
@@ -499,25 +513,26 @@ export default function EmployeeLeaveScreen() {
         onRequestClose={() => setShowApply(false)}
       >
         <View className="flex-1 justify-end bg-black/40">
-          <View className="max-h-[92%] rounded-t-3xl bg-white px-5 pb-8 pt-5">
-            <View className="flex-row items-center justify-between">
-              <View>
-                <Text className="text-xl font-black text-slate-950">
+          <View className="max-h-[92%] overflow-hidden rounded-t-[28px] bg-[#f2f2f2] px-5 pb-8 pt-5">
+            <View className="mb-4 flex-row items-center justify-between rounded-t-[26px] bg-[#111827] px-5 py-4">
+              <View className="flex-1 pr-0">
+                <Text className="text-[16px] font-black text-[#f97316]">
                   Apply for leave
                 </Text>
-                <Text className="mt-1 text-sm text-slate-500">
+                <Text className="mt-1 text-[15px] text-slate-200">
                   Submit a request for approval.
                 </Text>
               </View>
               <Pressable
                 onPress={() => setShowApply(false)}
-                className="rounded-full bg-slate-100 p-2"
+                className="h-11 w-11 items-center justify-center rounded-full bg-white"
               >
-                <Ionicons name="close" size={20} color="#475569" />
+                <Ionicons name="close" size={24} color="#1f2937" />
               </Pressable>
             </View>
-            <ScrollView className="mt-5" keyboardShouldPersistTaps="handled">
-              <Text className="mb-2 text-xs font-bold uppercase tracking-wider text-slate-500">
+
+            <ScrollView className="mt-2" keyboardShouldPersistTaps="handled">
+              <Text className="mb-2 text-[12px] font-black uppercase tracking-[2px] text-slate-500">
                 Leave type
               </Text>
               <ScrollView
@@ -529,48 +544,52 @@ export default function EmployeeLeaveScreen() {
                   <Pressable
                     key={type}
                     onPress={() => updateForm("leave_type", type)}
-                    className={`mr-2 rounded-full border px-3 py-2 ${form.leave_type === type ? "border-blue-600 bg-blue-600" : "border-slate-200 bg-slate-50"}`}
+                    className={`mr-2 rounded-full border px-4 py-3 ${form.leave_type === type ? "border-[#2563eb] bg-[#2563eb]" : "border-slate-300 bg-white"}`}
                   >
                     <Text
-                      className={`text-xs font-semibold ${form.leave_type === type ? "text-white" : "text-slate-600"}`}
+                      className={`text-sm font-semibold ${form.leave_type === type ? "text-white" : "text-slate-700"}`}
                     >
                       {type}
                     </Text>
                   </Pressable>
                 ))}
               </ScrollView>
+
               <View className="flex-row gap-3">
                 <View className="flex-1">
-                  <Text className="mb-2 text-xs font-bold text-slate-500">
+                  <Text className="mb-2 text-[12px] font-black uppercase tracking-[2px] text-slate-500">
                     From (YYYY-MM-DD)
                   </Text>
-                  <TextInput
-                    value={form.from_date}
-                    onChangeText={(value) => updateForm("from_date", value)}
-                    placeholder="2026-08-12"
-                    placeholderTextColor="#94a3b8"
-                    className="rounded-xl border border-slate-200 px-3 py-3 text-slate-900"
-                  />
+                  <Pressable
+                    onPress={() => setShowFromDatePicker(true)}
+                    className="rounded-xl border border-slate-300 bg-white px-3 py-3"
+                  >
+                    <Text className="text-base text-slate-900">
+                      {form.from_date || "Select date"}
+                    </Text>
+                  </Pressable>
                 </View>
                 <View className="flex-1">
-                  <Text className="mb-2 text-xs font-bold text-slate-500">
+                  <Text className="mb-2 text-[12px] font-black uppercase tracking-[2px] text-slate-500">
                     To (YYYY-MM-DD)
                   </Text>
-                  <TextInput
-                    value={
-                      form.day_type === "Half Day"
-                        ? form.from_date
-                        : form.to_date
-                    }
-                    onChangeText={(value) => updateForm("to_date", value)}
-                    editable={form.day_type !== "Half Day"}
-                    placeholder="2026-08-12"
-                    placeholderTextColor="#94a3b8"
-                    className="rounded-xl border border-slate-200 px-3 py-3 text-slate-900"
-                  />
+                  <Pressable
+                    onPress={() => setShowToDatePicker(true)}
+                    disabled={form.day_type === "Half Day"}
+                    className={`rounded-xl border border-slate-300 px-3 py-3 ${form.day_type === "Half Day" ? "bg-slate-100" : "bg-white"}`}
+                  >
+                    <Text
+                      className={`text-base ${form.day_type === "Half Day" ? "text-slate-400" : "text-slate-900"}`}
+                    >
+                      {form.day_type === "Half Day"
+                        ? form.from_date || "Select date"
+                        : form.to_date || "Select date"}
+                    </Text>
+                  </Pressable>
                 </View>
               </View>
-              <Text className="mb-2 mt-4 text-xs font-bold uppercase tracking-wider text-slate-500">
+
+              <Text className="mb-2 mt-4 text-[12px] font-black uppercase tracking-[2px] text-slate-500">
                 Day type
               </Text>
               <View className="flex-row gap-3">
@@ -578,32 +597,34 @@ export default function EmployeeLeaveScreen() {
                   <Pressable
                     key={type}
                     onPress={() => updateForm("day_type", type)}
-                    className={`flex-1 rounded-xl border px-3 py-3 ${form.day_type === type ? "border-blue-600 bg-blue-50" : "border-slate-200"}`}
+                    className={`flex-1 rounded-xl border px-3 py-3 ${form.day_type === type ? "border-[#2563eb] bg-[#dfe9ff]" : "border-slate-300 bg-white"}`}
                   >
                     <Text
-                      className={`text-center text-sm font-semibold ${form.day_type === type ? "text-blue-700" : "text-slate-600"}`}
+                      className={`text-center text-base font-semibold ${form.day_type === type ? "text-[#1d4ed8]" : "text-slate-600"}`}
                     >
                       {type}
                     </Text>
                   </Pressable>
                 ))}
               </View>
+
               {form.day_type === "Half Day" && (
                 <View className="mt-3 flex-row gap-3">
                   {["Morning", "Afternoon"].map((type) => (
                     <Pressable
                       key={type}
                       onPress={() => updateForm("half_day_type", type)}
-                      className={`flex-1 rounded-xl border px-3 py-3 ${form.half_day_type === type ? "border-blue-600 bg-blue-50" : "border-slate-200"}`}
+                      className={`flex-1 rounded-xl border px-3 py-3 ${form.half_day_type === type ? "border-[#2563eb] bg-[#dfe9ff]" : "border-slate-300 bg-white"}`}
                     >
-                      <Text className="text-center text-sm font-semibold text-slate-600">
+                      <Text className="text-center text-base font-semibold text-slate-600">
                         {type}
                       </Text>
                     </Pressable>
                   ))}
                 </View>
               )}
-              <Text className="mb-2 mt-4 text-xs font-bold uppercase tracking-wider text-slate-500">
+
+              <Text className="mb-2 mt-4 text-[12px] font-black uppercase tracking-[2px] text-slate-500">
                 Reason
               </Text>
               <TextInput
@@ -614,23 +635,56 @@ export default function EmployeeLeaveScreen() {
                 textAlignVertical="top"
                 placeholder="Tell us why you need leave"
                 placeholderTextColor="#94a3b8"
-                className="min-h-[100px] rounded-xl border border-slate-200 px-3 py-3 text-slate-900"
+                className="min-h-[100px] rounded-xl border border-slate-300 bg-white px-3 py-3 text-base text-slate-900"
               />
+
               <Pressable
                 disabled={submitting}
                 onPress={submitLeave}
-                className="mt-5 items-center rounded-xl bg-blue-600 py-4 active:bg-blue-700"
+                className="mt-5 items-center rounded-xl bg-[#2563eb] py-4 active:bg-[#1d4ed8]"
               >
                 {submitting ? (
                   <ActivityIndicator color="#fff" />
                 ) : (
-                  <Text className="font-bold text-white">Submit request</Text>
+                  <Text className="text-[20px] font-black text-white">
+                    Submit request
+                  </Text>
                 )}
               </Pressable>
             </ScrollView>
           </View>
         </View>
       </Modal>
+
+      {showFromDatePicker && (
+        <DateTimePicker
+          value={
+            form.from_date ? new Date(`${form.from_date}T00:00:00`) : new Date()
+          }
+          mode="date"
+          onChange={(_, selectedDate) => {
+            setShowFromDatePicker(false);
+            if (selectedDate) {
+              updateForm("from_date", formatPickerDate(selectedDate));
+            }
+          }}
+        />
+      )}
+
+      {showToDatePicker && (
+        <DateTimePicker
+          value={
+            form.to_date ? new Date(`${form.to_date}T00:00:00`) : new Date()
+          }
+          mode="date"
+          onChange={(_, selectedDate) => {
+            setShowToDatePicker(false);
+            if (selectedDate) {
+              updateForm("to_date", formatPickerDate(selectedDate));
+            }
+          }}
+        />
+      )}
     </View>
   );
 }
