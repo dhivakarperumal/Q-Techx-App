@@ -1096,12 +1096,7 @@ export default function TraineeScreen() {
         style={{ flex: 1 }}
         contentContainerStyle={{ padding: 20, paddingBottom: 32 }}
       >
-        <Text style={{ fontSize: 28, fontWeight: "800", color: "#0f172a" }}>
-          Assigned Trainees & Interns
-        </Text>
-        <Text style={{ marginTop: 6, fontSize: 15, color: "#64748b" }}>
-          View only the trainee and intern records assigned to you.
-        </Text>
+      
 
         {error ? (
           <View
