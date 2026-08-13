@@ -6,19 +6,19 @@ import { SafeAreaView } from "react-native-safe-area-context";
 type Tab = {
   label: string;
   href:
-    | "/employee"
-    | "/employee/tasks"
-    | "/employee/projects"
-    | "/employee/leave"
-    | "/employee/attendance"
-    | "/employee/more";
+  | "/employee"
+  | "/employee/tasks"
+  | "/employee/projects"
+  | "/employee/leave"
+  | "/employee/attendance"
+  | "/employee/more";
   icon:
-    | "home-outline"
-    | "checkmark-circle-outline"
-    | "folder-outline"
-    | "calendar-clear-outline"
-    | "calendar-outline"
-    | "apps-outline";
+  | "home-outline"
+  | "checkmark-circle-outline"
+  | "folder-outline"
+  | "calendar-clear-outline"
+  | "calendar-outline"
+  | "apps-outline";
   activeIcon: "home" | "checkmark-circle" | "folder" | "calendar-clear" | "calendar" | "apps";
 };
 
@@ -73,7 +73,7 @@ export function BottomHome() {
       <View className="flex-row items-center justify-around px-2 pb-2 pt-3">
         {tabs.map((tab) => {
           const isActive = pathname === tab.href;
-          const iconColor = isActive ? "#1d4ed8" : "#64748b";
+          const iconColor = isActive ? "#f97316" : "#64748b";
 
           return (
             <Pressable
@@ -89,7 +89,7 @@ export function BottomHome() {
               }}
             >
               {isActive && (
-                <View className="absolute -top-3 w-8 h-1 bg-blue-700 rounded-b-full" />
+                <View className="absolute -top-3 h-1 w-8 rounded-b-full bg-orange-500" />
               )}
               <Ionicons
                 name={isActive ? tab.activeIcon : tab.icon}
@@ -99,7 +99,7 @@ export function BottomHome() {
               <Text
                 className={
                   isActive
-                    ? "mt-1 text-[10px] font-bold text-blue-700"
+                    ? "mt-1 text-[10px] font-bold text-orange-500"
                     : "mt-1 text-[10px] font-medium text-slate-500"
                 }
               >
