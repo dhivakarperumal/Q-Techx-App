@@ -632,7 +632,9 @@ export default function EmployeeLeaveScreen() {
                       onPress={() => updateForm("half_day_type", type)}
                       className={`flex-1 rounded-xl border px-3 py-3 ${form.half_day_type === type ? "border-[#f97316] bg-[#fff7ed]" : "border-slate-300 bg-white"}`}
                     >
-                      <Text className={`text-center text-base font-semibold ${form.half_day_type === type ? "text-[#f97316]" : "text-slate-600"}`}>
+                      <Text
+                        className={`text-center text-base font-semibold ${form.half_day_type === type ? "text-[#f97316]" : "text-slate-600"}`}
+                      >
                         {type}
                       </Text>
                     </Pressable>
