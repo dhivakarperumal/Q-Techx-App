@@ -1,4 +1,5 @@
 import { Ionicons } from "@expo/vector-icons";
+import DateTimePicker from "@react-native-community/datetimepicker";
 import * as DocumentPicker from "expo-document-picker";
 import { useCallback, useEffect, useState } from "react";
 import {
@@ -368,6 +369,8 @@ function TaskAssignmentModal({
   const [assignedDate, setAssignedDate] = useState(attendanceDate());
   const [assignedTime, setAssignedTime] = useState(currentTime());
   const [dueDate, setDueDate] = useState("");
+  const [showAssignedDatePicker, setShowAssignedDatePicker] = useState(false);
+  const [showDueDatePicker, setShowDueDatePicker] = useState(false);
   const [saving, setSaving] = useState(false);
 
   const closeModal = () => {
@@ -376,7 +379,13 @@ function TaskAssignmentModal({
     setAssignedDate(attendanceDate());
     setAssignedTime(currentTime());
     setDueDate("");
+    setShowAssignedDatePicker(false);
+    setShowDueDatePicker(false);
     onClose();
+  };
+
+  const formatDateValue = (date: Date) => {
+    return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
   };
 
   const save = async () => {
@@ -580,22 +589,27 @@ function TaskAssignmentModal({
                 >
                   Assigned Date *
                 </Text>
-                <TextInput
-                  value={assignedDate}
-                  onChangeText={setAssignedDate}
-                  placeholder="YYYY-MM-DD"
-                  placeholderTextColor="#9ca3af"
+                <Pressable
+                  onPress={() => setShowAssignedDatePicker(true)}
                   style={{
                     height: 48,
                     borderRadius: 12,
                     backgroundColor: "#f8fafc",
                     borderWidth: 1,
                     borderColor: "#dbe3ee",
-                    color: "#0f172a",
+                    justifyContent: "center",
                     paddingHorizontal: 12,
-                    fontSize: 15,
                   }}
-                />
+                >
+                  <Text
+                    style={{
+                      color: assignedDate ? "#0f172a" : "#9ca3af",
+                      fontSize: 15,
+                    }}
+                  >
+                    {assignedDate || "YYYY-MM-DD"}
+                  </Text>
+                </Pressable>
               </View>
 
               <View style={{ flex: 1 }}>
@@ -639,22 +653,27 @@ function TaskAssignmentModal({
               >
                 Due Date
               </Text>
-              <TextInput
-                value={dueDate}
-                onChangeText={setDueDate}
-                placeholder="YYYY-MM-DD"
-                placeholderTextColor="#9ca3af"
+              <Pressable
+                onPress={() => setShowDueDatePicker(true)}
                 style={{
                   height: 48,
                   borderRadius: 12,
                   backgroundColor: "#f8fafc",
                   borderWidth: 1,
                   borderColor: "#dbe3ee",
-                  color: "#0f172a",
+                  justifyContent: "center",
                   paddingHorizontal: 12,
-                  fontSize: 15,
                 }}
-              />
+              >
+                <Text
+                  style={{
+                    color: dueDate ? "#0f172a" : "#9ca3af",
+                    fontSize: 15,
+                  }}
+                >
+                  {dueDate || "YYYY-MM-DD"}
+                </Text>
+              </Pressable>
             </View>
 
             <View
@@ -665,7 +684,29 @@ function TaskAssignmentModal({
                 paddingHorizontal: 0,
               }}
             >
-            
+              <Pressable
+                onPress={closeModal}
+                style={{
+                  minWidth: 120,
+                  paddingVertical: 14,
+                  paddingHorizontal: 20,
+                  borderRadius: 14,
+                  backgroundColor: "#fff",
+                  borderWidth: 1,
+                  borderColor: "#dbe3ee",
+                }}
+              >
+                <Text
+                  style={{
+                    color: "#0f172a",
+                    textAlign: "center",
+                    fontSize: 16,
+                    fontWeight: "700",
+                  }}
+                >
+                  Cancel
+                </Text>
+              </Pressable>
 
               <Pressable
                 disabled={saving}
@@ -691,6 +732,31 @@ function TaskAssignmentModal({
               </Pressable>
             </View>
           </ScrollView>
+
+          {showAssignedDatePicker ? (
+            <DateTimePicker
+              value={new Date(assignedDate || attendanceDate())}
+              mode="date"
+              display="default"
+              onChange={(_, selectedDate) => {
+                setShowAssignedDatePicker(false);
+                if (selectedDate)
+                  setAssignedDate(formatDateValue(selectedDate));
+              }}
+            />
+          ) : null}
+
+          {showDueDatePicker ? (
+            <DateTimePicker
+              value={dueDate ? new Date(dueDate) : new Date()}
+              mode="date"
+              display="default"
+              onChange={(_, selectedDate) => {
+                setShowDueDatePicker(false);
+                if (selectedDate) setDueDate(formatDateValue(selectedDate));
+              }}
+            />
+          ) : null}
         </View>
       </View>
     </Modal>
