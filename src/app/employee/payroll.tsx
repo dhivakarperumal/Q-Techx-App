@@ -171,53 +171,59 @@ export default function PayrollScreen() {
       <Text className="mt-2 text-base text-slate-500">Your salary slips and payment breakdown.</Text>
       {loading ? <View className="items-center py-24"><ActivityIndicator size="large" color="#f97316" /><Text className="mt-3 text-sm text-slate-500">Loading your payroll...</Text></View> : error ? <View className="mt-6 rounded-2xl border border-rose-200 bg-rose-50 p-5"><Text className="font-semibold text-rose-700">{error}</Text><Pressable onPress={() => fetchHistory()} className="mt-4 self-start rounded-xl bg-rose-600 px-4 py-2"><Text className="font-bold text-white">Try again</Text></Pressable></View> : sortedHistory.length === 0 ? <View className="mt-6 rounded-2xl border border-dashed border-slate-300 bg-white p-6"><Ionicons name="cash-outline" size={32} color="#94a3b8" style={{ alignSelf: "center" }} /><Text className="mt-3 text-center font-semibold text-slate-600">No payroll records found</Text><Text className="mt-1 text-center text-sm text-slate-400">Your salary details will appear here after payroll is processed.</Text></View> : <>
         <View
-  className="mt-5 rounded-3xl bg-orange-600 p-5"
-  style={{
-    shadowColor: "#f97316",
-    shadowOpacity: 0.2,
-    shadowRadius: 12,
-    shadowOffset: { width: 0, height: 6 },
-    elevation: 5,
-  }}
->
-  {/* Header */}
-  <View className="flex-row items-center justify-between">
-    <View className="flex-1">
-      <Text className="text-xs font-semibold text-orange-100">
-        Latest Salary
-      </Text>
+          className="mt-5 overflow-hidden rounded-2xl border border-orange-100 bg-white"
+          style={{
+            shadowColor: "#f97316",
+            shadowOffset: { width: 0, height: 4 },
+            shadowOpacity: 0.12,
+            shadowRadius: 10,
+            elevation: 4,
+          }}
+        >
+          <LinearGradient
+            colors={["#ffffff", "#fff7ed"]}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={{
+              paddingHorizontal: 14,
+              paddingVertical: 16,
+            }}
+          >
+            {/* Icon + Label */}
+            <View className="mb-3 flex-col items-start">
+              <View className="mb-2 h-9 w-9 items-center justify-center rounded-xl bg-black">
+                <Ionicons
+                  name="wallet-outline"
+                  size={18}
+                  color="#f97316"
+                />
+              </View>
 
-      <Text className="mt-1 text-[11px] font-medium text-orange-100">
-        {employeeName ? employeeName : "Current Employee"}
-      </Text>
-    </View>
+              <Text
+                className="text-[10px] font-bold uppercase tracking-[0.5px] text-gray-500"
+                numberOfLines={1}
+              >
+                Latest Salary
+                {employeeName ? ` · ${employeeName}` : ""}
+              </Text>
+            </View>
 
-    {/* Icon */}
-    <View className="h-11 w-11 items-center justify-center rounded-2xl bg-white/20">
-      <Ionicons name="wallet-outline" size={22} color="#fff" />
-    </View>
-  </View>
+            {/* Month + Salary */}
+            <View className="flex-col items-start">
+              <Text className="mb-1 text-[9px] font-bold text-gray-400">
+                {monthYear(latest)}
+              </Text>
 
-  {/* Salary */}
-  <View className="mt-4">
-    <Text className="text-[11px] font-medium text-orange-100">
-      {monthYear(latest)}
-    </Text>
+              <Text className="text-2xl font-black text-black">
+                {amount(latest.total_salary)}
+              </Text>
 
-    <Text className="mt-1 text-4xl font-black text-white">
-      {amount(latest.total_salary)}
-    </Text>
-  </View>
-
-  {/* Footer */}
-  <View className="mt-4 flex-row items-center">
-    <View className="mr-2 h-2 w-2 rounded-full bg-white" />
-
-    <Text className="text-xs font-medium text-orange-100">
-      Net pay after deductions
-    </Text>
-  </View>
-</View>
+              <Text className="mt-1 text-[9px] font-bold text-orange-500">
+                Net pay after deductions
+              </Text>
+            </View>
+          </LinearGradient>
+        </View>
         <Text className="mb-3 mt-7 text-xs font-bold uppercase tracking-widest text-slate-400">Latest breakdown</Text>
         <View className="flex-row flex-wrap justify-between">
           <SummaryCard label="Basic Salary" value={amount(latest.basic_salary)} icon="wallet-outline" />
