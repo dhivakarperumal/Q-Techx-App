@@ -185,100 +185,183 @@ export default function AdminTraineeScreen() {
   useEffect(() => { if (tab === "Tasks" || tab === "Assign Task") loadTasks(); }, [tab, loadTasks]);
   const remove = (member: Member) => Alert.alert("Delete member", `Delete ${nameOf(member)}?`, [{ text: "Cancel", style: "cancel" }, { text: "Delete", style: "destructive", onPress: async () => { try { await api.delete(`/trainee-intern/${member.uuid}`); setSelected(null); loadMembers(true); } catch (error: any) { Alert.alert("Delete failed", error?.message || "Please try again."); } } }]);
   const stats = { total: members.length, active: members.filter((item) => item.status === "Active").length, trainees: members.filter((item) => item.type === "Trainee").length, interns: members.filter((item) => item.type === "Intern").length };
-  const renderMembers = () => (
-    <>
-      {/* Stats cards (like ExpensesTab) */}
-      <View className="mb-6 flex-row flex-wrap justify-between">
-        {[{ label: 'Total', value: stats.total, icon: 'people' }, { label: 'Active', value: stats.active, icon: 'checkmark' }, { label: 'Trainees', value: stats.trainees, icon: 'school' }, { label: 'Interns', value: stats.interns, icon: 'book' }].map((stat, idx) => (
-          <TouchableOpacity
-            key={String(idx)}
-            activeOpacity={0.9}
-            className="mb-3 w-[48%] overflow-hidden rounded-2xl border border-orange-100"
-            style={{
-              shadowColor: '#f97316',
-              shadowOffset: { width: 0, height: 4 },
-              shadowOpacity: 0.12,
-              shadowRadius: 10,
-              elevation: 4,
-            }}
-          >
-            <LinearGradient colors={["#ffffff", "#fff7ed"]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} className="px-4 py-4">
-              <View className="flex-row items-center mb-3">
-                <View className="h-10 w-10 items-center justify-center rounded-xl bg-black">
-                  <Ionicons name={stat.icon as any} size={20} color="#f97316" />
+  const renderMembers = () => {
+    const hasActiveAssignment = (m: Member) => Number(m.has_active_assignment || m.assigned_employee_id ? 1 : 0) > 0;
+    return (
+      <>
+        {/* Stats cards (like ExpensesTab) */}
+        <View className="mb-6 flex-row flex-wrap justify-between">
+          {[{ label: 'Total', value: stats.total, icon: 'people' }, { label: 'Active', value: stats.active, icon: 'checkmark' }, { label: 'Trainees', value: stats.trainees, icon: 'school' }, { label: 'Interns', value: stats.interns, icon: 'book' }].map((stat, idx) => (
+            <TouchableOpacity
+              key={String(idx)}
+              activeOpacity={0.9}
+              className="mb-3 w-[48%] overflow-hidden rounded-2xl border border-orange-100"
+              style={{
+                shadowColor: '#f97316',
+                shadowOffset: { width: 0, height: 4 },
+                shadowOpacity: 0.12,
+                shadowRadius: 10,
+                elevation: 4,
+              }}
+            >
+              <LinearGradient colors={["#ffffff", "#fff7ed"]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} className="px-4 py-4">
+                <View className="flex-row items-center mb-3">
+                  <View className="h-10 w-10 items-center justify-center rounded-xl bg-black">
+                    <Ionicons name={stat.icon as any} size={20} color="#f97316" />
+                  </View>
+                  <View className="ml-2 flex-1">
+                    <Text className="text-[10px] font-bold uppercase tracking-[0.5px] text-gray-500">{stat.label}</Text>
+                  </View>
                 </View>
-                <View className="ml-2 flex-1">
-                  <Text className="text-[10px] font-bold uppercase tracking-[0.5px] text-gray-500">{stat.label}</Text>
+                <View className="mt-1 flex-col">
+                  <Text className="text-[22px] font-black text-black">{stat.value}</Text>
+                  <Text className={`text-[10px] font-bold mt-0.5 text-gray-400`}>{"All Time"}</Text>
                 </View>
-              </View>
-              <View className="mt-1 flex-col">
-                <Text className="text-[22px] font-black text-black">{stat.value}</Text>
-                <Text className={`text-[10px] font-bold mt-0.5 text-gray-400`}>{"All Time"}</Text>
-              </View>
-            </LinearGradient>
-          </TouchableOpacity>
-        ))}
-      </View>
-
-      {/* Search and filters (like ExpensesTab) */}
-      <Text className="mb-3 mt-6 text-lg font-black text-slate-900">Member Directory</Text>
-
-      {/* Members list */}
-      {loading ? (
-        <View className="items-center py-12"><ActivityIndicator color="#f97316" /></View>
-      ) : members.length === 0 ? (
-        <View className="items-center justify-center p-6 py-10">
-          <Ionicons name="people-outline" size={40} color="#cbd5e1" />
-          <Text className="text-slate-400 text-sm mt-3">No members found</Text>
-        </View>
-      ) : (
-        <View className="p-0">
-          {members.map((member, i) => (
-            <View key={member.uuid || i} className="p-4 mb-3 bg-white rounded-2xl shadow-sm flex-row items-center justify-between" style={{ shadowColor: "#cbd5e1", shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.1, shadowRadius: 4, elevation: 2 }}>
-              <View className="flex-row items-center flex-1 mr-3">
-                <View className="w-12 h-12 rounded-full items-center justify-center bg-orange-50">
-                  <Text className="text-orange-600 font-black">{initials(nameOf(member))}</Text>
-                </View>
-                <View className="ml-3 flex-1">
-                  <Text className="font-bold text-slate-900">{nameOf(member)}</Text>
-                  <Text className="mt-1 text-xs text-slate-500">{member.person_id || member.personId || 'Trainee'} • {member.type || 'Trainee'}</Text>
-                  <Text className="mt-1 text-xs text-slate-400">{member.joining_date ? `Joined ${dateText(member.joining_date)}` : ''}</Text>
-                </View>
-              </View>
-              <View className="items-end">
-                <Text className={`text-sm font-bold ${member.status === 'Active' ? 'text-emerald-600' : 'text-slate-500'}`}>{member.status || 'Active'}</Text>
-                <Pressable onPress={() => { setAssignmentMember(member); setAssignmentVisible(true); }} className="mt-3 items-center rounded-full border border-orange-200 px-3 py-1">
-                  <Text className="text-xs font-bold text-orange-600">{member.assigned_employee_id ? 'Reassign' : 'Assign'}</Text>
-                </Pressable>
-              </View>
-            </View>
+              </LinearGradient>
+            </TouchableOpacity>
           ))}
         </View>
-      )}
-    </>
-  );
-  const renderAttendance = () => (<><View className="mb-6 flex-row flex-wrap justify-between">{[{ label: 'Total', value: members.length, icon: 'people' }, { label: 'Present Days', value: attendance.reduce((sum, r) => sum + (r.present_days || 0), 0), icon: 'checkmark' }, { label: 'Absent Days', value: attendance.reduce((sum, r) => sum + (r.absent_days || 0), 0), icon: 'close' }].map((stat, idx) => (<TouchableOpacity key={String(idx)} activeOpacity={0.9} className="mb-3 w-[48%] overflow-hidden rounded-2xl border border-orange-100" style={{ shadowColor: '#f97316', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.12, shadowRadius: 10, elevation: 4, }}><LinearGradient colors={["#ffffff", "#fff7ed"]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} className="px-4 py-4"><View className="flex-row items-center mb-3"><View className="h-10 w-10 items-center justify-center rounded-xl bg-black"><Ionicons name={stat.icon as any} size={20} color="#f97316" /></View><View className="ml-2 flex-1"><Text className="text-[10px] font-bold uppercase tracking-[0.5px] text-gray-500">{stat.label}</Text></View></View><View className="mt-1 flex-col"><Text className="text-[22px] font-black text-black">{stat.value}</Text><Text className={`text-[10px] font-bold mt-0.5 text-gray-400`}>This Month</Text></View></LinearGradient></TouchableOpacity>))}</View><View className="mb-6">
-    <View className="bg-white border border-slate-200 rounded-2xl flex-row items-center px-4 py-2 shadow-sm mb-3">
-      <Ionicons name="search" size={16} color="#94a3b8" />
-      <TextInput
-        placeholder="Search..."
-        placeholderTextColor="#94a3b8"
-        value={search}
-        onChangeText={setSearch}
-        className="flex-1 ml-2 text-sm font-medium text-slate-800 h-10"
-      />
-    </View>
-    <ScrollView horizontal showsHorizontalScrollIndicator={false} className="flex-row gap-2 mb-3">
-      {[{ l: "All Time", v: "all" }, { l: "Today", v: "today" }, { l: "Yesterday", v: "yesterday" }, { l: "This Week", v: "this_week" }, { l: "This Month", v: "this_month" }].map(pre => (
-        <TouchableOpacity
-          key={pre.v}
-          className={'mr-2 px-4 py-2 rounded-full border ' + ('all' === pre.v ? 'bg-orange-100 border-orange-200' : 'bg-white border-slate-200')}
-        >
-          <Text className={'text-xs font-semibold ' + ('all' === pre.v ? 'text-orange-700' : 'text-slate-600')}>{pre.l}</Text>
-        </TouchableOpacity>
-      ))}
-    </ScrollView>
-  </View><View className="mt-5 flex-row items-center justify-between"><View><Text className="text-xl font-black text-slate-900">Attendance</Text><Text className="mt-1 text-sm text-slate-500">This month&apos;s trainee and intern summary.</Text></View></View>{attendanceLoading ? <View className="items-center py-12"><ActivityIndicator color="#f97316" /></View> : attendance.length ? attendance.map((row, index) => <View key={row.trainee_intern_id || index} className="p-4 mb-3 bg-white rounded-2xl shadow-sm" style={{ shadowColor: "#cbd5e1", shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.1, shadowRadius: 4, elevation: 2 }}><View className="flex-row items-center"><View className="h-11 w-11 items-center justify-center rounded-2xl bg-orange-50"><Text className="font-black text-orange-600">{initials(row.trainee_name || "Trainee")}</Text></View><View className="ml-3 flex-1"><Text className="font-bold text-slate-900">{row.trainee_name || "Unnamed member"}</Text><Text className="mt-1 text-xs text-slate-500">{row.person_id || "No person ID"} - {row.type || "Trainee / Intern"}</Text></View></View><View className="mt-4 flex-row gap-3"><View className="flex-1 rounded-xl bg-emerald-50 p-3"><Text className="text-xs text-emerald-700">Present</Text><Text className="mt-1 text-xl font-black text-emerald-700">{row.present_days || 0}</Text></View><View className="flex-1 rounded-xl bg-rose-50 p-3"><Text className="text-xs text-rose-700">Absent</Text><Text className="mt-1 text-xl font-black text-rose-700">{row.absent_days || 0}</Text></View></View></View>) : <View className="mt-5 items-center rounded-3xl border border-dashed border-slate-200 bg-white p-8"><Ionicons name="calendar-outline" size={34} color="#cbd5e1" /><Text className="mt-3 font-bold text-slate-500">No attendance records this month.</Text></View>}</>);
+
+        {/* Search and filters (like ExpensesTab) */}
+        <Text className="mb-3 mt-6 text-lg font-black text-slate-900">Member Directory</Text>
+
+        {/* Members list */}
+        {loading ? (
+          <View className="items-center py-12"><ActivityIndicator color="#f97316" /></View>
+        ) : members.length === 0 ? (
+          <View className="items-center justify-center p-6 py-10">
+            <Ionicons name="people-outline" size={40} color="#cbd5e1" />
+            <Text className="text-slate-400 text-sm mt-3">No members found</Text>
+          </View>
+        ) : (
+          <View className="p-0">
+            {members.map((member, i) => (
+              <View key={member.uuid || i} className="p-4 mb-3 bg-white rounded-2xl shadow-sm flex-row items-center justify-between" style={{ shadowColor: "#cbd5e1", shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.1, shadowRadius: 4, elevation: 2 }}>
+                <View className="flex-row items-center flex-1 mr-3">
+                  <View className="w-12 h-12 rounded-full items-center justify-center bg-orange-50">
+                    <Text className="text-orange-600 font-black">{initials(nameOf(member))}</Text>
+                  </View>
+                  <View className="ml-3 flex-1">
+                    <Text className="font-bold text-slate-900">{nameOf(member)}</Text>
+                    <Text className="mt-1 text-xs text-slate-500">{member.person_id || member.personId || 'Trainee'} • {member.type || 'Trainee'}</Text>
+                    <Text className="mt-1 text-xs text-slate-400">{member.joining_date ? `Joined ${dateText(member.joining_date)}` : ''}</Text>
+                  </View>
+                </View>
+                <View className="items-end">
+                  <Text className={`text-sm font-bold ${member.status === 'Active' ? 'text-emerald-600' : 'text-slate-500'}`}>{member.status || 'Active'}</Text>
+                  <Pressable onPress={() => { setAssignmentMember(member); setAssignmentVisible(true); }} className={`mt-3 items-center rounded-full border px-3 py-1 ${hasActiveAssignment(member) ? 'border-slate-300 bg-slate-100' : 'border-orange-200 bg-orange-50'}`}>
+                    <Text className={`text-xs font-bold ${hasActiveAssignment(member) ? 'text-slate-600' : 'text-orange-600'}`}>{hasActiveAssignment(member) ? 'Reassign' : 'Assign'}</Text>
+                  </Pressable>
+                </View>
+              </View>
+            ))}
+          </View>
+        )}
+      </>
+    );
+  };
+  const renderAttendance = () => {
+    const filteredAttendance = attendance.filter(row => {
+      if (!search) return true;
+      const searchLower = search.toLowerCase();
+      return (
+        (row.trainee_name || '').toLowerCase().includes(searchLower) ||
+        (row.person_id || '').toLowerCase().includes(searchLower) ||
+        (row.type || '').toLowerCase().includes(searchLower)
+      );
+    });
+    return (
+      <>
+        <View className="mb-6 flex-row flex-wrap justify-between">
+          {[
+            { label: 'Total', value: members.length, icon: 'people' },
+            { label: 'Present Days', value: attendance.reduce((sum, r) => sum + (r.present_days || 0), 0), icon: 'checkmark' },
+            { label: 'Absent Days', value: attendance.reduce((sum, r) => sum + (r.absent_days || 0), 0), icon: 'close' }
+          ].map((stat, idx) => (
+            <TouchableOpacity
+              key={String(idx)}
+              activeOpacity={0.9}
+              className="mb-3 w-[48%] overflow-hidden rounded-2xl border border-orange-100"
+              style={{ shadowColor: '#f97316', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.12, shadowRadius: 10, elevation: 4 }}
+            >
+              <LinearGradient colors={["#ffffff", "#fff7ed"]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} className="px-4 py-4">
+                <View className="flex-row items-center mb-3">
+                  <View className="h-10 w-10 items-center justify-center rounded-xl bg-black">
+                    <Ionicons name={stat.icon as any} size={20} color="#f97316" />
+                  </View>
+                  <View className="ml-2 flex-1">
+                    <Text className="text-[10px] font-bold uppercase tracking-[0.5px] text-gray-500">{stat.label}</Text>
+                  </View>
+                </View>
+                <View className="mt-1 flex-col">
+                  <Text className="text-[22px] font-black text-black">{stat.value}</Text>
+                  <Text className="text-[10px] font-bold mt-0.5 text-gray-400">This Month</Text>
+                </View>
+              </LinearGradient>
+            </TouchableOpacity>
+          ))}
+        </View>
+        <View className="mb-6">
+          <View className="bg-white border border-slate-200 rounded-2xl flex-row items-center px-4 py-2 shadow-sm mb-3">
+            <Ionicons name="search" size={16} color="#94a3b8" />
+            <TextInput
+              placeholder="Search by name, ID..."
+              placeholderTextColor="#94a3b8"
+              value={search}
+              onChangeText={setSearch}
+              className="flex-1 ml-2 text-sm font-medium text-slate-800 h-10"
+            />
+          </View>
+        </View>
+        <View className="mt-5 flex-row items-center justify-between">
+          <View>
+            <Text className="text-xl font-black text-slate-900">Attendance</Text>
+            <Text className="mt-1 text-sm text-slate-500">This month's trainee and intern summary.</Text>
+          </View>
+        </View>
+        {attendanceLoading ? (
+          <View className="items-center py-12">
+            <ActivityIndicator color="#f97316" />
+          </View>
+        ) : filteredAttendance.length ? (
+          filteredAttendance.map((row, index) => (
+            <View
+              key={row.trainee_intern_id || index}
+              className="p-4 mb-3 bg-white rounded-2xl shadow-sm"
+              style={{ shadowColor: "#cbd5e1", shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.1, shadowRadius: 4, elevation: 2 }}
+            >
+              <View className="flex-row items-center">
+                <View className="h-11 w-11 items-center justify-center rounded-2xl bg-orange-50">
+                  <Text className="font-black text-orange-600">{initials(row.trainee_name || "Trainee")}</Text>
+                </View>
+                <View className="ml-3 flex-1">
+                  <Text className="font-bold text-slate-900">{row.trainee_name || "Unnamed member"}</Text>
+                  <Text className="mt-1 text-xs text-slate-500">{row.person_id || "No person ID"} - {row.type || "Trainee / Intern"}</Text>
+                </View>
+              </View>
+              <View className="mt-4 flex-row gap-3">
+                <View className="flex-1 rounded-xl bg-emerald-50 p-3">
+                  <Text className="text-xs text-emerald-700">Present</Text>
+                  <Text className="mt-1 text-xl font-black text-emerald-700">{row.present_days || 0}</Text>
+                </View>
+                <View className="flex-1 rounded-xl bg-rose-50 p-3">
+                  <Text className="text-xs text-rose-700">Absent</Text>
+                  <Text className="mt-1 text-xl font-black text-rose-700">{row.absent_days || 0}</Text>
+                </View>
+              </View>
+            </View>
+          ))
+        ) : (
+          <View className="mt-5 items-center rounded-3xl border border-dashed border-slate-200 bg-white p-8">
+            <Ionicons name="calendar-outline" size={34} color="#cbd5e1" />
+            <Text className="mt-3 font-bold text-slate-500">
+              {search ? 'No records match your search.' : 'No attendance records this month.'}
+            </Text>
+          </View>
+        )}
+      </>
+    );
+  };
   const renderTasks = () => (
     <>
       {/* Stats cards for Tasks */}
