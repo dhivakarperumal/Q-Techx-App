@@ -469,28 +469,42 @@ export default function AdminTraineeScreen() {
             </LinearGradient>
           </TouchableOpacity>
         ))}
-      </View><View className="mb-6">
+      </View>
+      <View className="mb-6">
         <View className="bg-white border border-slate-200 rounded-2xl flex-row items-center px-4 py-2 shadow-sm mb-3">
           <Ionicons name="search" size={16} color="#94a3b8" />
           <TextInput
-            placeholder="Search..."
+            placeholder="Search task or description..."
             placeholderTextColor="#94a3b8"
             value={search}
             onChangeText={setSearch}
             className="flex-1 ml-2 text-sm font-medium text-slate-800 h-10"
           />
         </View>
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} className="flex-row gap-2 mb-3">
-          {[{ l: "All Time", v: "all" }, { l: "Today", v: "today" }, { l: "Yesterday", v: "yesterday" }, { l: "This Week", v: "this_week" }, { l: "This Month", v: "this_month" }].map(pre => (
-            <TouchableOpacity
-              key={pre.v}
-              className={'mr-2 px-4 py-2 rounded-full border ' + ('all' === pre.v ? 'bg-orange-100 border-orange-200' : 'bg-white border-slate-200')}
-            >
-              <Text className={'text-xs font-semibold ' + ('all' === pre.v ? 'text-orange-700' : 'text-slate-600')}>{pre.l}</Text>
-            </TouchableOpacity>
-          ))}
-        </ScrollView>
-      </View><View className="mt-5 flex-row items-center justify-between"><View><Text className="text-xl font-black text-slate-900">Task Master</Text><Text className="mt-1 text-sm text-slate-500">Reusable tasks for trainees and interns.</Text></View></View>{taskLoading ? <View className="items-center py-12"><ActivityIndicator color="#f97316" /></View> : tasks.length ? tasks.map((task) => <View key={task.uuid} className="p-4 mb-3 bg-white rounded-2xl shadow-sm" style={{ shadowColor: "#cbd5e1", shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.1, shadowRadius: 4, elevation: 2 }}><Text className="font-bold text-slate-900">{task.task_name || "Untitled task"}</Text><Text className="mt-2 text-sm text-slate-500">{task.description || "No description"}</Text></View>) : <View className="mt-5 items-center rounded-3xl border border-dashed border-slate-200 bg-white p-8"><Ionicons name="checkbox-outline" size={34} color="#cbd5e1" /><Text className="mt-3 font-bold text-slate-500">No trainee tasks found.</Text></View>}</>);
+      </View>
+      <View className="mt-5 flex-row items-center justify-between">
+        <View>
+          <Text className="text-xl font-black text-slate-900">Task Master</Text>
+          <Text className="mt-1 text-sm text-slate-500">Reusable tasks for trainees and interns.</Text>
+        </View>
+      </View>
+      {taskLoading ? (
+        <View className="items-center py-12"><ActivityIndicator color="#f97316" /></View>
+      ) : filteredTasks.length ? (
+        filteredTasks.map((task) => (
+          <View key={task.uuid} className="p-4 mb-3 bg-white rounded-2xl shadow-sm" style={{ shadowColor: "#cbd5e1", shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.1, shadowRadius: 4, elevation: 2 }}>
+            <Text className="font-bold text-slate-900">{task.task_name || "Untitled task"}</Text>
+            <Text className="mt-2 text-sm text-slate-500">{task.description || "No description"}</Text>
+          </View>
+        ))
+      ) : (
+        <View className="mt-5 items-center rounded-3xl border border-dashed border-slate-200 bg-white p-8">
+          <Ionicons name="checkbox-outline" size={34} color="#cbd5e1" />
+          <Text className="mt-3 font-bold text-slate-500">{search ? 'No matching tasks found.' : 'No trainee tasks found.'}</Text>
+        </View>
+      )}
+    </>);
+
   const renderTaskAssignments = () => (
     <>
       {/* Stats cards for Assign Task */}
@@ -524,28 +538,50 @@ export default function AdminTraineeScreen() {
             </LinearGradient>
           </TouchableOpacity>
         ))}
-      </View><View className="mb-6">
+      </View>
+      <View className="mb-6">
         <View className="bg-white border border-slate-200 rounded-2xl flex-row items-center px-4 py-2 shadow-sm mb-3">
           <Ionicons name="search" size={16} color="#94a3b8" />
           <TextInput
-            placeholder="Search..."
+            placeholder="Search assignment, task, member..."
             placeholderTextColor="#94a3b8"
             value={search}
             onChangeText={setSearch}
             className="flex-1 ml-2 text-sm font-medium text-slate-800 h-10"
           />
         </View>
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} className="flex-row gap-2 mb-3">
-          {[{ l: "All Time", v: "all" }, { l: "Today", v: "today" }, { l: "Yesterday", v: "yesterday" }, { l: "This Week", v: "this_week" }, { l: "This Month", v: "this_month" }].map(pre => (
-            <TouchableOpacity
-              key={pre.v}
-              className={'mr-2 px-4 py-2 rounded-full border ' + ('all' === pre.v ? 'bg-orange-100 border-orange-200' : 'bg-white border-slate-200')}
-            >
-              <Text className={'text-xs font-semibold ' + ('all' === pre.v ? 'text-orange-700' : 'text-slate-600')}>{pre.l}</Text>
-            </TouchableOpacity>
-          ))}
-        </ScrollView>
-      </View><View className="mt-5 flex-row items-center justify-between"><View><Text className="text-xl font-black text-slate-900">Assigned Tasks</Text><Text className="mt-1 text-sm text-slate-500">Track work assigned to trainees and interns.</Text></View></View>{taskLoading ? <View className="items-center py-12"><ActivityIndicator color="#f97316" /></View> : taskAssignments.length ? taskAssignments.map((assignment, index) => <View key={assignment.uuid || index} className="p-4 mb-3 bg-white rounded-2xl shadow-sm" style={{ shadowColor: "#cbd5e1", shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.1, shadowRadius: 4, elevation: 2 }}><View className="flex-row items-start justify-between"><View className="flex-1"><Text className="font-bold text-slate-900">{assignment.task_name || "Untitled task"}</Text><Text className="mt-1 text-xs text-slate-500">{assignment.trainee_name || "Trainee / Intern"}</Text></View><Text className="rounded-full bg-orange-50 px-2 py-1 text-[10px] font-bold text-orange-600">{assignment.status || "Pending"}</Text></View><View className="mt-3 flex-row justify-between"><Text className="text-xs text-slate-500">Assigned: {assignment.assigned_date?.slice?.(0, 10) || "-"}</Text><Text className="text-xs font-bold text-orange-600">{assignment.progress || 0}%</Text></View></View>) : <View className="mt-5 items-center rounded-3xl border border-dashed border-slate-200 bg-white p-8"><Ionicons name="list-outline" size={34} color="#cbd5e1" /><Text className="mt-3 font-bold text-slate-500">No task assignments found.</Text></View>}</>);
+      </View>
+      <View className="mt-5 flex-row items-center justify-between">
+        <View>
+          <Text className="text-xl font-black text-slate-900">Assigned Tasks</Text>
+          <Text className="mt-1 text-sm text-slate-500">Track work assigned to trainees and interns.</Text>
+        </View>
+      </View>
+      {taskLoading ? (
+        <View className="items-center py-12"><ActivityIndicator color="#f97316" /></View>
+      ) : filteredTaskAssignments.length ? (
+        filteredTaskAssignments.map((assignment, index) => (
+          <View key={assignment.uuid || index} className="p-4 mb-3 bg-white rounded-2xl shadow-sm" style={{ shadowColor: "#cbd5e1", shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.1, shadowRadius: 4, elevation: 2 }}>
+            <View className="flex-row items-start justify-between">
+              <View className="flex-1">
+                <Text className="font-bold text-slate-900">{assignment.task_name || "Untitled task"}</Text>
+                <Text className="mt-1 text-xs text-slate-500">{assignment.trainee_name || "Trainee / Intern"}</Text>
+              </View>
+              <Text className="rounded-full bg-orange-50 px-2 py-1 text-[10px] font-bold text-orange-600">{assignment.status || "Pending"}</Text>
+            </View>
+            <View className="mt-3 flex-row justify-between">
+              <Text className="text-xs text-slate-500">Assigned: {assignment.assigned_date?.slice?.(0, 10) || "-"}</Text>
+              <Text className="text-xs font-bold text-orange-600">{assignment.progress || 0}%</Text>
+            </View>
+          </View>
+        ))
+      ) : (
+        <View className="mt-5 items-center rounded-3xl border border-dashed border-slate-200 bg-white p-8">
+          <Ionicons name="list-outline" size={34} color="#cbd5e1" />
+          <Text className="mt-3 font-bold text-slate-500">{search ? 'No matching assignments found.' : 'No task assignments found.'}</Text>
+        </View>
+      )}
+    </>);
   return <SafeAreaView edges={["top"]} style={{ flex: 1, backgroundColor: "#f8fafc" }}>
     <View style={{
       flexDirection: "row", alignItems: "center",
