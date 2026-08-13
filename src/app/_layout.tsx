@@ -8,6 +8,7 @@ import { useEffect } from "react";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import "../../global.css";
 import { AuthProvider, useAuth } from "../auth/AuthContext";
+import { CustomAlertProvider } from "../context/CustomAlertContext";
 import { getRoleHome } from "../auth/roleUtils";
 
 function RootLayoutNav() {
@@ -45,7 +46,9 @@ export default function RootLayout() {
   return (
     <SafeAreaProvider>
       <AuthProvider>
-        <RootLayoutNav />
+        <CustomAlertProvider>
+          <RootLayoutNav />
+        </CustomAlertProvider>
       </AuthProvider>
     </SafeAreaProvider>
   );

@@ -1,5 +1,6 @@
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
+import { AdminBottomBar } from "../../components/admin-bottom-bar";
 import {
   Alert,
   Pressable,
@@ -9,9 +10,9 @@ import {
   View,
 } from "react-native";
 import { useAuth } from "../../auth/AuthContext";
-import { AdminBottomBar } from "../../components/admin-bottom-bar";
 import { TopHeader } from "../../components/TopHeader";
 import { LinearGradient } from "expo-linear-gradient";
+import { useCustomAlert } from "../../context/CustomAlertContext";
 
 const menuItems = [
   {
@@ -61,6 +62,7 @@ const menuItems = [
 export default function MoreScreen() {
   const router = useRouter();
   const { user, logout } = useAuth();
+  const { showAlert } = useCustomAlert();
 
   const rawName =
     (user?.name as string) || (user?.full_name as string) || "Admin User";
@@ -346,7 +348,7 @@ export default function MoreScreen() {
           <TouchableOpacity
             activeOpacity={0.85}
             onPress={() =>
-              Alert.alert(
+              showAlert(
                 "Log out",
                 "Are you sure you want to log out?",
                 [

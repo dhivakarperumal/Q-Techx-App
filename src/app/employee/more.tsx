@@ -1,8 +1,11 @@
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
-import { Pressable, ScrollView, Text, View } from "react-native";
+import { Pressable, ScrollView, Text, View, TouchableOpacity } from "react-native";
 import { BottomHome } from "../../components/BottomHome";
 import { TopHeader } from "../../components/TopHeader";
+import { useAuth } from "../../auth/AuthContext";
+import { useCustomAlert } from "../../context/CustomAlertContext";
+import { LinearGradient } from "expo-linear-gradient";
 
 type RouteOption = {
   label: string;
@@ -57,6 +60,8 @@ const accountOptions = [
 
 export default function EmployeeMoreScreen() {
   const router = useRouter();
+  const { logout } = useAuth();
+  const { showAlert } = useCustomAlert();
 
   return (
     <View className="flex-1 bg-slate-50">
@@ -156,6 +161,73 @@ export default function EmployeeMoreScreen() {
               <Ionicons name="chevron-forward" size={20} color="#94a3b8" />
             </Pressable>
           ))}
+        </View>
+
+        {/* ── LOG OUT ── */}
+        <View className="mt-10">
+          <TouchableOpacity
+            activeOpacity={0.85}
+            onPress={() =>
+              showAlert(
+                "Log out",
+                "Are you sure you want to log out?",
+                [
+                  {
+                    text: "Cancel",
+                    style: "cancel",
+                  },
+                  {
+                    text: "Log out",
+                    style: "destructive",
+                    onPress: async () => {
+                      await logout();
+                      router.replace("/login");
+                    },
+                  },
+                ],
+              )
+            }
+            className="overflow-hidden rounded-[24px] border border-orange-100"
+            style={{
+              shadowColor: "#f97316",
+              shadowOffset: { width: 0, height: 4 },
+              shadowOpacity: 0.12,
+              shadowRadius: 10,
+              elevation: 4,
+            }}
+          >
+            <LinearGradient
+              colors={["#ffffff", "#fff7ed"]}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+              className="p-5 flex-row items-center"
+            >
+              <View className="h-11 w-11 rounded-2xl bg-orange-100 items-center justify-center mr-4">
+                <Ionicons
+                  name="log-out-outline"
+                  size={21}
+                  color="#f97316"
+                />
+              </View>
+
+              <View className="flex-1">
+                <Text className="text-orange-600 font-black text-sm">
+                  Log Out
+                </Text>
+                <Text className="text-slate-500 text-[11px] mt-0.5">
+                  Sign out from your account
+                </Text>
+              </View>
+
+              <View className="h-9 w-9 rounded-full bg-orange-50 items-center justify-center">
+                <Ionicons
+                  name="chevron-forward"
+                  size={18}
+                  color="#f97316"
+                />
+              </View>
+            </LinearGradient>
+          </TouchableOpacity>
         </View>
       </ScrollView>
       <BottomHome />
