@@ -1,4 +1,5 @@
 import { Ionicons } from "@expo/vector-icons";
+import { LinearGradient } from "expo-linear-gradient";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
     ActivityIndicator,
@@ -168,9 +169,50 @@ export default function EmployeeLeaveScreen() {
           <View className="flex-1 pr-3"><Text className="text-3xl font-bold text-slate-950">My leave</Text><Text className="mt-2 text-base text-slate-500">Track requests and apply for time off.</Text></View>
           <Pressable onPress={() => setShowApply(true)} className="items-center rounded-2xl bg-blue-600 px-4 py-3 active:bg-blue-700"><Ionicons name="add" size={20} color="#fff" /><Text className="mt-1 text-xs font-bold text-white">Apply</Text></Pressable>
         </View>
-        <View className="mt-6 flex-row gap-3">
-          {[["Allowed", totalAllowed, "#0f172a"], ["Taken", totalTaken, "#ea580c"], ["Remaining", Math.max(totalAllowed - totalTaken, 0), "#16a34a"]].map(([label, value, color]) => (
-            <View key={String(label)} className="flex-1 rounded-2xl border border-slate-200 bg-white p-3"><Text className="text-[10px] font-bold uppercase tracking-wider text-slate-400">{label}</Text><Text className="mt-2 text-2xl font-black" style={{ color: String(color) }}>{String(value)}</Text></View>
+        {/* ── STATS SECTION ── */}
+        <View className="mt-6 mb-6 flex-row flex-wrap justify-between">
+          {[
+            { label: "Allowed", value: String(totalAllowed), sub: "Total Days", icon: "calendar", color: "#f97316", bg: "#fff7ed", subColor: "text-orange-500" },
+            { label: "Taken", value: String(totalTaken), sub: "Used", icon: "time", color: "#f97316", bg: "#fff7ed", subColor: "text-blue-500" },
+            { label: "Remaining", value: String(Math.max(totalAllowed - totalTaken, 0)), sub: "Available", icon: "checkmark-circle", color: "#f97316", bg: "#fff7ed", subColor: "text-emerald-500" },
+          ].map((stat, idx) => (
+            <View
+              key={idx}
+              className={`mb-3 ${idx === 2 ? "w-full" : "w-[48%]"} overflow-hidden rounded-2xl bg-white border border-orange-100`}
+              style={{
+                shadowColor: "#f97316",
+                shadowOffset: { width: 0, height: 4 },
+                shadowOpacity: 0.12,
+                shadowRadius: 10,
+                elevation: 4,
+              }}
+            >
+              <LinearGradient
+                colors={["#ffffff", "#fff7ed"]}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+                style={{ paddingHorizontal: 16, paddingVertical: 16 }}
+              >
+                <View className="flex-row items-center mb-3">
+                  <View className="h-10 w-10 items-center justify-center rounded-xl bg-black">
+                    <Ionicons name={stat.icon as any} size={20} color="#f97316" />
+                  </View>
+                  <View className="ml-2 flex-1">
+                    <Text className="text-[10px] font-bold uppercase tracking-[0.5px] text-gray-500" numberOfLines={2}>
+                      {stat.label}
+                    </Text>
+                  </View>
+                </View>
+                <View className="flex-row items-baseline justify-between">
+                  <Text className="text-[22px] font-black text-black">
+                    {stat.value}
+                  </Text>
+                  <Text className={`text-[10px] font-bold ${stat.subColor || "text-gray-400"}`}>
+                    {stat.sub}
+                  </Text>
+                </View>
+              </LinearGradient>
+            </View>
           ))}
         </View>
         {balances.length > 0 && <View className="mt-6"><Text className="mb-3 text-xs font-bold uppercase tracking-widest text-slate-400">Leave balance</Text><ScrollView horizontal showsHorizontalScrollIndicator={false}>{balances.map((item) => <View key={item.type} className="mr-3 w-40 rounded-2xl border border-slate-200 bg-white p-4"><Text className="font-bold text-slate-900" numberOfLines={1}>{item.type}</Text><Text className="mt-3 text-2xl font-black text-slate-900">{item.remaining}</Text><Text className="mt-1 text-xs text-slate-500">of {item.total} remaining</Text></View>)}</ScrollView></View>}

@@ -1,4 +1,5 @@
 import { Ionicons } from "@expo/vector-icons";
+import { LinearGradient } from "expo-linear-gradient";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import { useRouter } from "expo-router";
 import { useCallback, useEffect, useState } from "react";
@@ -714,50 +715,6 @@ export default function EmployeeTasksScreen() {
           />
         }
       >
-        <View className="mb-5 rounded-2xl bg-white p-4 shadow-sm shadow-slate-200">
-          <View className="flex-row items-center justify-between">
-            <Text className="text-base font-bold text-slate-900">
-              Task summary
-            </Text>
-            <Text className="text-sm font-semibold text-slate-500">
-              Total {taskSummary.total}
-            </Text>
-          </View>
-          <View className="mt-4 flex-row flex-wrap gap-3">
-            <View className="flex-1 rounded-2xl border border-slate-200 bg-slate-50 p-3">
-              <Text className="text-2xl font-black text-slate-900">
-                {taskSummary.total}
-              </Text>
-              <Text className="mt-1 text-xs uppercase text-slate-500">
-                Total
-              </Text>
-            </View>
-            <View className="flex-1 rounded-2xl border border-slate-200 bg-slate-50 p-3">
-              <Text className="text-2xl font-black text-blue-700">
-                {taskSummary.inProgress}
-              </Text>
-              <Text className="mt-1 text-xs uppercase text-slate-500">
-                In Progress
-              </Text>
-            </View>
-            <View className="flex-1 rounded-2xl border border-slate-200 bg-slate-50 p-3">
-              <Text className="text-2xl font-black text-emerald-700">
-                {taskSummary.completed}
-              </Text>
-              <Text className="mt-1 text-xs uppercase text-slate-500">
-                Completed
-              </Text>
-            </View>
-            <View className="flex-1 rounded-2xl border border-slate-200 bg-slate-50 p-3">
-              <Text className="text-2xl font-black text-orange-700">
-                {taskSummary.onHold}
-              </Text>
-              <Text className="mt-1 text-xs uppercase text-slate-500">
-                On Hold
-              </Text>
-            </View>
-          </View>
-        </View>
 
         {/* Filter & Search Bar */}
         <View className="mb-4 flex-row items-center gap-3">

@@ -1,4 +1,5 @@
 import { Ionicons } from "@expo/vector-icons";
+import { LinearGradient } from "expo-linear-gradient";
 import * as Location from "expo-location";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
@@ -214,7 +215,52 @@ export default function AttendanceScreen() {
 
         {!todayRecord?.check_in_time && <View className="mt-4 rounded-2xl border border-slate-200 bg-white p-4"><Text className="text-base font-bold text-slate-900">Office verification</Text><Text className="mt-1 text-sm text-slate-500">You must be within {ALLOWED_RADIUS_METERS}m of the office to clock in.</Text><Pressable onPress={handleLocation} disabled={locationLoading || todayHoliday || approvedLeaveToday} className="mt-4 flex-row items-center justify-center rounded-xl border border-blue-200 bg-blue-50 py-3 disabled:opacity-50">{locationLoading ? <ActivityIndicator color="#2563eb" /> : <><Ionicons name="location-outline" size={18} color="#2563eb" /><Text className="ml-2 font-bold text-blue-700">{distance === null ? "Verify my location" : `${Math.round(distance)}m from office`}</Text></>}</Pressable>{locationText ? <Text className="mt-3 text-xs text-slate-500">{locationText}</Text> : null}</View>}
 
-        <View className="mt-6 flex-row gap-3"><View className="flex-1 rounded-2xl border border-slate-200 bg-white p-4"><Text className="text-xs font-bold uppercase tracking-wider text-slate-400">Records</Text><Text className="mt-2 text-2xl font-black text-slate-900">{history.length}</Text></View><View className="flex-1 rounded-2xl border border-slate-200 bg-white p-4"><Text className="text-xs font-bold uppercase tracking-wider text-slate-400">Present</Text><Text className="mt-2 text-2xl font-black text-emerald-600">{presentDays}</Text></View></View>
+        {/* ── STATS SECTION ── */}
+        <View className="mt-6 mb-6 flex-row flex-wrap justify-between">
+          {[
+            { label: "Total Records", value: String(history.length), sub: "All Logs", icon: "document-text", color: "#f97316", bg: "#fff7ed", subColor: "text-orange-500" },
+            { label: "Present", value: String(presentDays), sub: "On Time", icon: "checkmark-circle", color: "#f97316", bg: "#fff7ed", subColor: "text-emerald-500" },
+            { label: "Absent/Leave", value: String(Math.max(history.length - presentDays, 0)), sub: "Missed", icon: "close-circle", color: "#f97316", bg: "#fff7ed", subColor: "text-red-500" },
+          ].map((stat, idx) => (
+            <View
+              key={idx}
+              className={`mb-3 ${idx === 2 ? "w-full" : "w-[48%]"} overflow-hidden rounded-2xl bg-white border border-orange-100`}
+              style={{
+                shadowColor: "#f97316",
+                shadowOffset: { width: 0, height: 4 },
+                shadowOpacity: 0.12,
+                shadowRadius: 10,
+                elevation: 4,
+              }}
+            >
+              <LinearGradient
+                colors={["#ffffff", "#fff7ed"]}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+                style={{ paddingHorizontal: 16, paddingVertical: 16 }}
+              >
+                <View className="flex-row items-center mb-3">
+                  <View className="h-10 w-10 items-center justify-center rounded-xl bg-black">
+                    <Ionicons name={stat.icon as any} size={20} color="#f97316" />
+                  </View>
+                  <View className="ml-2 flex-1">
+                    <Text className="text-[10px] font-bold uppercase tracking-[0.5px] text-gray-500" numberOfLines={2}>
+                      {stat.label}
+                    </Text>
+                  </View>
+                </View>
+                <View className="flex-row items-baseline justify-between">
+                  <Text className="text-[22px] font-black text-black">
+                    {stat.value}
+                  </Text>
+                  <Text className={`text-[10px] font-bold ${stat.subColor || "text-gray-400"}`}>
+                    {stat.sub}
+                  </Text>
+                </View>
+              </LinearGradient>
+            </View>
+          ))}
+        </View>
         <Text className="mb-3 mt-7 text-xs font-bold uppercase tracking-widest text-slate-400">This month</Text>
         {loading ? <ActivityIndicator color="#2563eb" /> : history.length === 0 ? <View className="items-center rounded-2xl border border-dashed border-slate-300 bg-white p-8"><Ionicons name="calendar-outline" size={28} color="#94a3b8" /><Text className="mt-3 text-sm text-slate-500">No attendance records found.</Text></View> : <View className="gap-3">{history.map((record, index) => <View key={record.id || index} className="rounded-2xl border border-slate-200 bg-white p-4"><View className="flex-row items-start justify-between"><View className="flex-1"><Text className="text-base font-bold text-slate-900">{formatDate(record.date || record.attendance_date)}</Text><Text className="mt-1 text-sm text-slate-500">{record.check_in_time || "--"} - {record.check_out_time || (getLocalDateKey(record.date || record.attendance_date) === todayKey ? "In progress" : "--")}</Text></View><Text className={`text-sm font-bold ${record.attendance_status === "Present" ? "text-emerald-600" : "text-rose-600"}`}>{record.attendance_status || "-"}</Text></View><View className="mt-3 flex-row justify-between border-t border-slate-100 pt-3"><Text className="text-xs text-slate-500">Working: {record.working_hours || (getLocalDateKey(record.date || record.attendance_date) === todayKey ? liveDuration : "--")}</Text><Text className="text-xs text-slate-500">Late: {record.late_entry || "No"}</Text></View></View>)}</View>}
       </ScrollView>
