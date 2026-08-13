@@ -420,19 +420,18 @@ function TaskAssignmentModal({
         style={{
           flex: 1,
           justifyContent: "flex-end",
-          backgroundColor: "rgba(15, 23, 42, 0.7)",
-          paddingHorizontal: 14,
+          backgroundColor: "rgba(15, 23, 42, 0.22)",
           paddingBottom: 0,
         }}
       >
         <View
           style={{
-            backgroundColor: "#111827",
+            backgroundColor: "#ffffff",
             borderTopLeftRadius: 24,
             borderTopRightRadius: 24,
             borderWidth: 1,
             borderColor: "rgba(148, 163, 184, 0.18)",
-            paddingHorizontal: 20,
+            paddingHorizontal: 0,
             paddingTop: 18,
             paddingBottom: 22,
             maxHeight: "90%",
@@ -444,12 +443,13 @@ function TaskAssignmentModal({
               justifyContent: "space-between",
               alignItems: "center",
               marginBottom: 12,
+              paddingHorizontal: 16,
             }}
           >
             <View>
               <Text
                 style={{
-                  color: "#f8fafc",
+                  color: "#0f172a",
                   fontSize: 24,
                   fontWeight: "800",
                 }}
@@ -465,19 +465,23 @@ function TaskAssignmentModal({
                 borderRadius: 18,
                 borderWidth: 1,
                 borderColor: "#e2e8f0",
+                backgroundColor: "#f8fafc",
                 alignItems: "center",
                 justifyContent: "center",
               }}
             >
-              <Ionicons name="close" size={20} color="#f8fafc" />
+              <Ionicons name="close" size={20} color="#334155" />
             </Pressable>
           </View>
 
-          <ScrollView showsVerticalScrollIndicator={false}>
+          <ScrollView
+            showsVerticalScrollIndicator={false}
+            contentContainerStyle={{ paddingHorizontal: 16 }}
+          >
             <View style={{ marginBottom: 18 }}>
               <Text
                 style={{
-                  color: "#f8fafc",
+                  color: "#334155",
                   fontSize: 14,
                   fontWeight: "700",
                   marginBottom: 10,
@@ -497,17 +501,13 @@ function TaskAssignmentModal({
                         paddingHorizontal: 12,
                         paddingVertical: 10,
                         borderWidth: 1,
-                        backgroundColor: selected
-                          ? "#f97316"
-                          : "rgba(148, 163, 184, 0.08)",
-                        borderColor: selected
-                          ? "#f97316"
-                          : "rgba(148, 163, 184, 0.2)",
+                        backgroundColor: selected ? "#fff7ed" : "#fff",
+                        borderColor: selected ? "#f97316" : "#dbe3ee",
                       }}
                     >
                       <Text
                         style={{
-                          color: selected ? "#fff" : "#e2e8f0",
+                          color: selected ? "#ea580c" : "#334155",
                           fontSize: 12,
                           fontWeight: "700",
                         }}
@@ -523,7 +523,7 @@ function TaskAssignmentModal({
             <View style={{ marginBottom: 18 }}>
               <Text
                 style={{
-                  color: "#f8fafc",
+                  color: "#334155",
                   fontSize: 14,
                   fontWeight: "700",
                   marginBottom: 10,
@@ -546,17 +546,13 @@ function TaskAssignmentModal({
                         paddingHorizontal: 12,
                         paddingVertical: 10,
                         borderWidth: 1,
-                        backgroundColor: selected
-                          ? "#10b981"
-                          : "rgba(148, 163, 184, 0.08)",
-                        borderColor: selected
-                          ? "#10b981"
-                          : "rgba(148, 163, 184, 0.2)",
+                        backgroundColor: selected ? "#ecfdf5" : "#fff",
+                        borderColor: selected ? "#22c55e" : "#dbe3ee",
                       }}
                     >
                       <Text
                         style={{
-                          color: selected ? "#fff" : "#e2e8f0",
+                          color: selected ? "#15803d" : "#334155",
                           fontSize: 12,
                           fontWeight: "700",
                         }}
@@ -573,7 +569,7 @@ function TaskAssignmentModal({
               <View style={{ flex: 1 }}>
                 <Text
                   style={{
-                    color: "#f8fafc",
+                    color: "#334155",
                     fontSize: 14,
                     fontWeight: "700",
                     marginBottom: 8,
@@ -589,10 +585,10 @@ function TaskAssignmentModal({
                   style={{
                     height: 48,
                     borderRadius: 12,
-                    backgroundColor: "rgba(148, 163, 184, 0.08)",
+                    backgroundColor: "#f8fafc",
                     borderWidth: 1,
-                    borderColor: "rgba(148, 163, 184, 0.2)",
-                    color: "#f8fafc",
+                    borderColor: "#dbe3ee",
+                    color: "#0f172a",
                     paddingHorizontal: 12,
                     fontSize: 15,
                   }}
@@ -602,7 +598,7 @@ function TaskAssignmentModal({
               <View style={{ flex: 1 }}>
                 <Text
                   style={{
-                    color: "#f8fafc",
+                    color: "#334155",
                     fontSize: 14,
                     fontWeight: "700",
                     marginBottom: 8,
@@ -618,10 +614,10 @@ function TaskAssignmentModal({
                   style={{
                     height: 48,
                     borderRadius: 12,
-                    backgroundColor: "rgba(148, 163, 184, 0.08)",
+                    backgroundColor: "#f8fafc",
                     borderWidth: 1,
-                    borderColor: "rgba(148, 163, 184, 0.2)",
-                    color: "#f8fafc",
+                    borderColor: "#dbe3ee",
+                    color: "#0f172a",
                     paddingHorizontal: 12,
                     fontSize: 15,
                   }}
@@ -632,7 +628,7 @@ function TaskAssignmentModal({
             <View style={{ marginBottom: 20 }}>
               <Text
                 style={{
-                  color: "#f8fafc",
+                  color: "#334155",
                   fontSize: 14,
                   fontWeight: "700",
                   marginBottom: 8,
@@ -648,10 +644,10 @@ function TaskAssignmentModal({
                 style={{
                   height: 48,
                   borderRadius: 12,
-                  backgroundColor: "rgba(148, 163, 184, 0.08)",
+                  backgroundColor: "#f8fafc",
                   borderWidth: 1,
-                  borderColor: "rgba(148, 163, 184, 0.2)",
-                  color: "#f8fafc",
+                  borderColor: "#dbe3ee",
+                  color: "#0f172a",
                   paddingHorizontal: 12,
                   fontSize: 15,
                 }}
@@ -663,6 +659,7 @@ function TaskAssignmentModal({
                 flexDirection: "row",
                 justifyContent: "flex-end",
                 gap: 12,
+                paddingHorizontal: 0,
               }}
             >
               <Pressable
