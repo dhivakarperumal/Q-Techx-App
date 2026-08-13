@@ -1,4 +1,5 @@
 import { Ionicons } from "@expo/vector-icons";
+import { LinearGradient } from "expo-linear-gradient";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useCallback, useEffect, useState } from "react";
 import {
@@ -11,8 +12,6 @@ import {
 } from "react-native";
 import api from "../../../api";
 import { useAuth } from "../../../auth/AuthContext";
-import { BottomHome } from "../../../components/BottomHome";
-import { TopHeader } from "../../../components/TopHeader";
 
 // Reusing types and parsing logic from tasks.tsx for consistency
 type ApiTask = {
@@ -221,37 +220,29 @@ export default function EmployeeTaskDetailsScreen() {
 
   if (loading)
     return (
-      <View className="flex-1 bg-slate-50">
-        <TopHeader title="Task" subtitle="Task details" />
-        <View className="flex-1 items-center justify-center">
-          <ActivityIndicator size="large" color="#2563eb" />
-          <Text className="mt-3 text-sm text-slate-500">
-            Loading task details...
-          </Text>
-        </View>
-        <BottomHome />
+      <View className="flex-1 bg-slate-50 items-center justify-center">
+        <ActivityIndicator size="large" color="#f97316" />
+        <Text className="mt-3 text-sm font-medium text-slate-500">
+          Loading task details...
+        </Text>
       </View>
     );
 
   if (error || !task)
     return (
-      <View className="flex-1 bg-slate-50">
-        <TopHeader title="Task" subtitle="Task details" />
-        <View className="flex-1 p-5">
-          <Pressable
-            onPress={() => router.back()}
-            className="flex-row items-center"
-          >
-            <Ionicons name="arrow-back" size={20} color="#2563eb" />
-            <Text className="ml-2 font-bold text-blue-600">Back to tasks</Text>
-          </Pressable>
-          <View className="mt-5 rounded-2xl border border-rose-200 bg-rose-50 p-5">
-            <Text className="font-semibold text-rose-700">
-              {error || "Task not found"}
-            </Text>
-          </View>
+      <View className="flex-1 bg-slate-50 p-5 pt-16">
+        <Pressable
+          onPress={() => router.back()}
+          className="flex-row items-center self-start rounded-full bg-white px-4 py-2 shadow-sm border border-slate-100"
+        >
+          <Ionicons name="arrow-back" size={18} color="#f97316" />
+          <Text className="ml-2 font-bold text-slate-700">Go back</Text>
+        </Pressable>
+        <View className="mt-8 rounded-2xl border border-rose-200 bg-rose-50 p-5">
+          <Text className="font-semibold text-rose-700">
+            {error || "Task not found"}
+          </Text>
         </View>
-        <BottomHome />
       </View>
     );
 
@@ -300,46 +291,61 @@ export default function EmployeeTaskDetailsScreen() {
 
   return (
     <View className="flex-1 bg-slate-50">
-      <TopHeader title="Task" subtitle="Task details" />
+      <LinearGradient
+        colors={["#fff7ed", "#ffffff", "#f8fafc"]}
+        locations={[0, 0.4, 1]}
+        style={{ position: "absolute", left: 0, right: 0, top: 0, bottom: 0 }}
+      />
       <ScrollView
         className="flex-1"
-        contentContainerStyle={{ padding: 20, paddingBottom: 32 }}
+        contentContainerStyle={{ padding: 20, paddingTop: 60, paddingBottom: 40 }}
         refreshControl={
           <RefreshControl
             refreshing={refreshing}
             onRefresh={() => fetchDetails(true)}
-            tintColor="#2563eb"
+            tintColor="#f97316"
           />
         }
       >
-        <Pressable
-          onPress={() => router.back()}
-          className="mb-5 flex-row items-center"
-        >
-          <Ionicons name="arrow-back" size={20} color="#2563eb" />
-          <Text className="ml-2 font-bold text-blue-600">Back to tasks</Text>
-        </Pressable>
+        <View className="mb-6 flex-row items-center">
+          <Pressable
+            onPress={() => router.back()}
+            className="h-11 w-11 items-center justify-center rounded-full bg-white shadow-sm border border-slate-100"
+          >
+            <Ionicons name="arrow-back" size={22} color="#f97316" />
+          </Pressable>
+          <Text className="ml-3 text-lg font-black text-slate-800">Task Details</Text>
+        </View>
 
-        <View className="rounded-3xl bg-slate-900 p-5">
+        <View
+          className="mb-6 overflow-hidden rounded-[24px] border border-orange-200 bg-white p-6 shadow-sm"
+          style={{
+            shadowColor: "#f97316",
+            shadowOffset: { width: 0, height: 6 },
+            shadowOpacity: 0.15,
+            shadowRadius: 16,
+            elevation: 4,
+          }}
+        >
           <View className="flex-row items-start justify-between">
             <View className="mr-3 flex-1">
-              <Text className="text-xs font-bold uppercase tracking-widest text-blue-300">
+              <Text className="text-xs font-bold uppercase tracking-widest text-orange-500">
                 {task.task_code || "Task"}
               </Text>
-              <Text className="mt-2 text-2xl font-black text-white">
+              <Text className="mt-2 text-2xl font-black text-slate-900">
                 {title}
               </Text>
-              <Text className="mt-1 text-sm text-slate-300">
-                {project}
+              <Text className="mt-1.5 text-sm font-semibold text-slate-500">
+                Project: <Text className="font-bold text-slate-700">{project}</Text>
               </Text>
               {moduleName ? (
-                <Text className="mt-1 text-xs text-blue-200">
+                <Text className="mt-1 text-xs font-medium text-slate-400">
                   Module: {moduleName}
                 </Text>
               ) : null}
             </View>
-            <View className="rounded-xl bg-white/10 px-3 py-2">
-              <Text className="text-xs font-bold text-white">
+            <View className="rounded-xl px-3 py-2" style={{ backgroundColor: `${color}15` }}>
+              <Text className="text-xs font-bold" style={{ color }}>
                 {rawStatus || "Unknown"}
               </Text>
             </View>
@@ -383,7 +389,6 @@ export default function EmployeeTaskDetailsScreen() {
           ) : null}
         </View>
       </ScrollView>
-      <BottomHome />
     </View>
   );
 }
