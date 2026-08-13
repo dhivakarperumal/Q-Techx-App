@@ -3,6 +3,7 @@ import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { ActivityIndicator, Alert, Modal, Pressable, RefreshControl, ScrollView, Text, TextInput, TouchableOpacity, View } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import api from "../../api";
 import { AdminBottomBar } from "../../components/admin-bottom-bar";
 
@@ -172,7 +173,7 @@ export default function AdminLeavesScreen() {
   };
 
   return (
-    <View className="flex-1 bg-white">
+    <SafeAreaView className="flex-1 bg-white">
       <View style={{
         flexDirection: "row",
         alignItems: "center",
@@ -392,26 +393,28 @@ export default function AdminLeavesScreen() {
                     )}
                   </View>
 
-                  <View className="ml-3 justify-between h-[80px]">
-                    <TouchableOpacity
-                      onPress={() => {
-                        setSelected(leave);
-                        setDecision("Approved");
-                      }}
-                      className="bg-emerald-600 rounded-lg px-3 py-2"
-                    >
-                      <Text className="text-white text-[10px] font-bold">Approve</Text>
-                    </TouchableOpacity>
-                    <TouchableOpacity
-                      onPress={() => {
-                        setSelected(leave);
-                        setDecision("Rejected");
-                      }}
-                      className="bg-rose-600 rounded-lg px-3 py-2"
-                    >
-                      <Text className="text-white text-[10px] font-bold">Reject</Text>
-                    </TouchableOpacity>
-                  </View>
+                  {leave.status === "Pending" && (
+                    <View className="ml-3 justify-between h-[80px]">
+                      <TouchableOpacity
+                        onPress={() => {
+                          setSelected(leave);
+                          setDecision("Approved");
+                        }}
+                        className="bg-emerald-600 rounded-lg px-3 py-2"
+                      >
+                        <Text className="text-white text-[10px] font-bold">Approve</Text>
+                      </TouchableOpacity>
+                      <TouchableOpacity
+                        onPress={() => {
+                          setSelected(leave);
+                          setDecision("Rejected");
+                        }}
+                        className="bg-rose-600 rounded-lg px-3 py-2"
+                      >
+                        <Text className="text-white text-[10px] font-bold">Reject</Text>
+                      </TouchableOpacity>
+                    </View>
+                  )}
                 </View>
               </TouchableOpacity>
             ))
@@ -468,6 +471,6 @@ export default function AdminLeavesScreen() {
 
       {/* Bottom Bar */}
       <AdminBottomBar />
-    </View>
+    </SafeAreaView>
   );
 }
