@@ -67,14 +67,6 @@ export default function EmployeeLeaveScreen() {
   const [submitting, setSubmitting] = useState(false);
   const [showFromDatePicker, setShowFromDatePicker] = useState(false);
   const [showToDatePicker, setShowToDatePicker] = useState(false);
-  const [form, setForm] = useState({
-    leave_type: "Casual Leave",
-    from_date: "",
-    to_date: "",
-    day_type: "Full Day",
-    half_day_type: "Morning",
-    reason: "",
-  });
 
   const formatPickerDate = (date: Date) => {
     const year = date.getFullYear();
@@ -82,6 +74,26 @@ export default function EmployeeLeaveScreen() {
     const day = String(date.getDate()).padStart(2, "0");
     return `${year}-${month}-${day}`;
   };
+
+  const getDefaultLeaveDates = () => {
+    const today = new Date();
+    const tomorrow = new Date(today);
+    tomorrow.setDate(today.getDate() + 1);
+
+    return {
+      from_date: formatPickerDate(today),
+      to_date: formatPickerDate(tomorrow),
+    };
+  };
+
+  const [form, setForm] = useState({
+    leave_type: "Casual Leave",
+    from_date: getDefaultLeaveDates().from_date,
+    to_date: getDefaultLeaveDates().to_date,
+    day_type: "Full Day",
+    half_day_type: "Morning",
+    reason: "",
+  });
 
   const fetchLeaveData = useCallback(async (isRefresh = false) => {
     try {
@@ -204,8 +216,8 @@ export default function EmployeeLeaveScreen() {
       setShowApply(false);
       setForm({
         leave_type: leaveTypes[0] || "Casual Leave",
-        from_date: "",
-        to_date: "",
+        from_date: getDefaultLeaveDates().from_date,
+        to_date: getDefaultLeaveDates().to_date,
         day_type: "Full Day",
         half_day_type: "Morning",
         reason: "",
@@ -230,7 +242,7 @@ export default function EmployeeLeaveScreen() {
       <TopHeader title="Leave" subtitle="Requests and balances" />
       <ScrollView
         className="flex-1"
-        contentContainerStyle={{ padding: 20, paddingBottom: 110 }}
+        contentContainerStyle={{ paddingHorizontal: 0, paddingBottom: 110 }}
         refreshControl={
           <RefreshControl
             refreshing={refreshing}
@@ -240,7 +252,7 @@ export default function EmployeeLeaveScreen() {
         }
       >
         {/* ── STATS SECTION ── */}
-        <View className="mt-6 mb-6 flex-row justify-between">
+        <View className="mt-6 mb-6 px-4 flex-row justify-between">
           {[
             {
               label: "Allowed",
@@ -321,7 +333,7 @@ export default function EmployeeLeaveScreen() {
           ))}
         </View>
         {balances.length > 0 && (
-          <View className="mt-6">
+          <View className="mt-6 px-4">
             <Text className="mb-3 text-xs font-bold uppercase tracking-widest text-slate-400">
               Leave balance
             </Text>
@@ -345,7 +357,7 @@ export default function EmployeeLeaveScreen() {
             </ScrollView>
           </View>
         )}
-        <View className="mt-7 flex-row items-center justify-between">
+        <View className="mt-7 flex-row items-center justify-between px-4">
           <Text className="text-xs font-bold uppercase tracking-widest text-slate-400">
             Request history
           </Text>
@@ -359,7 +371,7 @@ export default function EmployeeLeaveScreen() {
         <ScrollView
           horizontal
           showsHorizontalScrollIndicator={false}
-          className="mt-3"
+          className="mt-3 px-4"
         >
           {["All", "Pending", "Approved", "Rejected"].map((status) => (
             <Pressable
@@ -375,7 +387,7 @@ export default function EmployeeLeaveScreen() {
             </Pressable>
           ))}
         </ScrollView>
-        <View className="mt-4 gap-3">
+        <View className="mt-4 gap-3 px-4">
           {loading ? (
             <ActivityIndicator size="small" color="#2563eb" />
           ) : filteredLeaves.length === 0 ? (
