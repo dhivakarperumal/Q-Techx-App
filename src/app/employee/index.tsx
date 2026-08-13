@@ -654,75 +654,217 @@ export default function EmployeeScreen() {
                 </View>
               )}
             </View>
-            <View className="mt-7 flex-row gap-3">
-              <View className="flex-1 rounded-2xl border border-slate-200 bg-white p-4">
-                <Ionicons name="cash-outline" size={22} color="#16a34a" />
-                <Text className="mt-3 text-xs text-slate-500">Next salary</Text>
-                <Text className="mt-1 text-lg font-black text-slate-900">
-                  {payroll.nextSalary || "-"}
-                </Text>
-                <Text className="mt-1 text-xs text-slate-500">
-                  {payroll.nextPayDate || "Pay date unavailable"}
-                </Text>
-              </View>
-              <View className="flex-1 rounded-2xl border border-slate-200 bg-white p-4">
-                <Ionicons
-                  name="notifications-outline"
-                  size={22}
-                  color="#7c3aed"
-                />
-                <Text className="mt-3 text-xs text-slate-500">
-                  Pending leave
-                </Text>
-                <Text className="mt-1 text-lg font-black text-slate-900">
-                  {leaves.pendingCount ?? 0}
-                </Text>
-                <Text className="mt-1 text-xs text-slate-500">
-                  Requests awaiting review
-                </Text>
-              </View>
-            </View>
-            <Text className="mb-3 mt-7 text-xs font-bold uppercase tracking-widest text-slate-400">
-              Recent leave
-            </Text>
-            <View className="gap-3">
-              {leaves.recent?.length ? (
-                leaves.recent.slice(0, 4).map((leave, index) => (
-                  <View
-                    key={`${leave.leave_type}-${index}`}
-                    className="flex-row items-center rounded-2xl border border-slate-200 bg-white p-4"
-                  >
-                    <View className="h-10 w-10 items-center justify-center rounded-xl bg-orange-50">
-                      <Ionicons
-                        name="calendar-clear-outline"
-                        size={20}
-                        color="#ea580c"
-                      />
-                    </View>
-                    <View className="ml-3 flex-1">
-                      <Text className="font-bold text-slate-900">
-                        {leave.leave_type || "Leave"}
-                      </Text>
-                      <Text className="mt-1 text-xs text-slate-500">
-                        {dateLabel(leave.from_date)} · {leave.no_of_days || 0}{" "}
-                        day(s)
-                      </Text>
-                    </View>
-                    <Text
-                      className={`text-xs font-bold ${leave.status === "Approved" ? "text-emerald-600" : leave.status === "Rejected" ? "text-rose-600" : "text-orange-600"}`}
-                    >
-                      {leave.status || "Pending"}
+
+
+            {/* Salary & Leave Summary */}
+            <View className="mb-5 overflow-hidden rounded-3xl bg-white shadow-md">
+              {/* Orange top accent */}
+              <LinearGradient
+                colors={["#fb923c", "#f97316"]}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 0 }}
+                className="h-0.5 w-full"
+              />
+
+              <View className="p-5">
+                {/* Header */}
+                <View className="mb-4 flex-row items-center">
+                  <View className="h-10 w-10 items-center justify-center rounded-xl bg-black">
+                    <Ionicons
+                      name="wallet-outline"
+                      size={19}
+                      color="#f97316"
+                    />
+                  </View>
+
+                  <View className="ml-3">
+                    <Text className="text-base font-black text-black">
+                      Salary & Leave
+                    </Text>
+
+                    <Text className="mt-0.5 text-[10px] text-gray-400">
+                      Your payroll and leave summary
                     </Text>
                   </View>
-                ))
-              ) : (
-                <View className="rounded-2xl border border-dashed border-slate-300 bg-white p-5">
-                  <Text className="text-center text-sm text-slate-500">
-                    No recent leave requests.
-                  </Text>
                 </View>
-              )}
+
+                {/* Cards */}
+                <View className="flex-row gap-3">
+                  {/* Next Salary */}
+                  <View className="flex-1 rounded-2xl border border-orange-100 bg-orange-50/40 p-4">
+                    <View className="h-10 w-10 items-center justify-center rounded-xl bg-black">
+                      <Ionicons
+                        name="cash-outline"
+                        size={19}
+                        color="#f97316"
+                      />
+                    </View>
+
+                    <Text className="mt-3 text-[10px] font-bold uppercase tracking-wide text-gray-400">
+                      Next Salary
+                    </Text>
+
+                    <Text
+                      className="mt-1 text-lg font-black text-black"
+                      numberOfLines={1}
+                    >
+                      {payroll.nextSalary || "-"}
+                    </Text>
+
+                    <Text
+                      className="mt-1 text-[10px] text-gray-400"
+                      numberOfLines={1}
+                    >
+                      {payroll.nextPayDate || "Pay date unavailable"}
+                    </Text>
+                  </View>
+
+                  {/* Pending Leave */}
+                  <View className="flex-1 rounded-2xl border border-orange-100 bg-orange-50/40 p-4">
+                    <View className="h-10 w-10 items-center justify-center rounded-xl bg-black">
+                      <Ionicons
+                        name="notifications-outline"
+                        size={19}
+                        color="#f97316"
+                      />
+                    </View>
+
+                    <Text className="mt-3 text-[10px] font-bold uppercase tracking-wide text-gray-400">
+                      Pending Leave
+                    </Text>
+
+                    <Text className="mt-1 text-lg font-black text-black">
+                      {leaves.pendingCount ?? 0}
+                    </Text>
+
+                    <Text className="mt-1 text-[10px] text-gray-400">
+                      Requests awaiting review
+                    </Text>
+                  </View>
+                </View>
+              </View>
             </View>
+
+
+            {/* Recent Leave */}
+            <View className="mb-5 overflow-hidden rounded-3xl bg-white shadow-md">
+              {/* Orange top accent */}
+              <LinearGradient
+                colors={["#fb923c", "#f97316"]}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 0 }}
+                className="h-0.5 w-full"
+              />
+
+              <View className="p-5">
+                {/* Header */}
+                <View className="mb-4 flex-row items-center justify-between">
+                  <View className="flex-row items-center">
+                    <View className="h-10 w-10 items-center justify-center rounded-xl bg-black">
+                      <Ionicons
+                        name="calendar-clear-outline"
+                        size={19}
+                        color="#f97316"
+                      />
+                    </View>
+
+                    <View className="ml-3">
+                      <Text className="text-base font-black text-black">
+                        Recent Leave
+                      </Text>
+
+                      <Text className="mt-0.5 text-[10px] text-gray-400">
+                        Your latest leave requests
+                      </Text>
+                    </View>
+                  </View>
+
+                  {/* Pending count */}
+                  <View className="rounded-xl bg-orange-50 px-3 py-2">
+                    <Text className="text-xs font-black text-orange-500">
+                      {leaves.pendingCount ?? 0} pending
+                    </Text>
+                  </View>
+                </View>
+
+                {/* Leave List */}
+                <View className="gap-3">
+                  {leaves.recent?.length ? (
+                    leaves.recent.slice(0, 4).map((leave, index) => (
+                      <View
+                        key={`${leave.leave_type}-${index}`}
+                        className="flex-row items-center rounded-2xl border border-orange-100 bg-orange-50/40 p-3"
+                      >
+                        {/* Icon */}
+                        <View className="h-11 w-11 items-center justify-center rounded-xl bg-black">
+                          <Ionicons
+                            name="calendar-clear-outline"
+                            size={19}
+                            color="#f97316"
+                          />
+                        </View>
+
+                        {/* Leave Details */}
+                        <View className="ml-3 flex-1">
+                          <Text
+                            className="text-sm font-bold text-black"
+                            numberOfLines={1}
+                          >
+                            {leave.leave_type || "Leave"}
+                          </Text>
+
+                          <Text className="mt-1 text-[11px] text-gray-400">
+                            {dateLabel(leave.from_date)} · {leave.no_of_days || 0} day(s)
+                          </Text>
+                        </View>
+
+                        {/* Status */}
+                        <View
+                          className={`rounded-lg px-2.5 py-1 ${leave.status === "Approved"
+                              ? "bg-emerald-50"
+                              : leave.status === "Rejected"
+                                ? "bg-rose-50"
+                                : "bg-orange-50"
+                            }`}
+                        >
+                          <Text
+                            className={`text-[10px] font-bold ${leave.status === "Approved"
+                                ? "text-emerald-600"
+                                : leave.status === "Rejected"
+                                  ? "text-rose-600"
+                                  : "text-orange-600"
+                              }`}
+                          >
+                            {leave.status || "Pending"}
+                          </Text>
+                        </View>
+                      </View>
+                    ))
+                  ) : (
+                    <View className="rounded-2xl border border-dashed border-orange-200 bg-orange-50/40 p-6">
+                      <View className="mb-2 items-center">
+                        <View className="h-12 w-12 items-center justify-center rounded-2xl bg-black">
+                          <Ionicons
+                            name="calendar-clear-outline"
+                            size={22}
+                            color="#f97316"
+                          />
+                        </View>
+                      </View>
+
+                      <Text className="text-center text-sm font-bold text-black">
+                        No recent leave requests
+                      </Text>
+
+                      <Text className="mt-1 text-center text-xs text-gray-400">
+                        Your leave requests will appear here.
+                      </Text>
+                    </View>
+                  )}
+                </View>
+              </View>
+            </View>
+
             <Text className="mb-3 mt-7 text-xs font-bold uppercase tracking-widest text-slate-400">
               Upcoming meetings
             </Text>
