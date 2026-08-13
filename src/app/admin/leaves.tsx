@@ -5,7 +5,6 @@ import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { ActivityIndicator, Alert, Modal, Pressable, RefreshControl, ScrollView, Text, TextInput, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import api from "../../api";
-import { AdminBottomBar } from "../../components/admin-bottom-bar";
 
 type Leave = { id: string | number; employee_id?: string | number; user_id?: string | number; first_name?: string; last_name?: string; employee_code?: string; leave_type?: string; from_date?: string; to_date?: string; no_of_days?: number | string; day_type?: string; half_day_type?: string; reason?: string; status?: string; admin_reason?: string };
 const statuses = ["All", "Pending", "Approved", "Rejected"];
@@ -469,8 +468,6 @@ export default function AdminLeavesScreen() {
         </View>
       </Modal>
 
-      {/* Bottom Bar */}
-      <AdminBottomBar />
     </SafeAreaView>
   );
 }
