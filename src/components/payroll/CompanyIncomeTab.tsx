@@ -229,7 +229,12 @@ export default function CompanyIncomeTab() {
     },
   ];
 
-  const MONTHS = ["01", "02", "03", "04", "05", "06", "07", "08", "09", "10", "11", "12"];
+  const MONTHS = [
+    { v: "01", l: "January" }, { v: "02", l: "February" }, { v: "03", l: "March" },
+    { v: "04", l: "April" }, { v: "05", l: "May" }, { v: "06", l: "June" },
+    { v: "07", l: "July" }, { v: "08", l: "August" }, { v: "09", l: "September" },
+    { v: "10", l: "October" }, { v: "11", l: "November" }, { v: "12", l: "December" }
+  ];
   const TYPES = ["Internship Payment", "Other"];
   const MODES = ["Bank Transfer", "UPI", "Cash", "Cheque"];
 
@@ -266,11 +271,11 @@ export default function CompanyIncomeTab() {
                     </Text>
                   </View>
                 </View>
-                <View className="flex-row items-baseline justify-between">
+                <View className="mt-1 flex-col">
                   <Text className="text-[22px] font-black text-black" numberOfLines={1} adjustsFontSizeToFit>
                     {stat.value}
                   </Text>
-                  <Text className={`text-[10px] font-bold ${stat.subColor || "text-gray-400"}`}>
+                  <Text className={`text-[10px] font-bold mt-0.5 ${stat.subColor || "text-gray-400"}`}>
                     {stat.sub}
                   </Text>
                 </View>
@@ -320,7 +325,7 @@ export default function CompanyIncomeTab() {
               className="h-11 flex-1 bg-white border border-slate-200 rounded-xl px-3 flex-row items-center justify-between min-w-[30%]"
             >
               <Text className="text-[11px] font-medium text-slate-700" numberOfLines={1}>
-                {monthFilter ? `Month: ${monthFilter}` : "All Dates"}
+                {monthFilter ? `Month: ${MONTHS.find(m => m.v === monthFilter)?.l || monthFilter}` : "All Dates"}
               </Text>
               <Ionicons name="chevron-down" size={12} color="#64748b" />
             </TouchableOpacity>
@@ -373,8 +378,8 @@ export default function CompanyIncomeTab() {
                   <Text className={`text-sm ${!monthFilter ? "font-bold text-orange-500" : "text-slate-700"}`}>All Dates</Text>
                 </TouchableOpacity>
                 {MONTHS.map((m) => (
-                  <TouchableOpacity key={m} onPress={() => { setMonthFilter(m); setMonthDropdownOpen(false); }} className="px-5 py-4 border-b border-slate-100">
-                    <Text className={`text-sm ${monthFilter === m ? "font-bold text-orange-500" : "text-slate-700"}`}>{m}</Text>
+                  <TouchableOpacity key={m.v} onPress={() => { setMonthFilter(m.v); setMonthDropdownOpen(false); }} className="px-5 py-4 border-b border-slate-100">
+                    <Text className={`text-sm ${monthFilter === m.v ? "font-bold text-orange-500" : "text-slate-700"}`}>{m.l}</Text>
                   </TouchableOpacity>
                 ))}
               </ScrollView>
@@ -400,30 +405,35 @@ export default function CompanyIncomeTab() {
         ) : (
           <View>
             {filteredHistory.map((record, index) => (
-              <View key={record.income_id || index} className="p-4 border-b border-slate-100 flex-row items-center justify-between">
-                <View className="flex-1 mr-4">
-                  <View className="flex-row items-center gap-2 mb-1">
-                    <Text className="font-bold text-slate-900">{record.income_type}</Text>
-                    {record.invoice_number && (
-                      <Text className="text-[10px] bg-slate-100 text-slate-500 px-1.5 py-0.5 rounded font-mono">{record.invoice_number}</Text>
-                    )}
+              <View key={record.income_id || index} className="flex-row items-center justify-between p-4 mb-3 bg-white rounded-2xl shadow-sm" style={{ shadowColor: "#cbd5e1", shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.1, shadowRadius: 4, elevation: 2 }}>
+                <View className="flex-1 mr-3 flex-row items-center gap-3">
+                  <View className="w-10 h-10 rounded-full items-center justify-center bg-blue-50">
+                    <Ionicons name="cash" size={18} color="#3b82f6" />
                   </View>
-                  <Text className="text-xs text-slate-500">{record.intern_name || record.income_reason || '—'}</Text>
-                  <Text className="text-[10px] text-slate-400 mt-1">
-                    {new Date(record.date_of_payment).toLocaleDateString()} • {record.payment_type}
-                  </Text>
+                  <View className="flex-1">
+                    <View className="flex-row items-center gap-2 mb-0.5">
+                      <Text className="font-bold text-slate-900" numberOfLines={1}>{record.income_type}</Text>
+                      {record.invoice_number && (
+                        <Text className="text-[9px] bg-slate-100 text-slate-500 px-1.5 py-0.5 rounded font-mono">{record.invoice_number}</Text>
+                      )}
+                    </View>
+                    <Text className="text-xs text-slate-500" numberOfLines={1}>{record.intern_name || record.income_reason || '—'}</Text>
+                    <Text className="text-[10px] text-slate-400 mt-1">
+                      {new Date(record.date_of_payment).toLocaleDateString()} • {record.payment_type}
+                    </Text>
+                  </View>
                 </View>
                 <View className="items-end gap-2">
-                  <Text className="font-bold text-emerald-600 text-base">₹{parseFloat(record.amount).toFixed(2)}</Text>
-                  <View className="flex-row gap-2 mt-1">
-                    <TouchableOpacity onPress={() => setViewRecord(record)} className="bg-slate-100 p-1.5 rounded-lg">
-                      <Eye size={14} color="#64748b" />
+                  <Text className="font-black text-emerald-600 text-base">₹{parseFloat(record.amount).toFixed(2)}</Text>
+                  <View className="flex-row gap-1">
+                    <TouchableOpacity onPress={() => setViewRecord(record)} className="bg-slate-100 p-1.5 rounded-md">
+                      <Eye size={12} color="#64748b" />
                     </TouchableOpacity>
-                    <TouchableOpacity onPress={() => handleEdit(record)} className="bg-blue-50 p-1.5 rounded-lg">
-                      <Edit size={14} color="#3b82f6" />
+                    <TouchableOpacity onPress={() => handleEdit(record)} className="bg-blue-50 p-1.5 rounded-md">
+                      <Edit size={12} color="#3b82f6" />
                     </TouchableOpacity>
-                    <TouchableOpacity onPress={() => handleDelete(record.income_id)} className="bg-rose-50 p-1.5 rounded-lg">
-                      <Trash2 size={14} color="#f43f5e" />
+                    <TouchableOpacity onPress={() => handleDelete(record.income_id)} className="bg-rose-50 p-1.5 rounded-md">
+                      <Trash2 size={12} color="#f43f5e" />
                     </TouchableOpacity>
                   </View>
                 </View>
