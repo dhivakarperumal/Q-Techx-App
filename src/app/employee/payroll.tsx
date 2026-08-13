@@ -97,7 +97,77 @@ function PayslipModal({ record, onClose }: { record: SalaryRecord | null; onClos
         <Pressable onPress={onClose} accessibilityLabel="Close payslip" className="h-10 w-10 items-center justify-center rounded-xl bg-slate-100"><Ionicons name="close" size={22} color="#475569" /></Pressable>
       </View>
       <ScrollView contentContainerStyle={{ padding: 20, paddingBottom: 32 }}>
-        <View className="rounded-2xl bg-slate-900 p-5"><Text className="text-xs font-bold uppercase tracking-widest text-orange-300">Q TECHX</Text><Text className="mt-3 text-xl font-black text-white">Salary Payslip</Text><Text className="mt-1 text-sm text-slate-300">{employeeName} · {monthYear(record)}</Text><View className="mt-5 border-t border-white/10 pt-4"><Text className="text-xs text-slate-400">Net Pay</Text><Text className="mt-1 text-3xl font-black text-orange-300">{amount(record.total_salary)}</Text><Text className="mt-1 text-xs text-slate-400">Credited {record.created_at ? new Date(record.created_at).toLocaleDateString() : "-"}</Text></View></View>
+        <View
+          className="overflow-hidden rounded-2xl border border-orange-100 bg-white"
+          style={{
+            shadowColor: "#f97316",
+            shadowOffset: { width: 0, height: 4 },
+            shadowOpacity: 0.12,
+            shadowRadius: 10,
+            elevation: 4,
+          }}
+        >
+          <LinearGradient
+            colors={["#ffffff", "#fff7ed"]}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={{
+              paddingHorizontal: 14,
+              paddingVertical: 16,
+            }}
+          >
+            {/* Icon + Title */}
+            <View className="mb-3 flex-row items-center justify-between">
+              <View>
+                <View className="mb-2 h-9 w-9 items-center justify-center rounded-xl bg-black">
+                  <Ionicons
+                    name="document-text-outline"
+                    size={18}
+                    color="#f97316"
+                  />
+                </View>
+
+                <Text className="text-[10px] font-bold uppercase tracking-[0.5px] text-gray-500">
+                  Salary Payslip
+                </Text>
+              </View>
+
+              <View className="items-end">
+                <Text className="text-[9px] font-bold uppercase tracking-wider text-gray-400">
+                  Payslip
+                </Text>
+
+                <Text className="mt-1 text-xs font-bold text-gray-500">
+                  {monthYear(record)}
+                </Text>
+              </View>
+            </View>
+
+            {/* Employee */}
+            <Text className="text-sm font-bold text-gray-600">
+              {employeeName}
+            </Text>
+
+            {/* Net Pay */}
+            <View className="mt-4 border-t border-orange-100 pt-4">
+              <Text className="text-[9px] font-bold uppercase tracking-wider text-gray-400">
+                Net Pay
+              </Text>
+
+              <Text className="mt-1 text-3xl font-black text-black">
+                {amount(record.total_salary)}
+              </Text>
+
+              <Text className="mt-1 text-[9px] font-bold text-orange-500">
+                Credited{" "}
+                {record.created_at
+                  ? new Date(record.created_at).toLocaleDateString()
+                  : "-"}
+              </Text>
+            </View>
+          </LinearGradient>
+        </View>
+
         <Text className="mb-3 mt-7 text-xs font-bold uppercase tracking-widest text-slate-400">Employee attendance</Text>
         <View className="rounded-2xl border border-slate-200 bg-white p-4"><DetailRow label="Present Days" value={String(record.present_days ?? 0)} /><DetailRow label="Leave Days" value={String(record.leave_days ?? 0)} /></View>
         <Text className="mb-3 mt-7 text-xs font-bold uppercase tracking-widest text-slate-400">Earnings</Text>
