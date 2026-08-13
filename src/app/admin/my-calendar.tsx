@@ -1,6 +1,6 @@
 import { Ionicons } from "@expo/vector-icons";
 import * as DocumentPicker from "expo-document-picker";
-import { useFocusEffect } from "expo-router";
+import { useFocusEffect, useRouter } from "expo-router";
 import type { ReactNode } from "react";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import {
@@ -22,8 +22,7 @@ import dayjs from "dayjs";
 import isSameOrAfter from "dayjs/plugin/isSameOrAfter";
 import api from "../../api";
 import { useAuth } from "../../auth/AuthContext";
-import { BottomHome } from "../../components/BottomHome";
-import { TopHeader } from "../../components/TopHeader";
+import { FAB } from "../../components/FAB";
 
 dayjs.extend(isSameOrAfter);
 
@@ -261,19 +260,24 @@ function CreateEventModal({ visible, initialData, initialDate, userId, onClose, 
   return (
     <Modal visible={visible} animationType="slide" presentationStyle="pageSheet" onRequestClose={onClose}>
       <SafeAreaView style={{ flex: 1, backgroundColor: "#f8fafc" }} edges={["top"]}>
-        <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", padding: 20, backgroundColor: "#fff", borderBottomWidth: 1, borderBottomColor: "#e2e8f0" }}>
-          <View>
-            <Text style={{ fontSize: 22, fontWeight: "800", color: "#0f172a" }}>{initialData ? "Edit Event" : "Plan My Day"}</Text>
-            <Text style={{ marginTop: 3, color: "#64748b", fontSize: 13 }}>{initialData ? "Update your event details" : "Create a personal calendar event"}</Text>
+        <View style={{ backgroundColor: "#000", paddingTop: 16, paddingHorizontal: 24, paddingBottom: 24 }}>
+          <View style={{ width: 48, height: 6, backgroundColor: "#334155", borderRadius: 3, alignSelf: "center", marginBottom: 16 }} />
+          <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
+            <View>
+              <Text style={{ color: "#f97316", fontSize: 18, fontWeight: "bold" }}>{initialData ? "Edit Event" : "Plan My Day"}</Text>
+              <Text style={{ color: "#fff", fontSize: 12, marginTop: 4 }}>{initialData ? "Update your event details" : "Create a personal calendar event"}</Text>
+            </View>
+            <TouchableOpacity onPress={onClose} style={{ backgroundColor: "#ffedd5", padding: 8, borderRadius: 20 }}>
+              <Ionicons name="close" size={20} color="#f97316" />
+            </TouchableOpacity>
           </View>
-          <Pressable onPress={onClose} style={{ borderRadius: 20, backgroundColor: "#f1f5f9", padding: 8 }}><Ionicons name="close" size={20} color="#475569" /></Pressable>
         </View>
 
         <View style={{ flexDirection: "row", backgroundColor: "#fff", borderBottomWidth: 1, borderBottomColor: "#e2e8f0" }}>
           <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: 16 }}>
             {["Basic", "Details", "Work", "Tracking"].map(tab => (
-              <TouchableOpacity key={tab} onPress={() => setActiveTab(tab)} style={{ paddingVertical: 14, paddingHorizontal: 16, borderBottomWidth: 2, borderBottomColor: activeTab === tab ? "#2563eb" : "transparent" }}>
-                <Text style={{ fontSize: 14, fontWeight: activeTab === tab ? "700" : "500", color: activeTab === tab ? "#2563eb" : "#64748b" }}>{tab}</Text>
+              <TouchableOpacity key={tab} onPress={() => setActiveTab(tab)} style={{ paddingVertical: 14, paddingHorizontal: 16, borderBottomWidth: 2, borderBottomColor: activeTab === tab ? "#f97316" : "transparent" }}>
+                <Text style={{ fontSize: 14, fontWeight: activeTab === tab ? "700" : "500", color: activeTab === tab ? "#f97316" : "#64748b" }}>{tab}</Text>
               </TouchableOpacity>
             ))}
           </ScrollView>
@@ -317,7 +321,7 @@ function CreateEventModal({ visible, initialData, initialDate, userId, onClose, 
                     <Pressable onPress={() => removeArrayItem("checklistItems", index)} style={{ justifyContent: "center", padding: 8 }}><Ionicons name="trash-outline" size={20} color="#dc2626" /></Pressable>
                   </View>
                 ))}
-                <Pressable onPress={() => addArrayItem("checklistItems")} style={{ alignSelf: "flex-start", paddingVertical: 8 }}><Text style={{ color: "#2563eb", fontWeight: "700" }}>+ Add Item</Text></Pressable>
+                <Pressable onPress={() => addArrayItem("checklistItems")} style={{ alignSelf: "flex-start", paddingVertical: 8 }}><Text style={{ color: "#f97316", fontWeight: "700" }}>+ Add Item</Text></Pressable>
               </View>
               <View style={{ marginBottom: 16 }}>
                 <Text style={{ fontSize: 12, fontWeight: "700", color: "#475569", marginBottom: 6 }}>Tags</Text>
@@ -327,12 +331,12 @@ function CreateEventModal({ visible, initialData, initialDate, userId, onClose, 
                     <Pressable onPress={() => removeArrayItem("tags", index)} style={{ justifyContent: "center", padding: 8 }}><Ionicons name="trash-outline" size={20} color="#dc2626" /></Pressable>
                   </View>
                 ))}
-                <Pressable onPress={() => addArrayItem("tags")} style={{ alignSelf: "flex-start", paddingVertical: 8 }}><Text style={{ color: "#2563eb", fontWeight: "700" }}>+ Add Tag</Text></Pressable>
+                <Pressable onPress={() => addArrayItem("tags")} style={{ alignSelf: "flex-start", paddingVertical: 8 }}><Text style={{ color: "#f97316", fontWeight: "700" }}>+ Add Tag</Text></Pressable>
               </View>
               <View style={{ marginBottom: 16 }}>
                 <Text style={{ fontSize: 12, fontWeight: "700", color: "#475569", marginBottom: 6 }}>Upload Document</Text>
                 <Pressable onPress={pickDocument} style={[inputStyle, { flexDirection: "row", alignItems: "center", gap: 8 }]}>
-                  <Ionicons name="document-attach-outline" size={20} color="#2563eb" />
+                  <Ionicons name="document-attach-outline" size={20} color="#f97316" />
                   <Text style={{ flex: 1, color: "#475569" }}>{documentFile?.name || "Choose a document"}</Text>
                 </Pressable>
               </View>
@@ -367,7 +371,7 @@ function CreateEventModal({ visible, initialData, initialDate, userId, onClose, 
             </View>
           )}
           
-          <Pressable disabled={saving} onPress={save} style={{ flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8, borderRadius: 14, backgroundColor: saving ? "#93c5fd" : "#2563eb", paddingVertical: 16, marginTop: 12 }}>
+          <Pressable disabled={saving} onPress={save} style={{ flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8, borderRadius: 14, backgroundColor: saving ? "#fdba74" : "#f97316", paddingVertical: 16, marginTop: 12 }}>
             <Ionicons name={saving ? "hourglass-outline" : "save-outline"} size={18} color="#fff" />
             <Text style={{ color: "#fff", fontSize: 16, fontWeight: "800" }}>{saving ? "Saving..." : initialData ? "Update Event" : "Save Event"}</Text>
           </Pressable>
@@ -411,17 +415,20 @@ function EventDetailsModal({ event, onClose, onEdit, onDelete }: { event: MyEven
   return (
     <Modal visible animationType="slide" presentationStyle="pageSheet" onRequestClose={onClose}>
       <SafeAreaView style={{ flex: 1, backgroundColor: "#f8fafc" }} edges={["top"]}>
-        <View style={{ padding: 20, backgroundColor: "#fff", borderBottomWidth: 1, borderBottomColor: "#e2e8f0", flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start" }}>
-          <View style={{ flex: 1, marginRight: 16 }}>
-            <View style={{ alignSelf: "flex-start", backgroundColor: `${color}15`, paddingHorizontal: 10, paddingVertical: 4, borderRadius: 12, marginBottom: 8 }}>
-              <Text style={{ color, fontSize: 10, fontWeight: "800", textTransform: "uppercase" }}>{eventType(event)}</Text>
+        <View style={{ backgroundColor: "#000", paddingTop: 16, paddingHorizontal: 24, paddingBottom: 24 }}>
+          <View style={{ width: 48, height: 6, backgroundColor: "#334155", borderRadius: 3, alignSelf: "center", marginBottom: 16 }} />
+          <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start" }}>
+            <View style={{ flex: 1, marginRight: 16 }}>
+              <View style={{ alignSelf: "flex-start", backgroundColor: `${color}15`, paddingHorizontal: 10, paddingVertical: 4, borderRadius: 12, marginBottom: 8 }}>
+                <Text style={{ color, fontSize: 10, fontWeight: "800", textTransform: "uppercase" }}>{eventType(event)}</Text>
+              </View>
+              <Text style={{ color: "#f97316", fontSize: 18, fontWeight: "bold" }}>{eventName(event)}</Text>
             </View>
-            <Text style={{ fontSize: 22, fontWeight: "800", color: "#0f172a" }}>{eventName(event)}</Text>
-          </View>
-          <View style={{ flexDirection: "row", gap: 8 }}>
-            <TouchableOpacity onPress={() => onEdit(event)} style={{ padding: 8, backgroundColor: "#eff6ff", borderRadius: 12 }}><Ionicons name="pencil" size={18} color="#2563eb" /></TouchableOpacity>
-            <TouchableOpacity onPress={confirmDelete} style={{ padding: 8, backgroundColor: "#fef2f2", borderRadius: 12 }}><Ionicons name="trash" size={18} color="#ef4444" /></TouchableOpacity>
-            <TouchableOpacity onPress={onClose} style={{ padding: 8, backgroundColor: "#f1f5f9", borderRadius: 12 }}><Ionicons name="close" size={18} color="#475569" /></TouchableOpacity>
+            <View style={{ flexDirection: "row", gap: 8 }}>
+              <TouchableOpacity onPress={() => onEdit(event)} style={{ padding: 8, backgroundColor: "#ffedd5", borderRadius: 12 }}><Ionicons name="pencil" size={18} color="#f97316" /></TouchableOpacity>
+              <TouchableOpacity onPress={confirmDelete} style={{ padding: 8, backgroundColor: "#fef2f2", borderRadius: 12 }}><Ionicons name="trash" size={18} color="#ef4444" /></TouchableOpacity>
+              <TouchableOpacity onPress={onClose} style={{ padding: 8, backgroundColor: "#ffedd5", borderRadius: 12 }}><Ionicons name="close" size={18} color="#f97316" /></TouchableOpacity>
+            </View>
           </View>
         </View>
 
@@ -490,8 +497,8 @@ function EventDetailsModal({ event, onClose, onEdit, onDelete }: { event: MyEven
             <Section title="Tags" icon="pricetags-outline">
               <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8, paddingVertical: 12 }}>
                 {tags.map((tag, i) => (
-                  <View key={i} style={{ backgroundColor: "#eff6ff", borderRadius: 16, paddingHorizontal: 10, paddingVertical: 4, borderWidth: 1, borderColor: "#bfdbfe" }}>
-                    <Text style={{ color: "#2563eb", fontSize: 12, fontWeight: "600" }}>{tag}</Text>
+                  <View key={i} style={{ backgroundColor: "#ffedd5", borderRadius: 16, paddingHorizontal: 10, paddingVertical: 4, borderWidth: 1, borderColor: "#fed7aa" }}>
+                    <Text style={{ color: "#f97316", fontSize: 12, fontWeight: "600" }}>{tag}</Text>
                   </View>
                 ))}
               </View>
@@ -505,7 +512,7 @@ function EventDetailsModal({ event, onClose, onEdit, onDelete }: { event: MyEven
                   const name = typeof att === "string" ? att.split("/").pop() : att.originalName || att.fileName || "Attachment";
                   return (
                     <View key={i} style={{ flexDirection: "row", alignItems: "center", gap: 10, padding: 10, backgroundColor: "#f8fafc", borderRadius: 12, borderWidth: 1, borderColor: "#e2e8f0" }}>
-                      <View style={{ backgroundColor: "#eff6ff", padding: 8, borderRadius: 8 }}><Ionicons name="document-text" size={16} color="#2563eb" /></View>
+                      <View style={{ backgroundColor: "#ffedd5", padding: 8, borderRadius: 8 }}><Ionicons name="document-text" size={16} color="#f97316" /></View>
                       <Text style={{ flex: 1, fontSize: 13, fontWeight: "600", color: "#334155" }}>{name}</Text>
                     </View>
                   );
@@ -520,6 +527,7 @@ function EventDetailsModal({ event, onClose, onEdit, onDelete }: { event: MyEven
 }
 
 export default function AdminMyCalendarScreen() {
+  const router = useRouter();
   const { user } = useAuth();
   const [events, setEvents] = useState<MyEvent[]>([]);
   const [loading, setLoading] = useState(true);
@@ -586,7 +594,14 @@ export default function AdminMyCalendarScreen() {
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: "#f8fafc" }} edges={["top"]}>
-      <TopHeader title="My Calendar" subtitle="Plan your day and track your events" />
+        <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", paddingHorizontal: 16, paddingVertical: 14, backgroundColor: "#fff", borderBottomWidth: 1, borderBottomColor: "#f1f5f9" }}>
+          <View style={{ flexDirection: "row", alignItems: "center" }}>
+            <TouchableOpacity onPress={() => router.back()} style={{ width: 38, height: 38, borderRadius: 12, backgroundColor: "#f1f5f9", alignItems: "center", justifyContent: "center", marginRight: 12 }}>
+              <Ionicons name="arrow-back" size={20} color="#0f172a" />
+            </TouchableOpacity>
+            <Text style={{ fontSize: 18, fontWeight: "800", color: "#0f172a" }}>My Calendar</Text>
+          </View>
+        </View>
       <ScrollView style={{ flex: 1 }} contentContainerStyle={{ padding: 20, paddingBottom: 80 }} refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => fetchEvents(true)} />}>
         
         <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: 20 }}>
@@ -594,14 +609,10 @@ export default function AdminMyCalendarScreen() {
             <Text style={{ fontSize: 24, fontWeight: "800", color: "#0f172a" }}>Plan My Day</Text>
             <Text style={{ marginTop: 4, fontSize: 13, color: "#64748b" }}>Your personal plans and tasks.</Text>
           </View>
-          <TouchableOpacity onPress={() => { setEventToEdit(null); setShowCreateModal(true); }} style={{ flexDirection: "row", alignItems: "center", gap: 6, backgroundColor: "#2563eb", paddingHorizontal: 14, paddingVertical: 10, borderRadius: 12 }}>
-            <Ionicons name="add" size={18} color="#fff" />
-            <Text style={{ color: "#fff", fontWeight: "700", fontSize: 13 }}>New Event</Text>
-          </TouchableOpacity>
         </View>
 
         {loading ? (
-          <ActivityIndicator size="large" color="#2563eb" style={{ marginVertical: 40 }} />
+          <ActivityIndicator size="large" color="#f97316" style={{ marginVertical: 40 }} />
         ) : (
           <>
             <View style={{ borderRadius: 22, backgroundColor: "#fff", borderWidth: 1, borderColor: "#e2e8f0", padding: 16, shadowColor: "#000", shadowOpacity: 0.04, shadowRadius: 8, elevation: 2 }}>
@@ -636,10 +647,10 @@ export default function AdminMyCalendarScreen() {
                       {day !== null && (
                         <View style={{ 
                           width: 34, height: 34, borderRadius: 17, alignItems: "center", justifyContent: "center", 
-                          backgroundColor: isToday ? "#2563eb" : isSelected ? "#eff6ff" : "transparent",
-                          borderWidth: isSelected && !isToday ? 2 : 0, borderColor: isSelected ? "#2563eb" : "transparent"
+                          backgroundColor: isToday ? "#f97316" : isSelected ? "#ffedd5" : "transparent",
+                          borderWidth: isSelected && !isToday ? 2 : 0, borderColor: isSelected ? "#f97316" : "transparent"
                         }}>
-                          <Text style={{ fontSize: 13, fontWeight: isToday ? "800" : "600", color: isToday ? "#fff" : isSelected ? "#2563eb" : "#334155" }}>
+                          <Text style={{ fontSize: 13, fontWeight: isToday ? "800" : "600", color: isToday ? "#fff" : isSelected ? "#f97316" : "#334155" }}>
                             {day}
                           </Text>
                           {dayEvents.length > 0 && !isToday && (
@@ -719,6 +730,7 @@ export default function AdminMyCalendarScreen() {
         onEdit={(ev) => { setSelectedEvent(null); setEventToEdit(ev); setShowCreateModal(true); }}
         onDelete={handleDelete}
       />
+      <FAB onPress={() => { setEventToEdit(null); setShowCreateModal(true); }} style={{ bottom: 32 }} />
     </SafeAreaView>
   );
 }

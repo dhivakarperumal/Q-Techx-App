@@ -13,6 +13,7 @@ import {
 import api from "../../api";
 import { BottomHome } from "../../components/BottomHome";
 import { TopHeader } from "../../components/TopHeader";
+import { FAB } from "../../components/FAB";
 
 type OfficeEvent = {
   id?: string;
@@ -111,13 +112,18 @@ function EventDetailsModal({ event, onClose }: { event: OfficeEvent | null; onCl
   return (
     <Modal visible animationType="slide" presentationStyle="pageSheet" onRequestClose={onClose}>
       <View style={{ flex: 1, backgroundColor: "#f8fafc" }}>
-        <View style={{ borderBottomWidth: 1, borderBottomColor: "#e2e8f0", backgroundColor: "#fff", padding: 20 }}>
-          <View style={{ flexDirection: "row", alignItems: "flex-start", justifyContent: "space-between", gap: 16 }}>
+        <View style={{ backgroundColor: "#000", paddingTop: 16, paddingHorizontal: 24, paddingBottom: 24 }}>
+          <View style={{ width: 48, height: 6, backgroundColor: "#334155", borderRadius: 3, alignSelf: "center", marginBottom: 16 }} />
+          <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start" }}>
             <View style={{ flex: 1 }}>
-              <Text style={{ alignSelf: "flex-start", borderRadius: 20, backgroundColor: `${color}18`, borderWidth: 1, borderColor: `${color}45`, paddingHorizontal: 10, paddingVertical: 5, color, fontSize: 10, fontWeight: "800", textTransform: "uppercase" }}>{event.eventType || "Other"}</Text>
-              <Text style={{ marginTop: 10, fontSize: 24, fontWeight: "800", color: "#0f172a" }}>{event.title || "Untitled event"}</Text>
+              <View style={{ alignSelf: "flex-start", backgroundColor: `${color}15`, paddingHorizontal: 10, paddingVertical: 4, borderRadius: 12, marginBottom: 8 }}>
+                <Text style={{ color, fontSize: 10, fontWeight: "800", textTransform: "uppercase" }}>{event.eventType || "Other"}</Text>
+              </View>
+              <Text style={{ color: "#f97316", fontSize: 18, fontWeight: "bold" }}>{event.title || "Untitled event"}</Text>
             </View>
-            <Pressable onPress={onClose} accessibilityLabel="Close event details" style={{ padding: 8, borderRadius: 20, backgroundColor: "#f1f5f9" }}><Ionicons name="close" size={20} color="#475569" /></Pressable>
+            <Pressable onPress={onClose} accessibilityLabel="Close event details" style={{ padding: 8, borderRadius: 20, backgroundColor: "#ffedd5" }}>
+              <Ionicons name="close" size={20} color="#f97316" />
+            </Pressable>
           </View>
         </View>
 
@@ -236,8 +242,8 @@ export default function OfficeCalendarScreen() {
             <Text style={{ fontSize: 28, fontWeight: "800", color: "#0f172a" }}>Office Calendar</Text>
             <Text style={{ marginTop: 6, fontSize: 15, color: "#64748b" }}>Company-wide events, holidays and deadlines.</Text>
           </View>
-          <Pressable onPress={() => fetchEvents(true)} accessibilityLabel="Refresh office calendar" style={{ padding: 10, borderRadius: 12, backgroundColor: "#f5f3ff" }}>
-            <Ionicons name="refresh-outline" size={22} color="#7c3aed" />
+          <Pressable onPress={() => fetchEvents(true)} accessibilityLabel="Refresh office calendar" style={{ padding: 10, borderRadius: 12, backgroundColor: "#ffedd5" }}>
+            <Ionicons name="refresh-outline" size={22} color="#f97316" />
           </Pressable>
         </View>
 
@@ -264,9 +270,9 @@ export default function OfficeCalendarScreen() {
               return (
                 <Pressable key={day ? dateKey(day) : `empty-${index}`} disabled={!day || !marked} onPress={() => day && setSelectedEvent(eventsOnDay(day)[0] || null)} style={{ width: `${100 / 7}%`, aspectRatio: 1, alignItems: "center", justifyContent: "center" }}>
                   {day && (
-                    <View style={{ width: 34, height: 34, borderRadius: 17, alignItems: "center", justifyContent: "center", backgroundColor: isToday ? "#7c3aed" : marked ? "#f5f3ff" : "transparent" }}>
-                      <Text style={{ fontSize: 13, fontWeight: isToday ? "800" : "500", color: isToday ? "#fff" : marked ? "#7c3aed" : day.getDay() === 0 ? "#ef4444" : "#334155" }}>{day.getDate()}</Text>
-                      {marked && !isToday && <View style={{ position: "absolute", bottom: 3, width: 4, height: 4, borderRadius: 2, backgroundColor: "#7c3aed" }} />}
+                    <View style={{ width: 34, height: 34, borderRadius: 17, alignItems: "center", justifyContent: "center", backgroundColor: isToday ? "#f97316" : marked ? "#ffedd5" : "transparent" }}>
+                      <Text style={{ fontSize: 13, fontWeight: isToday ? "800" : "500", color: isToday ? "#fff" : marked ? "#f97316" : day.getDay() === 0 ? "#ef4444" : "#334155" }}>{day.getDate()}</Text>
+                      {marked && !isToday && <View style={{ position: "absolute", bottom: 3, width: 4, height: 4, borderRadius: 2, backgroundColor: "#f97316" }} />}
                     </View>
                   )}
                 </Pressable>
@@ -277,9 +283,9 @@ export default function OfficeCalendarScreen() {
 
         <Text style={{ marginTop: 24, marginBottom: 12, fontSize: 11, fontWeight: "700", letterSpacing: 1.2, textTransform: "uppercase", color: "#94a3b8" }}>This month</Text>
         {loading && !refreshing ? (
-          <View style={{ alignItems: "center", paddingVertical: 48 }}><ActivityIndicator size="large" color="#7c3aed" /></View>
+          <View style={{ alignItems: "center", paddingVertical: 48 }}><ActivityIndicator size="large" color="#f97316" /></View>
         ) : error ? (
-          <View style={{ alignItems: "center", paddingVertical: 40 }}><Ionicons name="cloud-offline-outline" size={42} color="#94a3b8" /><Text style={{ marginTop: 12, color: "#64748b", textAlign: "center" }}>{error}</Text><Pressable onPress={() => fetchEvents()} style={{ marginTop: 16, borderRadius: 10, backgroundColor: "#7c3aed", paddingHorizontal: 16, paddingVertical: 10 }}><Text style={{ color: "#fff", fontWeight: "700" }}>Try again</Text></Pressable></View>
+          <View style={{ alignItems: "center", paddingVertical: 40 }}><Ionicons name="cloud-offline-outline" size={42} color="#94a3b8" /><Text style={{ marginTop: 12, color: "#64748b", textAlign: "center" }}>{error}</Text><Pressable onPress={() => fetchEvents()} style={{ marginTop: 16, borderRadius: 10, backgroundColor: "#f97316", paddingHorizontal: 16, paddingVertical: 10 }}><Text style={{ color: "#fff", fontWeight: "700" }}>Try again</Text></Pressable></View>
         ) : monthEvents.length === 0 ? (
           <View style={{ alignItems: "center", paddingVertical: 40 }}><Ionicons name="calendar-outline" size={42} color="#cbd5e1" /><Text style={{ marginTop: 12, color: "#64748b" }}>No office events this month.</Text></View>
         ) : (

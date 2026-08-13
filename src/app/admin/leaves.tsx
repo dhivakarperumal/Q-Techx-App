@@ -1,9 +1,10 @@
 import { Ionicons } from "@expo/vector-icons";
+import { LinearGradient } from "expo-linear-gradient";
+import { useRouter } from "expo-router";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
-import { ActivityIndicator, Alert, Modal, Pressable, RefreshControl, ScrollView, Text, TextInput, View } from "react-native";
+import { ActivityIndicator, Alert, Modal, Pressable, RefreshControl, ScrollView, Text, TextInput, TouchableOpacity, View } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import api from "../../api";
-import { AdminBottomBar } from "../../components/admin-bottom-bar";
-import { TopHeader } from "../../components/TopHeader";
 
 type Leave = { id: string | number; employee_id?: string | number; user_id?: string | number; first_name?: string; last_name?: string; employee_code?: string; leave_type?: string; from_date?: string; to_date?: string; no_of_days?: number | string; day_type?: string; half_day_type?: string; reason?: string; status?: string; admin_reason?: string };
 const statuses = ["All", "Pending", "Approved", "Rejected"];
@@ -13,8 +14,42 @@ const dateKey = (value?: string) => value ? new Date(value).toISOString().slice(
 const dateText = (value?: string) => value ? new Date(value).toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" }) : "-";
 const statusColor = (status?: string) => status === "Approved" ? "#059669" : status === "Rejected" ? "#e11d48" : "#f97316";
 
-function Stat({ label, value, color }: { label: string; value: string | number; color: string }) {
-  return <View className="flex-1 rounded-2xl border border-slate-100 bg-white p-3 shadow-sm"><Ionicons name="document-text-outline" size={20} color={color} /><Text className="mt-2 text-xl font-black text-slate-900">{value}</Text><Text className="mt-1 text-[10px] font-bold uppercase text-slate-400">{label}</Text></View>;
+function StatCard({ label, value, color, icon }: { label: string; value: string | number; color: string; icon: string }) {
+  return (
+    <View
+      className="mb-3 w-[48%] overflow-hidden rounded-2xl bg-white border border-orange-100"
+      style={{
+        shadowColor: "#f97316",
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.12,
+        shadowRadius: 10,
+        elevation: 4,
+      }}
+    >
+      <LinearGradient
+        colors={["#ffffff", "#fff7ed"]}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+        className="px-4 py-4"
+      >
+        <View className="flex-row items-center mb-3">
+          <View className="h-10 w-10 items-center justify-center rounded-xl bg-black">
+            <Ionicons name={icon as any} size={20} color={color} />
+          </View>
+          <View className="ml-2 flex-1">
+            <Text className="text-[10px] font-bold uppercase tracking-[0.5px] text-gray-500" numberOfLines={2}>
+              {label}
+            </Text>
+          </View>
+        </View>
+        <View className="flex-row items-baseline justify-between">
+          <Text className="text-[22px] font-black text-black">
+            {value}
+          </Text>
+        </View>
+      </LinearGradient>
+    </View>
+  );
 }
 
 function StatusPill({ status }: { status?: string }) { return <View className="rounded-full px-2.5 py-1" style={{ backgroundColor: `${statusColor(status)}18` }}><Text className="text-[10px] font-black uppercase" style={{ color: statusColor(status) }}>{status || "Pending"}</Text></View>; }
@@ -28,16 +63,411 @@ function DecisionModal({ leave, action, onClose, onDone }: { leave: Leave | null
 function HistoryModal({ employeeId, employeeName, leaves, onClose }: { employeeId?: string | number; employeeName: string; leaves: Leave[]; onClose: () => void }) {
   const [history, setHistory] = useState<Leave[]>([]); const [loading, setLoading] = useState(true);
   useEffect(() => { if (!employeeId) return; api.get(`/employee-leaves/employee/${employeeId}`).then((response) => setHistory(response.data?.data?.leaves || [])).catch(() => setHistory(leaves.filter((item) => String(item.employee_id || item.user_id) === String(employeeId)))).finally(() => setLoading(false)); }, [employeeId, leaves]);
-  return <Modal visible animationType="slide" onRequestClose={onClose}><View className="flex-1 bg-[#f8fafc]"><View className="flex-row items-center justify-between border-b border-slate-200 bg-white px-5 pb-4 pt-5"><View><Text className="text-xl font-black text-slate-900">Leave History</Text><Text className="mt-1 text-xs text-slate-500">{employeeName}</Text></View><Pressable onPress={onClose}><Ionicons name="close-circle" size={28} color="#94a3b8" /></Pressable></View><ScrollView contentContainerStyle={{ padding: 20, paddingBottom: 40 }}>{loading ? <ActivityIndicator color="#f97316" /> : history.length ? history.map((leave, index) => <View key={leave.id || index} className="mb-3 rounded-2xl border border-slate-100 bg-white p-4 shadow-sm"><View className="flex-row items-start justify-between"><View><Text className="font-bold text-slate-800">{leave.leave_type}</Text><Text className="mt-1 text-xs text-slate-500">{dateText(leave.from_date)}{leave.from_date !== leave.to_date ? ` - ${dateText(leave.to_date)}` : ""}</Text></View><StatusPill status={leave.status} /></View><Text className="mt-3 text-sm text-slate-600">{leave.reason || "No reason provided"}</Text><Text className="mt-2 text-xs text-slate-400">{leave.no_of_days || 0} day(s){leave.admin_reason ? ` - ${leave.admin_reason}` : ""}</Text></View>) : <Text className="text-center text-sm text-slate-400">No leave history found.</Text>}</ScrollView></View></Modal>;
+  return <Modal visible animationType="slide" onRequestClose={onClose}><View className="flex-1 bg-[#f8fafc]"><View className="flex-row items-center justify-between border-b border-slate-200 bg-black px-5 pb-4 pt-5"><View><Text className="text-xl font-black text-orange-500">Leave History</Text><Text className="mt-1 text-xs text-orange-200">{employeeName}</Text></View><Pressable onPress={onClose}><Ionicons name="close-circle" size={28} color="#f97316" /></Pressable></View><ScrollView contentContainerStyle={{ padding: 20, paddingBottom: 40 }}>{loading ? <ActivityIndicator color="#f97316" /> : history.length ? history.map((leave, index) => <View key={leave.id || index} className="mb-3 rounded-2xl border border-slate-100 bg-white p-4 shadow-sm"><View className="flex-row items-start justify-between"><View><Text className="font-bold text-slate-800">{leave.leave_type}</Text><Text className="mt-1 text-xs text-slate-500">{dateText(leave.from_date)}{leave.from_date !== leave.to_date ? ` - ${dateText(leave.to_date)}` : ""}</Text></View><StatusPill status={leave.status} /></View><Text className="mt-3 text-sm text-slate-600">{leave.reason || "No reason provided"}</Text><Text className="mt-2 text-xs text-slate-400">{leave.no_of_days || 0} day(s){leave.admin_reason ? ` - ${leave.admin_reason}` : ""}</Text></View>) : <Text className="text-center text-sm text-slate-400">No leave history found.</Text>}</ScrollView></View></Modal>;
 }
 
 export default function AdminLeavesScreen() {
-  const [leaves, setLeaves] = useState<Leave[]>([]); const [loading, setLoading] = useState(true); const [refreshing, setRefreshing] = useState(false); const [search, setSearch] = useState(""); const [status, setStatus] = useState("All"); const [dateFilter, setDateFilter] = useState("All"); const [selected, setSelected] = useState<Leave | null>(null); const [decision, setDecision] = useState<"Approved" | "Rejected" | null>(null); const [historyLeave, setHistoryLeave] = useState<Leave | null>(null); const [bulkSelected, setBulkSelected] = useState<(string | number)[]>([]); const [bulkReason, setBulkReason] = useState(""); const [bulkModal, setBulkModal] = useState(false); const [bulkSaving, setBulkSaving] = useState(false);
-  const fetchLeaves = useCallback(async (refresh = false) => { if (refresh) setRefreshing(true); else setLoading(true); try { const response = await api.get("/employee-leaves/all"); setLeaves(response.data?.data || []); setBulkSelected([]); } catch (error: any) { Alert.alert("Unable to load leaves", error?.message || "Please try again."); } finally { setLoading(false); setRefreshing(false); } }, []);
-  useEffect(() => { fetchLeaves(); }, [fetchLeaves]);
-  const filtered = useMemo(() => leaves.filter((leave) => { const query = search.toLowerCase().trim(); const fullName = nameOf(leave).toLowerCase(); const matchesSearch = !query || fullName.includes(query) || String(leave.employee_code || "").toLowerCase().includes(query); const matchesStatus = status === "All" || leave.status === status; if (!matchesSearch || !matchesStatus) return false; if (dateFilter === "All") return true; const from = new Date(leave.from_date || ""); const to = new Date(leave.to_date || leave.from_date || ""); const now = new Date(); now.setHours(0, 0, 0, 0); const target = new Date(now); if (dateFilter === "Tomorrow") target.setDate(target.getDate() + 1); if (dateFilter === "This Week") { const weekStart = new Date(now); weekStart.setDate(now.getDate() - now.getDay()); const weekEnd = new Date(weekStart); weekEnd.setDate(weekStart.getDate() + 6); return from <= weekEnd && to >= weekStart; } if (dateFilter === "This Month") return from.getMonth() === now.getMonth() && from.getFullYear() === now.getFullYear(); if (dateFilter === "This Year") return from.getFullYear() === now.getFullYear(); return dateKey(from.toISOString()) <= dateKey(target.toISOString()) && dateKey(to.toISOString()) >= dateKey(target.toISOString()); }), [leaves, search, status, dateFilter]);
+  const router = useRouter();
+  const [leaves, setLeaves] = useState<Leave[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+  const [search, setSearch] = useState("");
+  const [status, setStatus] = useState("All");
+  const [dateFilter, setDateFilter] = useState("All");
+  const [selected, setSelected] = useState<Leave | null>(null);
+  const [decision, setDecision] = useState<"Approved" | "Rejected" | null>(null);
+  const [historyLeave, setHistoryLeave] = useState<Leave | null>(null);
+  const [bulkSelected, setBulkSelected] = useState<(string | number)[]>([]);
+  const [bulkReason, setBulkReason] = useState("");
+  const [bulkModal, setBulkModal] = useState(false);
+  const [bulkSaving, setBulkSaving] = useState(false);
+  const [statusDropdownOpen, setStatusDropdownOpen] = useState(false);
+  const [dateDropdownOpen, setDateDropdownOpen] = useState(false);
+
+  const fetchLeaves = useCallback(async (refresh = false) => {
+    if (refresh) setRefreshing(true);
+    else setLoading(true);
+    try {
+      const response = await api.get("/employee-leaves/all");
+      setLeaves(response.data?.data || []);
+      setBulkSelected([]);
+    } catch (error: any) {
+      Alert.alert("Unable to load leaves", error?.message || "Please try again.");
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchLeaves();
+  }, [fetchLeaves]);
+
+  const filtered = useMemo(() =>
+    leaves.filter((leave) => {
+      const query = search.toLowerCase().trim();
+      const fullName = nameOf(leave).toLowerCase();
+      const matchesSearch = !query || fullName.includes(query) || String(leave.employee_code || "").toLowerCase().includes(query);
+      const matchesStatus = status === "All" || leave.status === status;
+
+      if (!matchesSearch || !matchesStatus) return false;
+
+      if (dateFilter === "All") return true;
+
+      const from = new Date(leave.from_date || "");
+      const to = new Date(leave.to_date || leave.from_date || "");
+      const now = new Date();
+      now.setHours(0, 0, 0, 0);
+      const target = new Date(now);
+
+      if (dateFilter === "Tomorrow") target.setDate(target.getDate() + 1);
+
+      if (dateFilter === "This Week") {
+        const weekStart = new Date(now);
+        weekStart.setDate(now.getDate() - now.getDay());
+        const weekEnd = new Date(weekStart);
+        weekEnd.setDate(weekStart.getDate() + 6);
+        return from <= weekEnd && to >= weekStart;
+      }
+
+      if (dateFilter === "This Month")
+        return from.getMonth() === now.getMonth() && from.getFullYear() === now.getFullYear();
+
+      if (dateFilter === "This Year") return from.getFullYear() === now.getFullYear();
+
+      return dateKey(from.toISOString()) <= dateKey(target.toISOString()) && dateKey(to.toISOString()) >= dateKey(target.toISOString());
+    }),
+    [leaves, search, status, dateFilter]
+  );
+
   const pending = leaves.filter((leave) => leave.status === "Pending");
-  const toggleBulk = (id: string | number) => setBulkSelected((current) => current.includes(id) ? current.filter((item) => item !== id) : [...current, id]);
-  const submitBulk = async (action: "Approved" | "Rejected") => { if (!bulkSelected.length) return Alert.alert("Select requests", "Please select at least one pending request."); if (action === "Rejected" && !bulkReason.trim()) return Alert.alert("Reason required", "Please provide a rejection reason."); setBulkSaving(true); try { await Promise.all(bulkSelected.map((id) => api.put(`/employee-leaves/${id}/status`, { status: action, admin_reason: bulkReason }))); Alert.alert("Updated", `${bulkSelected.length} leave(s) processed.`); setBulkModal(false); setBulkReason(""); fetchLeaves(true); } catch (error: any) { Alert.alert("Bulk update failed", error?.message || "Please try again."); } finally { setBulkSaving(false); } };
-  return <View className="flex-1 bg-[#f8fafc]"><TopHeader title="Leave Management" subtitle="Review employee requests" /><ScrollView className="flex-1" contentContainerStyle={{ padding: 20, paddingBottom: 120 }} refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => fetchLeaves(true)} tintColor="#f97316" />}><View className="flex-row items-start justify-between"><View className="flex-1 pr-3"><Text className="text-3xl font-black text-slate-900">Leave Requests</Text><Text className="mt-1 text-sm text-slate-500">Manage employee leave applications.</Text></View><Pressable onPress={() => setBulkModal(true)} className="h-11 w-11 items-center justify-center rounded-2xl bg-orange-500"><Ionicons name="checkmark-done" size={23} color="white" /></Pressable></View><View className="mt-5 flex-row gap-2"><Stat label="Total" value={leaves.length} color="#2563eb" /><Stat label="Approved" value={leaves.filter((item) => item.status === "Approved").length} color="#059669" /><Stat label="Rejected" value={leaves.filter((item) => item.status === "Rejected").length} color="#e11d48" /><Stat label="Pending" value={pending.length} color="#f97316" /></View><View className="mt-5 flex-row items-center rounded-xl border border-slate-200 bg-white px-3"><Ionicons name="search" size={18} color="#94a3b8" /><TextInput value={search} onChangeText={setSearch} placeholder="Search by employee or ID..." placeholderTextColor="#94a3b8" className="flex-1 px-2 py-3 text-sm text-slate-900" /></View><Text className="mb-2 mt-4 text-xs font-bold uppercase tracking-wide text-slate-400">Status</Text><ScrollView horizontal showsHorizontalScrollIndicator={false}>{statuses.map((item) => <Pressable key={item} onPress={() => setStatus(item)} className={`mr-2 rounded-full border px-3 py-2 ${status === item ? "border-orange-500 bg-orange-50" : "border-slate-200 bg-white"}`}><Text className={`text-xs font-bold ${status === item ? "text-orange-600" : "text-slate-500"}`}>{item}</Text></Pressable>)}</ScrollView><Text className="mb-2 mt-4 text-xs font-bold uppercase tracking-wide text-slate-400">Date</Text><ScrollView horizontal showsHorizontalScrollIndicator={false}>{dateFilters.map((item) => <Pressable key={item} onPress={() => setDateFilter(item)} className={`mr-2 rounded-full border px-3 py-2 ${dateFilter === item ? "border-orange-500 bg-orange-50" : "border-slate-200 bg-white"}`}><Text className={`text-xs font-bold ${dateFilter === item ? "text-orange-600" : "text-slate-500"}`}>{item}</Text></Pressable>)}</ScrollView><Text className="mb-3 mt-6 text-lg font-black text-slate-900">Requests</Text>{loading ? <View className="items-center py-12"><ActivityIndicator color="#f97316" /></View> : filtered.length ? filtered.map((leave, index) => <View key={leave.id || index} className="mb-3 rounded-3xl border border-slate-100 bg-white p-4 shadow-sm"><View className="flex-row items-start justify-between"><View className="flex-1 pr-3"><Text className="text-base font-black text-slate-900">{nameOf(leave)}</Text><Text className="mt-1 text-xs text-slate-400">{leave.employee_code || "No employee code"}</Text></View><StatusPill status={leave.status} /></View><View className="mt-4 rounded-2xl bg-slate-50 p-3"><Text className="font-bold text-slate-700">{leave.leave_type || "Leave"}</Text><Text className="mt-1 text-xs text-slate-500">{dateText(leave.from_date)}{leave.from_date !== leave.to_date ? ` - ${dateText(leave.to_date)}` : ""} - {leave.no_of_days || 0} day(s)</Text><Text className="mt-2 text-sm text-slate-600" numberOfLines={3}>{leave.reason || "No reason provided"}</Text></View><View className="mt-3 flex-row items-center justify-between"><Pressable onPress={() => setHistoryLeave(leave)}><Text className="text-xs font-bold text-orange-600">View history</Text></Pressable>{leave.status === "Pending" ? <View className="flex-row gap-2"><Pressable onPress={() => { setSelected(leave); setDecision("Rejected"); }} className="rounded-xl bg-rose-50 px-3 py-2"><Text className="text-xs font-bold text-rose-600">Reject</Text></Pressable><Pressable onPress={() => { setSelected(leave); setDecision("Approved"); }} className="rounded-xl bg-emerald-50 px-3 py-2"><Text className="text-xs font-bold text-emerald-600">Approve</Text></Pressable></View> : <Text className="text-xs text-slate-400">Processed</Text>}</View></View>) : <View className="items-center rounded-3xl bg-white p-8"><Ionicons name="calendar-outline" size={36} color="#cbd5e1" /><Text className="mt-3 font-bold text-slate-500">No leave requests found.</Text></View>}</ScrollView><AdminBottomBar /><DecisionModal leave={selected} action={decision} onClose={() => { setSelected(null); setDecision(null); }} onDone={() => fetchLeaves(true)} />{historyLeave && <HistoryModal employeeId={historyLeave.employee_id || historyLeave.user_id} employeeName={nameOf(historyLeave)} leaves={leaves} onClose={() => setHistoryLeave(null)} />}{bulkModal && <Modal visible animationType="slide" onRequestClose={() => setBulkModal(false)}><View className="flex-1 bg-[#f8fafc]"><View className="flex-row items-center justify-between border-b border-slate-200 bg-white px-5 pb-4 pt-5"><Text className="text-xl font-black text-slate-900">Bulk Approval</Text><Pressable onPress={() => setBulkModal(false)}><Ionicons name="close-circle" size={28} color="#94a3b8" /></Pressable></View><ScrollView contentContainerStyle={{ padding: 20, paddingBottom: 40 }}>{pending.map((leave) => <Pressable key={leave.id} onPress={() => toggleBulk(leave.id)} className={`mb-2 flex-row items-center rounded-2xl border p-4 ${bulkSelected.includes(leave.id) ? "border-orange-400 bg-orange-50" : "border-slate-200 bg-white"}`}><Ionicons name={bulkSelected.includes(leave.id) ? "checkbox" : "square-outline"} size={22} color={bulkSelected.includes(leave.id) ? "#f97316" : "#94a3b8"} /><View className="ml-3"><Text className="font-bold text-slate-800">{nameOf(leave)}</Text><Text className="mt-1 text-xs text-slate-500">{leave.leave_type} - {leave.no_of_days || 0} day(s)</Text></View></Pressable>)}<TextInput value={bulkReason} onChangeText={setBulkReason} placeholder="Common remarks..." placeholderTextColor="#94a3b8" multiline className="mt-3 min-h-20 rounded-xl border border-slate-200 bg-white p-3 text-sm text-slate-900" textAlignVertical="top" /><View className="mt-4 flex-row gap-3"><Pressable disabled={bulkSaving} onPress={() => submitBulk("Rejected")} className="flex-1 items-center rounded-xl bg-rose-600 py-3"><Text className="font-bold text-white">Reject Selected</Text></Pressable><Pressable disabled={bulkSaving} onPress={() => submitBulk("Approved")} className="flex-1 items-center rounded-xl bg-emerald-600 py-3"><Text className="font-bold text-white">Approve Selected</Text></Pressable></View></ScrollView></View></Modal>}</View>;
+  const approved = leaves.filter((leave) => leave.status === "Approved");
+  const rejected = leaves.filter((leave) => leave.status === "Rejected");
+
+  const toggleBulk = (id: string | number) =>
+    setBulkSelected((current) =>
+      current.includes(id) ? current.filter((item) => item !== id) : [...current, id]
+    );
+
+  const submitBulk = async (action: "Approved" | "Rejected") => {
+    if (!bulkSelected.length) return Alert.alert("Select requests", "Please select at least one pending request.");
+    if (action === "Rejected" && !bulkReason.trim()) return Alert.alert("Reason required", "Please provide a rejection reason.");
+
+    setBulkSaving(true);
+    try {
+      await Promise.all(
+        bulkSelected.map((id) =>
+          api.put(`/employee-leaves/${id}/status`, { status: action, admin_reason: bulkReason })
+        )
+      );
+      Alert.alert("Updated", `${bulkSelected.length} leave(s) processed.`);
+      setBulkModal(false);
+      setBulkReason("");
+      fetchLeaves(true);
+    } catch (error: any) {
+      Alert.alert("Bulk update failed", error?.message || "Please try again.");
+    } finally {
+      setBulkSaving(false);
+    }
+  };
+
+  return (
+    <SafeAreaView className="flex-1 bg-white">
+      <View style={{
+        flexDirection: "row",
+        alignItems: "center",
+        paddingHorizontal: 16,
+        paddingVertical: 14,
+        backgroundColor: "#fff",
+        borderBottomWidth: 1,
+        borderBottomColor: "#f1f5f9",
+      }}>
+        <Pressable
+          onPress={() => router.back()}
+          style={{
+            width: 38,
+            height: 38,
+            borderRadius: 12,
+            backgroundColor: "#f1f5f9",
+            alignItems: "center",
+            justifyContent: "center",
+            marginRight: 12,
+          }}
+        >
+          <Ionicons name="arrow-back" size={20} color="#0f172a" />
+        </Pressable>
+        <Text style={{ fontSize: 18, fontWeight: "800", color: "#0f172a" }}>Leave Management</Text>
+      </View>
+
+      <ScrollView
+        className="flex-1"
+        contentContainerStyle={{ padding: 20, paddingBottom: 120 }}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => fetchLeaves(true)} tintColor="#f97316" />}
+      >
+        {/* ── STATS SECTION ── */}
+        <View className="px-0 mb-6 flex-row flex-wrap justify-between">
+          <StatCard label="Total Leaves" value={leaves.length} color="#f97316" icon="document-text-outline" />
+          <StatCard label="Approved" value={approved.length} color="#059669" icon="checkmark-circle-outline" />
+          <StatCard label="Rejected" value={rejected.length} color="#e11d48" icon="close-circle-outline" />
+          <StatCard label="Pending" value={pending.length} color="#f97316" icon="time-outline" />
+        </View>
+
+        {/* ── SEARCH & FILTER ── */}
+        <View className="px-0 mb-6">
+          {/* Search */}
+          <View className="bg-white border border-slate-200 rounded-2xl flex-row items-center px-4 py-2 shadow-sm mb-3">
+            <Ionicons name="search" size={16} color="#94a3b8" />
+            <TextInput
+              placeholder="Search by employee or ID..."
+              placeholderTextColor="#94a3b8"
+              value={search}
+              onChangeText={setSearch}
+              className="flex-1 ml-2 text-sm font-medium text-slate-800"
+            />
+          </View>
+
+          {/* Dropdown Filters */}
+          <View className="flex-row gap-3">
+            {/* Status */}
+            <View className="flex-1">
+              <TouchableOpacity
+                onPress={() => {
+                  setStatusDropdownOpen(true);
+                  setDateDropdownOpen(false);
+                }}
+                className="h-11 bg-white border border-slate-200 rounded-xl px-3 flex-row items-center justify-between"
+              >
+                <Text className="text-xs font-medium text-slate-700">
+                  {status}
+                </Text>
+                <Ionicons name="chevron-down" size={15} color="#64748b" />
+              </TouchableOpacity>
+            </View>
+
+            {/* Date */}
+            <View className="flex-1">
+              <TouchableOpacity
+                onPress={() => {
+                  setDateDropdownOpen(true);
+                  setStatusDropdownOpen(false);
+                }}
+                className="h-11 bg-white border border-slate-200 rounded-xl px-3 flex-row items-center justify-between"
+              >
+                <Text className="text-xs font-medium text-slate-700">
+                  {dateFilter}
+                </Text>
+                <Ionicons name="chevron-down" size={15} color="#64748b" />
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+
+        {/* Status Dropdown Modal */}
+        <Modal
+          visible={statusDropdownOpen}
+          transparent
+          animationType="fade"
+          onRequestClose={() => setStatusDropdownOpen(false)}
+        >
+          <Pressable
+            className="flex-1 bg-black/40 justify-center px-8"
+            onPress={() => setStatusDropdownOpen(false)}
+          >
+            <Pressable
+              className="bg-white rounded-2xl overflow-hidden"
+              onPress={(e) => e.stopPropagation()}
+            >
+              <Text className="px-5 py-4 text-base font-bold text-slate-900 border-b border-slate-100">
+                Select Status
+              </Text>
+              {statuses.map((item) => (
+                <TouchableOpacity
+                  key={item}
+                  onPress={() => {
+                    setStatus(item);
+                    setStatusDropdownOpen(false);
+                  }}
+                  className="px-5 py-4 border-b border-slate-100"
+                >
+                  <Text
+                    className={`text-sm ${status === item ? "font-bold text-orange-500" : "text-slate-700"}`}
+                  >
+                    {item}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </Pressable>
+          </Pressable>
+        </Modal>
+
+        {/* Date Dropdown Modal */}
+        <Modal
+          visible={dateDropdownOpen}
+          transparent
+          animationType="fade"
+          onRequestClose={() => setDateDropdownOpen(false)}
+        >
+          <Pressable
+            className="flex-1 bg-black/40 justify-center px-8"
+            onPress={() => setDateDropdownOpen(false)}
+          >
+            <Pressable
+              className="bg-white rounded-2xl overflow-hidden"
+              onPress={(e) => e.stopPropagation()}
+            >
+              <Text className="px-5 py-4 text-base font-bold text-slate-900 border-b border-slate-100">
+                Select Date Range
+              </Text>
+              {dateFilters.map((filter) => (
+                <TouchableOpacity
+                  key={filter}
+                  onPress={() => {
+                    setDateFilter(filter);
+                    setDateDropdownOpen(false);
+                  }}
+                  className="px-5 py-4 border-b border-slate-100"
+                >
+                  <Text
+                    className={`text-sm ${dateFilter === filter ? "font-bold text-orange-500" : "text-slate-700"}`}
+                  >
+                    {filter}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </Pressable>
+          </Pressable>
+        </Modal>
+
+        {/* ── LIST HEADER ── */}
+        <View className="px-0 mb-4 flex-row items-center justify-between">
+          <Text className="text-slate-800 font-bold text-sm">
+            Leave Requests ({filtered.length})
+          </Text>
+        </View>
+
+        {/* ── LEAVE LIST ── */}
+        <View className="px-0">
+          {loading ? (
+            <Text className="text-center text-slate-500 mt-4">Loading leaves...</Text>
+          ) : filtered.length === 0 ? (
+            <Text className="text-center text-slate-500 mt-4">No leave requests found.</Text>
+          ) : (
+            filtered.map((leave, idx) => (
+              <TouchableOpacity
+                key={idx}
+                onPress={() => setHistoryLeave(leave)}
+                className="bg-white rounded-[24px] p-4 mb-4 border border-slate-100 shadow-sm"
+              >
+                <View className="flex-row items-start justify-between">
+                  <View className="flex-1">
+                    <View className="flex-row items-center mb-2">
+                      <Text className="text-slate-900 font-bold text-[15px]">
+                        {nameOf(leave)}
+                      </Text>
+                      <View className="ml-2 px-2 py-0.5 rounded-full" style={{ backgroundColor: `${statusColor(leave.status)}18` }}>
+                        <Text className="text-[9px] font-bold" style={{ color: statusColor(leave.status) }}>
+                          {leave.status}
+                        </Text>
+                      </View>
+                    </View>
+
+                    <View className="flex-row items-center mb-2">
+                      <Ionicons name="calendar-outline" size={12} color="#94a3b8" />
+                      <Text className="text-slate-500 text-xs ml-1">
+                        {dateText(leave.from_date)} - {dateText(leave.to_date)}
+                      </Text>
+                    </View>
+
+                    <View className="flex-row items-center mb-2">
+                      <Ionicons name="document-outline" size={12} color="#94a3b8" />
+                      <Text className="text-slate-500 text-xs ml-1">
+                        {leave.leave_type} • {leave.no_of_days} day(s)
+                      </Text>
+                    </View>
+
+                    {leave.reason && (
+                      <Text className="text-slate-500 text-xs mt-1" numberOfLines={1}>
+                        {leave.reason}
+                      </Text>
+                    )}
+                  </View>
+
+                  {leave.status === "Pending" && (
+                    <View className="ml-3 justify-between h-[80px]">
+                      <TouchableOpacity
+                        onPress={() => {
+                          setSelected(leave);
+                          setDecision("Approved");
+                        }}
+                        className="bg-emerald-600 rounded-lg px-3 py-2"
+                      >
+                        <Text className="text-white text-[10px] font-bold">Approve</Text>
+                      </TouchableOpacity>
+                      <TouchableOpacity
+                        onPress={() => {
+                          setSelected(leave);
+                          setDecision("Rejected");
+                        }}
+                        className="bg-rose-600 rounded-lg px-3 py-2"
+                      >
+                        <Text className="text-white text-[10px] font-bold">Reject</Text>
+                      </TouchableOpacity>
+                    </View>
+                  )}
+                </View>
+              </TouchableOpacity>
+            ))
+          )}
+        </View>
+      </ScrollView>
+
+      {/* Modals */}
+      <DecisionModal leave={selected} action={decision} onClose={() => { setSelected(null); setDecision(null); }} onDone={() => fetchLeaves(true)} />
+      {historyLeave && <HistoryModal employeeId={historyLeave.employee_id} employeeName={nameOf(historyLeave)} leaves={leaves} onClose={() => setHistoryLeave(null)} />}
+
+      {/* Bulk Action Modal */}
+      <Modal visible={bulkModal} transparent animationType="fade" onRequestClose={() => setBulkModal(false)}>
+        <View className="flex-1 items-center justify-center bg-black/60 px-5">
+          <View className="w-full rounded-3xl bg-white p-5">
+            <View className="flex-row items-center justify-between mb-4">
+              <Text className="text-xl font-black text-slate-900">Bulk Process</Text>
+              <Pressable onPress={() => setBulkModal(false)}>
+                <Ionicons name="close-circle" size={25} color="#94a3b8" />
+              </Pressable>
+            </View>
+
+            <Text className="text-sm text-slate-600 mb-4">Enter a reason for rejection (if applicable):</Text>
+
+            <TextInput
+              value={bulkReason}
+              onChangeText={setBulkReason}
+              placeholder="Rejection reason..."
+              placeholderTextColor="#94a3b8"
+              multiline
+              className="min-h-20 rounded-xl border border-slate-200 bg-slate-50 p-3 text-sm text-slate-900 mb-4"
+              textAlignVertical="top"
+            />
+
+            <View className="flex-row gap-3">
+              <Pressable
+                onPress={() => submitBulk("Approved")}
+                disabled={bulkSaving}
+                className="flex-1 items-center rounded-xl bg-emerald-600 py-3"
+              >
+                <Text className="font-bold text-white">{bulkSaving ? "Processing..." : "Approve All"}</Text>
+              </Pressable>
+              <Pressable
+                onPress={() => submitBulk("Rejected")}
+                disabled={bulkSaving}
+                className="flex-1 items-center rounded-xl bg-rose-600 py-3"
+              >
+                <Text className="font-bold text-white">{bulkSaving ? "Processing..." : "Reject All"}</Text>
+              </Pressable>
+            </View>
+          </View>
+        </View>
+      </Modal>
+
+    </SafeAreaView>
+  );
 }

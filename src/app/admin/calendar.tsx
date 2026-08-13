@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from "react";
-import { ScrollView, Text, TouchableOpacity, View, TextInput, Modal, Switch, ActivityIndicator, Alert } from "react-native";
+import { ScrollView, Text, TouchableOpacity, View, TextInput, Modal, Switch, RefreshControl, ActivityIndicator, Alert } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import dayjs from "dayjs";
 import isSameOrAfter from "dayjs/plugin/isSameOrAfter";
 import api from "../../api"; // Assuming api is at src/api.js
+import { FAB } from "../../components/FAB";
 
 dayjs.extend(isSameOrAfter);
 
@@ -84,6 +85,7 @@ export default function AdminCalendarScreen() {
   const [showModal, setShowModal] = useState(false);
   const [showEmpSelector, setShowEmpSelector] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
   const [formData, setFormData] = useState(defaultForm);
   
   const [selectedEvent, setSelectedEvent] = useState<any>(null);
@@ -92,7 +94,9 @@ export default function AdminCalendarScreen() {
     fetchData();
   }, []);
 
-  const fetchData = async () => {
+  const fetchData = async (refresh = false) => {
+    if (refresh) setRefreshing(true);
+    else setIsLoading(true);
     try {
       const [eventsRes, empRes, projRes] = await Promise.all([
         api.get('/events').catch(() => ({ data: [] })),
@@ -107,6 +111,7 @@ export default function AdminCalendarScreen() {
       Alert.alert("Error", "Failed to load calendar data.");
     } finally {
       setIsLoading(false);
+      setRefreshing(false);
     }
   };
 
@@ -200,10 +205,6 @@ export default function AdminCalendarScreen() {
           </TouchableOpacity>
           <Text style={{ fontSize: 18, fontWeight: "800", color: "#0f172a" }}>Calendar</Text>
         </View>
-        <TouchableOpacity onPress={() => { setFormData(defaultForm); setShowModal(true); }} style={{ backgroundColor: "#F8740E", paddingHorizontal: 14, paddingVertical: 8, borderRadius: 8, flexDirection: "row", alignItems: "center", gap: 6 }}>
-          <Ionicons name="add" size={16} color="#fff" />
-          <Text style={{ color: "#fff", fontWeight: "600", fontSize: 13 }}>Event</Text>
-        </TouchableOpacity>
       </View>
 
       {isLoading ? (
@@ -211,7 +212,7 @@ export default function AdminCalendarScreen() {
           <ActivityIndicator size="large" color="#F8740E" />
         </View>
       ) : (
-        <ScrollView style={{ flex: 1 }} contentContainerStyle={{ padding: 20, paddingBottom: 40 }}>
+        <ScrollView style={{ flex: 1 }} contentContainerStyle={{ padding: 20, paddingBottom: 40 }} refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => fetchData(true)} tintColor="#f97316" />}>
           {/* Month Calendar */}
           <View style={{ borderRadius: 22, backgroundColor: "#fff", borderWidth: 1, borderColor: "#e2e8f0", padding: 16, shadowColor: "#000", shadowOpacity: 0.04, shadowRadius: 8, elevation: 2 }}>
             <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
@@ -266,7 +267,7 @@ export default function AdminCalendarScreen() {
                     {day !== null && (
                       <View style={{ 
                         width: 32, height: 32, borderRadius: 16, alignItems: "center", justifyContent: "center", 
-                        backgroundColor: isToday ? "#2563eb" : "transparent",
+                        backgroundColor: isToday ? "#f97316" : "transparent",
                         borderWidth: isSelected ? 2 : 0, borderColor: isSelected ? "#F8740E" : "transparent"
                       }}>
                         <Text style={{ fontSize: 13, fontWeight: isToday ? "800" : "500", color: isToday ? "#fff" : isSelected ? "#F8740E" : isSunday ? "#ef4444" : "#334155" }}>
@@ -350,9 +351,17 @@ export default function AdminCalendarScreen() {
       {/* Add Event Modal */}
       <Modal visible={showModal} animationType="slide" presentationStyle="pageSheet" onRequestClose={() => setShowModal(false)}>
         <SafeAreaView style={{ flex: 1, backgroundColor: "#f8fafc" }} edges={["top"]}>
-          <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", padding: 16, backgroundColor: "#fff", borderBottomWidth: 1, borderBottomColor: "#e2e8f0" }}>
-            <Text style={{ fontSize: 18, fontWeight: "700", color: "#0f172a" }}>New Event</Text>
-            <TouchableOpacity onPress={() => setShowModal(false)}><Ionicons name="close" size={24} color="#64748b" /></TouchableOpacity>
+          <View style={{ backgroundColor: "#000", paddingTop: 16, paddingHorizontal: 24, paddingBottom: 24 }}>
+            <View style={{ width: 48, height: 6, backgroundColor: "#334155", borderRadius: 3, alignSelf: "center", marginBottom: 16 }} />
+            <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
+              <View>
+                <Text style={{ color: "#f97316", fontSize: 18, fontWeight: "bold" }}>New Event</Text>
+                <Text style={{ color: "#fff", fontSize: 12, marginTop: 4 }}>Add a new calendar event</Text>
+              </View>
+              <TouchableOpacity onPress={() => setShowModal(false)} style={{ backgroundColor: "#ffedd5", padding: 8, borderRadius: 20 }}>
+                <Ionicons name="close" size={20} color="#f97316" />
+              </TouchableOpacity>
+            </View>
           </View>
           <ScrollView contentContainerStyle={{ padding: 16 }}>
             <Text style={{ fontSize: 13, fontWeight: "600", color: "#334155", marginBottom: 6 }}>Title *</Text>
@@ -529,9 +538,16 @@ export default function AdminCalendarScreen() {
       {selectedEvent && (
         <Modal visible={true} animationType="slide" presentationStyle="pageSheet" onRequestClose={() => setSelectedEvent(null)}>
           <SafeAreaView style={{ flex: 1, backgroundColor: "#fff" }} edges={["top"]}>
-            <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", padding: 16, borderBottomWidth: 1, borderBottomColor: "#e2e8f0" }}>
-              <Text style={{ fontSize: 18, fontWeight: "700", color: "#0f172a" }}>Event Details</Text>
-              <TouchableOpacity onPress={() => setSelectedEvent(null)}><Ionicons name="close" size={24} color="#64748b" /></TouchableOpacity>
+            <View style={{ backgroundColor: "#000", paddingTop: 16, paddingHorizontal: 24, paddingBottom: 24 }}>
+              <View style={{ width: 48, height: 6, backgroundColor: "#334155", borderRadius: 3, alignSelf: "center", marginBottom: 16 }} />
+              <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start" }}>
+                <View style={{ flex: 1 }}>
+                  <Text style={{ color: "#f97316", fontSize: 18, fontWeight: "bold" }}>Event Details</Text>
+                </View>
+                <TouchableOpacity onPress={() => setSelectedEvent(null)} style={{ backgroundColor: "#ffedd5", padding: 8, borderRadius: 20 }}>
+                  <Ionicons name="close" size={20} color="#f97316" />
+                </TouchableOpacity>
+              </View>
             </View>
             <ScrollView contentContainerStyle={{ padding: 20 }}>
               <View style={{ marginBottom: 24 }}>
@@ -633,6 +649,7 @@ export default function AdminCalendarScreen() {
           </SafeAreaView>
         </Modal>
       )}
+      <FAB onPress={() => { setFormData(defaultForm); setShowModal(true); }} style={{ bottom: 32 }} />
     </SafeAreaView>
   );
 }
