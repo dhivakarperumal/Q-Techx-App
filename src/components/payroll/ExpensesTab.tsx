@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from "react";
-import { View, Text, ScrollView, TouchableOpacity, TextInput, Modal, ActivityIndicator, Alert, RefreshControl } from "react-native";
+import { View, Text, ScrollView, TouchableOpacity, TextInput, Modal, ActivityIndicator, Alert, RefreshControl, Pressable } from "react-native";
 import { Receipt, DollarSign, Filter, PlusCircle, X, ChevronDown, Check } from "lucide-react-native";
 import { PieChart } from "react-native-gifted-charts";
+import { Ionicons } from "@expo/vector-icons";
+import { LinearGradient } from "expo-linear-gradient";
 import api from "../../api";
 import { FAB } from "../FAB";
 
@@ -22,8 +24,11 @@ export default function ExpensesTab() {
   const [expenses, setExpenses] = useState([]);
   const [showFundForm, setShowFundForm] = useState(false);
   const [showExpenseForm, setShowExpenseForm] = useState(false);
-  const [showFilterModal, setShowFilterModal] = useState(false);
   const [loading, setLoading] = useState(false);
+
+  const [searchQuery, setSearchQuery] = useState("");
+  const [expenseTypeDropdownOpen, setExpenseTypeDropdownOpen] = useState(false);
+  const [paymentMethodDropdownOpen, setPaymentMethodDropdownOpen] = useState(false);
 
   // Filters
   const [filters, setFilters] = useState({
@@ -134,6 +139,9 @@ export default function ExpensesTab() {
   };
 
   const filteredExpenses = expenses.filter((exp) => {
+    const matchesSearch = !searchQuery || (exp.expense_type?.toLowerCase().includes(searchQuery.toLowerCase()) || exp.paid_to?.toLowerCase().includes(searchQuery.toLowerCase()));
+    if (!matchesSearch) return false;
+
     const expenseDate = exp.date_of_payment ? new Date(exp.date_of_payment) : null;
     if (filters.expenseType && exp.expense_type !== filters.expenseType) return false;
     if (filters.paymentMethod && exp.payment_type !== filters.paymentMethod) return false;
@@ -155,6 +163,46 @@ export default function ExpensesTab() {
   const filteredSpendEntries = filteredExpenses.filter((exp) => !isCreditEntry(exp));
   const totalSpent = filteredSpendEntries.reduce((acc, exp) => acc + parseFloat(exp.amount || 0), 0);
   
+  const thisMonthSpent = filteredSpendEntries.filter(exp => {
+    const d = new Date(exp.date_of_payment);
+    const today = new Date();
+    return d.getMonth() === today.getMonth() && d.getFullYear() === today.getFullYear();
+  }).reduce((acc, exp) => acc + parseFloat(exp.amount || 0), 0);
+  
+  const totalTransactions = filteredSpendEntries.length;
+
+  const dynamicStats = [
+    {
+      label: "Available Fund",
+      value: `₹ ${fund.toFixed(2)}`,
+      sub: "Update Fund",
+      icon: "wallet",
+      subColor: "text-green-500",
+      onPress: () => setShowFundForm(true)
+    },
+    {
+      label: "Total Spent",
+      value: `₹ ${totalSpent.toFixed(2)}`,
+      sub: "All Time",
+      icon: "cash",
+      subColor: "text-red-500",
+    },
+    {
+      label: "This Month",
+      value: `₹ ${thisMonthSpent.toFixed(2)}`,
+      sub: "Current Month",
+      icon: "calendar",
+      subColor: "text-orange-500",
+    },
+    {
+      label: "Transactions",
+      value: String(totalTransactions),
+      sub: "Expense Count",
+      icon: "receipt",
+      subColor: "text-violet-500",
+    },
+  ];
+
   const categoryBreakdown = Object.entries(
     filteredSpendEntries.reduce((acc, exp) => {
       const key = exp.expense_type || "Miscellaneous";
@@ -175,71 +223,128 @@ export default function ExpensesTab() {
   return (
     <View className="flex-1 bg-[#F9FAFB]">
       <ScrollView className="flex-1 p-4" refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#f97316" />}>
-      {/* ── Stats Overview ── */}
-      <View className="flex-row justify-between mb-4 gap-2">
-        <View className="flex-1 bg-white border border-emerald-100 rounded-2xl p-4 overflow-hidden relative shadow-sm">
-          <View className="flex-row items-center gap-3 mb-2 z-10">
-            <View className="w-10 h-10 rounded-xl bg-emerald-50 items-center justify-center">
-              <DollarSign size={18} color="#10b981" />
-            </View>
-            <View>
-              <Text className="text-slate-500 text-[10px] uppercase font-semibold">Available Fund</Text>
-              <Text className="text-xl font-bold text-emerald-600 mt-1">₹ {fund.toFixed(2)}</Text>
-            </View>
-          </View>
-          
-          <View className="mt-4 z-10">
-            {!showFundForm ? (
-              <TouchableOpacity
-                onPress={() => setShowFundForm(true)}
-                className="bg-emerald-50 px-3 py-2 rounded-lg self-start"
-              >
-                <Text className="text-xs font-semibold text-emerald-600">Update Fund</Text>
-              </TouchableOpacity>
-            ) : (
-              <View className="flex-row gap-2">
-                <TextInput
-                  className="flex-1 bg-white border border-slate-200 rounded-lg px-3 py-1 text-xs text-slate-900"
-                  placeholder="Amount"
-                  placeholderTextColor="#94a3b8"
-                  keyboardType="numeric"
-                  value={fundAmount}
-                  onChangeText={setFundAmount}
-                />
-                <TouchableOpacity onPress={handleUpdateFund} className="bg-emerald-500 px-3 py-1.5 rounded-lg justify-center">
-                  <Text className="text-white text-xs font-semibold">Save</Text>
-                </TouchableOpacity>
-                <TouchableOpacity onPress={() => setShowFundForm(false)} className="bg-slate-100 px-3 py-1.5 rounded-lg justify-center">
-                  <Text className="text-slate-600 text-xs">X</Text>
-                </TouchableOpacity>
+      {/* ── STATS SECTION ── */}
+      <View className="mb-6 flex-row flex-wrap justify-between">
+        {dynamicStats.map((stat, idx) => (
+          <TouchableOpacity
+            key={idx}
+            onPress={stat.onPress}
+            activeOpacity={stat.onPress ? 0.7 : 1}
+            className="mb-3 w-[48%] overflow-hidden rounded-2xl bg-white border border-orange-100"
+            style={{
+              shadowColor: "#f97316",
+              shadowOffset: { width: 0, height: 4 },
+              shadowOpacity: 0.12,
+              shadowRadius: 10,
+              elevation: 4,
+            }}
+          >
+            <LinearGradient
+              colors={["#ffffff", "#fff7ed"]}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+              className="px-4 py-4"
+            >
+              <View className="flex-row items-center mb-3">
+                <View className="h-10 w-10 items-center justify-center rounded-xl bg-black">
+                  <Ionicons name={stat.icon as any} size={20} color="#f97316" />
+                </View>
+                <View className="ml-2 flex-1">
+                  <Text className="text-[10px] font-bold uppercase tracking-[0.5px] text-gray-500" numberOfLines={2}>
+                    {stat.label}
+                  </Text>
+                </View>
               </View>
-            )}
-          </View>
-        </View>
-
-        <View className="flex-1 bg-white border border-rose-100 rounded-2xl p-4 overflow-hidden relative shadow-sm">
-          <View className="flex-row items-center gap-3 z-10">
-            <View className="w-10 h-10 rounded-xl bg-rose-50 items-center justify-center">
-              <Receipt size={18} color="#f43f5e" />
-            </View>
-            <View>
-              <Text className="text-slate-500 text-[10px] uppercase font-semibold">Total Spent</Text>
-              <Text className="text-xl font-bold text-rose-600 mt-1">₹ {totalSpent.toFixed(2)}</Text>
-            </View>
-          </View>
-          <Text className="text-[10px] text-slate-400 mt-4 z-10">{filteredExpenses.length} transactions.</Text>
-        </View>
+              <View className="flex-row items-baseline justify-between">
+                <Text className="text-[22px] font-black text-black">
+                  {stat.value}
+                </Text>
+                <Text className={`text-[10px] font-bold ${stat.subColor || "text-gray-400"}`}>
+                  {stat.sub}
+                </Text>
+              </View>
+            </LinearGradient>
+          </TouchableOpacity>
+        ))}
       </View>
 
-      {/* Action Buttons */}
-      <View className="mb-4">
-        <TouchableOpacity
-          onPress={() => setShowFilterModal(true)}
-          className="flex-row items-center justify-center gap-2 bg-white border border-slate-200 py-3 rounded-xl shadow-sm"
-        >
-          <Filter size={18} color="#64748b" />
-          <Text className="text-slate-700 text-sm font-semibold">Filters</Text>
-        </TouchableOpacity>
+      {showFundForm && (
+        <View className="bg-emerald-50 p-3 rounded-xl mb-4 border border-emerald-100 flex-row items-center gap-2">
+          <TextInput
+            className="flex-1 bg-white border border-slate-200 rounded-lg px-3 py-2 text-sm text-slate-900"
+            placeholder="Amount"
+            placeholderTextColor="#94a3b8"
+            keyboardType="numeric"
+            value={fundAmount}
+            onChangeText={setFundAmount}
+          />
+          <TouchableOpacity onPress={handleUpdateFund} className="bg-emerald-500 px-4 py-2.5 rounded-lg justify-center">
+            <Text className="text-white text-xs font-bold">Save</Text>
+          </TouchableOpacity>
+          <TouchableOpacity onPress={() => setShowFundForm(false)} className="bg-slate-200 px-3 py-2.5 rounded-lg justify-center">
+            <Text className="text-slate-600 text-xs font-bold">X</Text>
+          </TouchableOpacity>
+        </View>
+      )}
+
+      {/* ── SEARCH & FILTER ── */}
+      <View className="mb-6">
+        {/* Search */}
+        <View className="bg-white border border-slate-200 rounded-2xl flex-row items-center px-4 py-2 shadow-sm mb-3">
+          <Ionicons name="search" size={16} color="#94a3b8" />
+          <TextInput
+            placeholder="Search expenses..."
+            placeholderTextColor="#94a3b8"
+            value={searchQuery}
+            onChangeText={setSearchQuery}
+            className="flex-1 ml-2 text-sm font-medium text-slate-800 h-10"
+          />
+        </View>
+
+        {/* Date Pills */}
+        <View className="flex-row flex-wrap gap-2 mb-3">
+          {[ {l: "All Time", v: "all"}, {l: "Today", v: "today"}, {l: "This Month", v: "this_month"}].map(pre => (
+            <TouchableOpacity
+              key={pre.v}
+              onPress={() => setFilters({...filters, datePreset: pre.v})}
+              className={`px-4 py-2 rounded-full border ${filters.datePreset === pre.v ? 'bg-orange-100 border-orange-200' : 'bg-white border-slate-200'}`}
+            >
+              <Text className={`text-xs font-semibold ${filters.datePreset === pre.v ? 'text-orange-700' : 'text-slate-600'}`}>{pre.l}</Text>
+            </TouchableOpacity>
+          ))}
+        </View>
+
+        {/* Dropdown Filters */}
+        <View className="flex-row gap-3">
+          <View className="flex-1">
+            <TouchableOpacity
+              onPress={() => {
+                setExpenseTypeDropdownOpen(true);
+                setPaymentMethodDropdownOpen(false);
+              }}
+              className="h-11 bg-white border border-slate-200 rounded-xl px-3 flex-row items-center justify-between"
+            >
+              <Text className="text-xs font-medium text-slate-700" numberOfLines={1}>
+                {filters.expenseType || "All Expense Types"}
+              </Text>
+              <Ionicons name="chevron-down" size={15} color="#64748b" />
+            </TouchableOpacity>
+          </View>
+          <View className="flex-1">
+            <TouchableOpacity
+              onPress={() => {
+                setPaymentMethodDropdownOpen(true);
+                setExpenseTypeDropdownOpen(false);
+              }}
+              className="h-11 bg-white border border-slate-200 rounded-xl px-3 flex-row items-center justify-between"
+            >
+              <Text className="text-xs font-medium text-slate-700" numberOfLines={1}>
+                {filters.paymentMethod || "All Methods"}
+              </Text>
+              <Ionicons name="chevron-down" size={15} color="#64748b" />
+            </TouchableOpacity>
+          </View>
+        </View>
       </View>
 
       {/* Pie Chart Section */}
@@ -311,84 +416,52 @@ export default function ExpensesTab() {
         )}
       </View>
 
-      {/* Filter Modal */}
-      <Modal visible={showFilterModal} animationType="slide" transparent={true}>
-        <View className="flex-1 bg-black/50 justify-end">
-          <View className="bg-white rounded-t-3xl p-6 h-3/4 shadow-2xl">
-            <View className="flex-row justify-between items-center mb-6">
-              <Text className="text-slate-900 text-lg font-bold">Filters</Text>
-              <TouchableOpacity onPress={() => setShowFilterModal(false)}>
-                <X size={24} color="#64748b" />
+      <Modal visible={expenseTypeDropdownOpen} transparent animationType="fade" onRequestClose={() => setExpenseTypeDropdownOpen(false)}>
+        <Pressable className="flex-1 bg-black/40 justify-center px-8" onPress={() => setExpenseTypeDropdownOpen(false)}>
+          <Pressable className="bg-white rounded-2xl overflow-hidden" onPress={(e) => e.stopPropagation()}>
+            <Text className="px-5 py-4 text-base font-bold text-slate-900 border-b border-slate-100">Select Expense Type</Text>
+            <ScrollView style={{maxHeight: 400}}>
+              <TouchableOpacity
+                onPress={() => { setFilters({...filters, expenseType: ""}); setExpenseTypeDropdownOpen(false); }}
+                className="px-5 py-4 border-b border-slate-100"
+              >
+                <Text className={`text-sm ${!filters.expenseType ? "font-bold text-orange-500" : "text-slate-700"}`}>All Expense Types</Text>
               </TouchableOpacity>
-            </View>
-            <ScrollView showsVerticalScrollIndicator={false}>
-              <Text className="text-slate-500 text-xs font-bold uppercase mb-2">Date Range</Text>
-              <View className="flex-row flex-wrap gap-2 mb-6">
-                {[ {l: "All", v: "all"}, {l: "Today", v: "today"}, {l: "This Month", v: "this_month"}].map(pre => (
-                  <TouchableOpacity
-                    key={pre.v}
-                    onPress={() => setFilters({...filters, datePreset: pre.v})}
-                    className={`px-4 py-2 rounded-full border ${filters.datePreset === pre.v ? 'bg-orange-100 border-orange-200' : 'bg-slate-50 border-slate-200'}`}
-                  >
-                    <Text className={`text-xs font-semibold ${filters.datePreset === pre.v ? 'text-orange-700' : 'text-slate-600'}`}>{pre.l}</Text>
-                  </TouchableOpacity>
-                ))}
-              </View>
-
-              <Text className="text-slate-500 text-xs font-bold uppercase mb-2">Payment Method</Text>
-              <View className="flex-row flex-wrap gap-2 mb-6">
+              {expenseFilterTypeOptions.map((et) => (
                 <TouchableOpacity
-                  onPress={() => setFilters({...filters, paymentMethod: ""})}
-                  className={`px-3 py-1.5 rounded-lg border ${filters.paymentMethod === "" ? 'bg-orange-100 border-orange-200' : 'bg-slate-50 border-slate-200'}`}
+                  key={et}
+                  onPress={() => { setFilters({...filters, expenseType: et}); setExpenseTypeDropdownOpen(false); }}
+                  className="px-5 py-4 border-b border-slate-100"
                 >
-                  <Text className={`text-[11px] font-semibold ${filters.paymentMethod === "" ? 'text-orange-700' : 'text-slate-600'}`}>All</Text>
+                  <Text className={`text-sm ${filters.expenseType === et ? "font-bold text-orange-500" : "text-slate-700"}`}>{et}</Text>
                 </TouchableOpacity>
-                {paymentMethodOptions.map(pm => (
-                  <TouchableOpacity
-                    key={pm}
-                    onPress={() => setFilters({...filters, paymentMethod: pm})}
-                    className={`px-3 py-1.5 rounded-lg border ${filters.paymentMethod === pm ? 'bg-orange-100 border-orange-200' : 'bg-slate-50 border-slate-200'}`}
-                  >
-                    <Text className={`text-[11px] font-semibold ${filters.paymentMethod === pm ? 'text-orange-700' : 'text-slate-600'}`}>{pm}</Text>
-                  </TouchableOpacity>
-                ))}
-              </View>
-
-              <Text className="text-slate-500 text-xs font-bold uppercase mb-2">Expense Type</Text>
-              <View className="flex-row flex-wrap gap-2 mb-8">
-                <TouchableOpacity
-                  onPress={() => setFilters({...filters, expenseType: ""})}
-                  className={`px-3 py-1.5 rounded-lg border ${filters.expenseType === "" ? 'bg-orange-100 border-orange-200' : 'bg-slate-50 border-slate-200'}`}
-                >
-                  <Text className={`text-[11px] font-semibold ${filters.expenseType === "" ? 'text-orange-700' : 'text-slate-600'}`}>All</Text>
-                </TouchableOpacity>
-                {expenseFilterTypeOptions.map(et => (
-                  <TouchableOpacity
-                    key={et}
-                    onPress={() => setFilters({...filters, expenseType: et})}
-                    className={`px-3 py-1.5 rounded-lg border ${filters.expenseType === et ? 'bg-orange-100 border-orange-200' : 'bg-slate-50 border-slate-200'}`}
-                  >
-                    <Text className={`text-[11px] font-semibold ${filters.expenseType === et ? 'text-orange-700' : 'text-slate-600'}`}>{et}</Text>
-                  </TouchableOpacity>
-                ))}
-              </View>
+              ))}
             </ScrollView>
-            <View className="flex-row gap-3 pt-4 border-t border-slate-100">
+          </Pressable>
+        </Pressable>
+      </Modal>
+
+      <Modal visible={paymentMethodDropdownOpen} transparent animationType="fade" onRequestClose={() => setPaymentMethodDropdownOpen(false)}>
+        <Pressable className="flex-1 bg-black/40 justify-center px-8" onPress={() => setPaymentMethodDropdownOpen(false)}>
+          <Pressable className="bg-white rounded-2xl overflow-hidden" onPress={(e) => e.stopPropagation()}>
+            <Text className="px-5 py-4 text-base font-bold text-slate-900 border-b border-slate-100">Select Payment Method</Text>
+            <TouchableOpacity
+              onPress={() => { setFilters({...filters, paymentMethod: ""}); setPaymentMethodDropdownOpen(false); }}
+              className="px-5 py-4 border-b border-slate-100"
+            >
+              <Text className={`text-sm ${!filters.paymentMethod ? "font-bold text-orange-500" : "text-slate-700"}`}>All Methods</Text>
+            </TouchableOpacity>
+            {paymentMethodOptions.map((pm) => (
               <TouchableOpacity
-                onPress={() => setFilters({ expenseType: "", paymentMethod: "", datePreset: "all" })}
-                className="flex-1 py-3 rounded-xl items-center border border-slate-200 bg-slate-50"
+                key={pm}
+                onPress={() => { setFilters({...filters, paymentMethod: pm}); setPaymentMethodDropdownOpen(false); }}
+                className="px-5 py-4 border-b border-slate-100"
               >
-                <Text className="text-slate-700 font-bold">Reset</Text>
+                <Text className={`text-sm ${filters.paymentMethod === pm ? "font-bold text-orange-500" : "text-slate-700"}`}>{pm}</Text>
               </TouchableOpacity>
-              <TouchableOpacity
-                onPress={() => setShowFilterModal(false)}
-                className="flex-1 py-3 rounded-xl items-center bg-[#f97316]"
-              >
-                <Text className="text-white font-bold">Apply</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        </View>
+            ))}
+          </Pressable>
+        </Pressable>
       </Modal>
 
       {/* Add Expense Modal */}

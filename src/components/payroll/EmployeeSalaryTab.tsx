@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from "react";
-import { View, Text, ScrollView, TouchableOpacity, TextInput, Modal, ActivityIndicator, Alert, RefreshControl } from "react-native";
+import { View, Text, ScrollView, TouchableOpacity, TextInput, Modal, ActivityIndicator, Alert, RefreshControl, Pressable } from "react-native";
 import { DollarSign, Search, CheckCircle, Plus, Receipt, User, Calendar, X, Edit, Trash2, Eye } from "lucide-react-native";
+import { Ionicons } from "@expo/vector-icons";
+import { LinearGradient } from "expo-linear-gradient";
 import api from "../../api";
 import { FAB } from "../FAB";
 
@@ -13,6 +15,10 @@ export default function EmployeeSalaryTab() {
   const [showForm, setShowForm] = useState(false);
   const [editId, setEditId] = useState(null);
   const [viewRecord, setViewRecord] = useState(null);
+
+  const [searchQuery, setSearchQuery] = useState("");
+  const [monthFilter, setMonthFilter] = useState("");
+  const [monthDropdownOpen, setMonthDropdownOpen] = useState(false);
   
   // Pay form states
   const [selectedMonth, setSelectedMonth] = useState((new Date().getMonth() + 1).toString().padStart(2, '0'));
@@ -205,15 +211,154 @@ export default function EmployeeSalaryTab() {
     });
   };
 
+  const filteredHistory = history.filter(record => {
+    const matchesSearch = !searchQuery || (
+      record.first_name?.toLowerCase().includes(searchQuery.toLowerCase()) || 
+      record.last_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      record.employee_code?.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+    const matchesMonth = !monthFilter || record.salary_month === monthFilter;
+    return matchesSearch && matchesMonth;
+  });
+
+  const totalEmployees = employees.length;
+  const totalPaid = filteredHistory.reduce((acc, curr) => acc + parseFloat(curr.total_salary || 0), 0);
+  const paidCount = filteredHistory.length;
+  const avgPaid = paidCount > 0 ? totalPaid / paidCount : 0;
+
+  const dynamicStats = [
+    {
+      label: "Total Employees",
+      value: String(totalEmployees),
+      sub: "All Active",
+      icon: "people",
+      subColor: "text-blue-500",
+    },
+    {
+      label: "Total Salary Paid",
+      value: `₹ ${totalPaid.toFixed(2)}`,
+      sub: monthFilter ? `Month: ${monthFilter}` : "All Time",
+      icon: "cash",
+      subColor: "text-green-500",
+    },
+    {
+      label: "Salaries Processed",
+      value: String(paidCount),
+      sub: "Records Found",
+      icon: "document-text",
+      subColor: "text-orange-500",
+    },
+    {
+      label: "Average Salary",
+      value: `₹ ${avgPaid.toFixed(2)}`,
+      sub: "Per Employee",
+      icon: "pie-chart",
+      subColor: "text-violet-500",
+    },
+  ];
+
+  const MONTHS = ["01", "02", "03", "04", "05", "06", "07", "08", "09", "10", "11", "12"];
+
   return (
     <View className="flex-1">
       <ScrollView className="flex-1 bg-[#F9FAFB] p-4" refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#f97316" />}>
-        <View className="flex-row justify-between items-center mb-6 mt-2">
-          <View>
-            <Text className="text-xl font-bold text-slate-900">Employee Salary</Text>
-            <Text className="text-sm text-slate-500">Manage and distribute salaries</Text>
+        {/* ── STATS SECTION ── */}
+        <View className="mb-6 flex-row flex-wrap justify-between pt-2">
+          {dynamicStats.map((stat, idx) => (
+            <View
+              key={idx}
+              className="mb-3 w-[48%] overflow-hidden rounded-2xl bg-white border border-orange-100"
+              style={{
+                shadowColor: "#f97316",
+                shadowOffset: { width: 0, height: 4 },
+                shadowOpacity: 0.12,
+                shadowRadius: 10,
+                elevation: 4,
+              }}
+            >
+              <LinearGradient
+                colors={["#ffffff", "#fff7ed"]}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+                className="px-4 py-4"
+              >
+                <View className="flex-row items-center mb-3">
+                  <View className="h-10 w-10 items-center justify-center rounded-xl bg-black">
+                    <Ionicons name={stat.icon as any} size={20} color="#f97316" />
+                  </View>
+                  <View className="ml-2 flex-1">
+                    <Text className="text-[10px] font-bold uppercase tracking-[0.5px] text-gray-500" numberOfLines={2}>
+                      {stat.label}
+                    </Text>
+                  </View>
+                </View>
+                <View className="flex-row items-baseline justify-between">
+                  <Text className="text-[22px] font-black text-black" numberOfLines={1} adjustsFontSizeToFit>
+                    {stat.value}
+                  </Text>
+                  <Text className={`text-[10px] font-bold ${stat.subColor || "text-gray-400"}`}>
+                    {stat.sub}
+                  </Text>
+                </View>
+              </LinearGradient>
+            </View>
+          ))}
+        </View>
+
+        {/* ── SEARCH & FILTER ── */}
+        <View className="mb-6">
+          {/* Search */}
+          <View className="bg-white border border-slate-200 rounded-2xl flex-row items-center px-4 py-2 shadow-sm mb-3">
+            <Ionicons name="search" size={16} color="#94a3b8" />
+            <TextInput
+              placeholder="Search history..."
+              placeholderTextColor="#94a3b8"
+              value={searchQuery}
+              onChangeText={setSearchQuery}
+              className="flex-1 ml-2 text-sm font-medium text-slate-800 h-10"
+            />
+          </View>
+
+          {/* Month Dropdown Filter */}
+          <View className="flex-row gap-3">
+            <View className="flex-1">
+              <TouchableOpacity
+                onPress={() => setMonthDropdownOpen(true)}
+                className="h-11 bg-white border border-slate-200 rounded-xl px-3 flex-row items-center justify-between"
+              >
+                <Text className="text-xs font-medium text-slate-700" numberOfLines={1}>
+                  {monthFilter ? `Month: ${monthFilter}` : "All Months"}
+                </Text>
+                <Ionicons name="chevron-down" size={15} color="#64748b" />
+              </TouchableOpacity>
+            </View>
           </View>
         </View>
+
+        <Modal visible={monthDropdownOpen} transparent animationType="fade" onRequestClose={() => setMonthDropdownOpen(false)}>
+          <Pressable className="flex-1 bg-black/40 justify-center px-8" onPress={() => setMonthDropdownOpen(false)}>
+            <Pressable className="bg-white rounded-2xl overflow-hidden" onPress={(e) => e.stopPropagation()}>
+              <Text className="px-5 py-4 text-base font-bold text-slate-900 border-b border-slate-100">Select Month</Text>
+              <ScrollView style={{maxHeight: 400}}>
+                <TouchableOpacity
+                  onPress={() => { setMonthFilter(""); setMonthDropdownOpen(false); }}
+                  className="px-5 py-4 border-b border-slate-100"
+                >
+                  <Text className={`text-sm ${!monthFilter ? "font-bold text-orange-500" : "text-slate-700"}`}>All Months</Text>
+                </TouchableOpacity>
+                {MONTHS.map((m) => (
+                  <TouchableOpacity
+                    key={m}
+                    onPress={() => { setMonthFilter(m); setMonthDropdownOpen(false); }}
+                    className="px-5 py-4 border-b border-slate-100"
+                  >
+                    <Text className={`text-sm ${monthFilter === m ? "font-bold text-orange-500" : "text-slate-700"}`}>{m}</Text>
+                  </TouchableOpacity>
+                ))}
+              </ScrollView>
+            </Pressable>
+          </Pressable>
+        </Modal>
 
       <View className="bg-white border border-slate-100 rounded-2xl overflow-hidden shadow-sm mb-10">
         <View className="p-4 border-b border-slate-100 bg-slate-50 flex-row items-center gap-2">
@@ -225,13 +370,13 @@ export default function EmployeeSalaryTab() {
           <View className="items-center justify-center py-10">
             <ActivityIndicator size="large" color="#10b981" />
           </View>
-        ) : history.length === 0 ? (
+        ) : filteredHistory.length === 0 ? (
           <View className="items-center justify-center py-10">
             <Text className="text-slate-400">No salary records found</Text>
           </View>
         ) : (
           <View>
-            {history.map((record, index) => (
+            {filteredHistory.map((record, index) => (
               <View key={record.id || index} className="p-4 border-b border-slate-100 flex-row items-center justify-between">
                 <View>
                   <Text className="font-bold text-slate-900">{record.first_name} {record.last_name}</Text>
