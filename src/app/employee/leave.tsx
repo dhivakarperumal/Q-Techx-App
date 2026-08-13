@@ -220,7 +220,7 @@ export default function EmployeeLeaveScreen() {
       <TopHeader title="Leave" subtitle="Requests and balances" />
       <ScrollView
         className="flex-1"
-        contentContainerStyle={{ padding: 20, paddingBottom: 32 }}
+        contentContainerStyle={{ padding: 20, paddingBottom: 110 }}
         refreshControl={
           <RefreshControl
             refreshing={refreshing}
@@ -229,21 +229,6 @@ export default function EmployeeLeaveScreen() {
           />
         }
       >
-        <View className="mb-4 flex-row items-center justify-end">
-          <Pressable
-            onPress={() => setShowApply(true)}
-            className="h-14 w-14 items-center justify-center rounded-full bg-orange-600 shadow-sm shadow-orange-300 active:scale-95"
-            style={{
-              shadowColor: "#f97316",
-              shadowOffset: { width: 0, height: 6 },
-              shadowOpacity: 0.25,
-              shadowRadius: 10,
-              elevation: 6,
-            }}
-          >
-            <Ionicons name="add" size={28} color="#fff" />
-          </Pressable>
-        </View>
         {/* ── STATS SECTION ── */}
         <View className="mt-6 mb-6 flex-row justify-between">
           {[
@@ -493,6 +478,19 @@ export default function EmployeeLeaveScreen() {
           )}
         </View>
       </ScrollView>
+      <Pressable
+        onPress={() => setShowApply(true)}
+        className="absolute bottom-[120px] right-5 z-20 h-16 w-16 items-center justify-center rounded-full bg-orange-600"
+        style={{
+          shadowColor: "#f97316",
+          shadowOffset: { width: 0, height: 8 },
+          shadowOpacity: 0.28,
+          shadowRadius: 12,
+          elevation: 8,
+        }}
+      >
+        <Ionicons name="add" size={30} color="#fff" />
+      </Pressable>
       <BottomHome />
       <Modal
         visible={showApply}
