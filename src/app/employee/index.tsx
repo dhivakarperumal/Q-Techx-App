@@ -821,18 +821,18 @@ export default function EmployeeScreen() {
                         {/* Status */}
                         <View
                           className={`rounded-lg px-2.5 py-1 ${leave.status === "Approved"
-                              ? "bg-emerald-50"
-                              : leave.status === "Rejected"
-                                ? "bg-rose-50"
-                                : "bg-orange-50"
+                            ? "bg-emerald-50"
+                            : leave.status === "Rejected"
+                              ? "bg-rose-50"
+                              : "bg-orange-50"
                             }`}
                         >
                           <Text
                             className={`text-[10px] font-bold ${leave.status === "Approved"
-                                ? "text-emerald-600"
-                                : leave.status === "Rejected"
-                                  ? "text-rose-600"
-                                  : "text-orange-600"
+                              ? "text-emerald-600"
+                              : leave.status === "Rejected"
+                                ? "text-rose-600"
+                                : "text-orange-600"
                               }`}
                           >
                             {leave.status || "Pending"}
@@ -865,42 +865,119 @@ export default function EmployeeScreen() {
               </View>
             </View>
 
-            <Text className="mb-3 mt-7 text-xs font-bold uppercase tracking-widest text-slate-400">
-              Upcoming meetings
-            </Text>
-            <View className="gap-3">
-              {dashboard?.meetings?.upcoming?.length ? (
-                dashboard.meetings.upcoming
-                  .slice(0, 3)
-                  .map((meeting, index) => (
-                    <View
-                      key={meeting.id || index}
-                      className="flex-row items-center rounded-2xl border border-slate-200 bg-white p-4"
-                    >
-                      <View className="h-10 w-10 items-center justify-center rounded-xl bg-violet-50">
-                        <Ionicons
-                          name="calendar-outline"
-                          size={20}
-                          color="#7c3aed"
-                        />
-                      </View>
-                      <View className="ml-3 flex-1">
-                        <Text className="font-bold text-slate-900">
-                          {meeting.title || "Meeting"}
-                        </Text>
-                        <Text className="mt-1 text-xs text-slate-500">
-                          {dateLabel(meeting.startDate)}
-                        </Text>
-                      </View>
+            {/* Upcoming Meetings */}
+            <View className="mb-5 overflow-hidden rounded-3xl bg-white shadow-md">
+              {/* Orange top accent */}
+              <LinearGradient
+                colors={["#fb923c", "#f97316"]}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 0 }}
+                className="h-0.5 w-full"
+              />
+
+              <View className="p-5">
+                {/* Header */}
+                <View className="mb-4 flex-row items-center justify-between">
+                  <View className="flex-row items-center">
+                    <View className="h-10 w-10 items-center justify-center rounded-xl bg-black">
+                      <Ionicons
+                        name="calendar-outline"
+                        size={19}
+                        color="#f97316"
+                      />
                     </View>
-                  ))
-              ) : (
-                <View className="rounded-2xl border border-dashed border-slate-300 bg-white p-5">
-                  <Text className="text-center text-sm text-slate-500">
-                    No upcoming meetings.
-                  </Text>
+
+                    <View className="ml-3">
+                      <Text className="text-base font-black text-black">
+                        Upcoming Meetings
+                      </Text>
+
+                      <Text className="mt-0.5 text-[10px] text-gray-400">
+                        Your upcoming schedule
+                      </Text>
+                    </View>
+                  </View>
+
+                  {/* Meeting count */}
+                  <View className="rounded-xl bg-orange-50 px-3 py-2">
+                    <Text className="text-xs font-black text-orange-500">
+                      {dashboard?.meetings?.upcoming?.length ?? 0}
+                    </Text>
+                  </View>
                 </View>
-              )}
+
+                {/* Meetings */}
+                <View className="gap-3">
+                  {dashboard?.meetings?.upcoming?.length ? (
+                    dashboard.meetings.upcoming
+                      .slice(0, 3)
+                      .map((meeting, index) => (
+                        <View
+                          key={meeting.id || index}
+                          className="flex-row items-center rounded-2xl border border-orange-100 bg-orange-50/40 p-3"
+                        >
+                          {/* Meeting Icon */}
+                          <View className="h-11 w-11 items-center justify-center rounded-xl bg-black">
+                            <Ionicons
+                              name="videocam-outline"
+                              size={19}
+                              color="#f97316"
+                            />
+                          </View>
+
+                          {/* Meeting Details */}
+                          <View className="ml-3 flex-1">
+                            <Text
+                              className="text-sm font-bold text-black"
+                              numberOfLines={1}
+                            >
+                              {meeting.title || "Meeting"}
+                            </Text>
+
+                            <View className="mt-1 flex-row items-center">
+                              <Ionicons
+                                name="calendar-outline"
+                                size={12}
+                                color="#9ca3af"
+                              />
+
+                              <Text className="ml-1 text-[11px] text-gray-400">
+                                {dateLabel(meeting.startDate)}
+                              </Text>
+                            </View>
+                          </View>
+
+                          {/* Arrow */}
+                          <Ionicons
+                            name="chevron-forward"
+                            size={17}
+                            color="#f97316"
+                          />
+                        </View>
+                      ))
+                  ) : (
+                    <View className="rounded-2xl border border-dashed border-orange-200 bg-orange-50/40 p-6">
+                      <View className="mb-2 items-center">
+                        <View className="h-12 w-12 items-center justify-center rounded-2xl bg-black">
+                          <Ionicons
+                            name="calendar-outline"
+                            size={22}
+                            color="#f97316"
+                          />
+                        </View>
+                      </View>
+
+                      <Text className="text-center text-sm font-bold text-black">
+                        No upcoming meetings
+                      </Text>
+
+                      <Text className="mt-1 text-center text-xs text-gray-400">
+                        Your scheduled meetings will appear here.
+                      </Text>
+                    </View>
+                  )}
+                </View>
+              </View>
             </View>
           </>
         )}
