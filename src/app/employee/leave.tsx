@@ -525,7 +525,7 @@ export default function EmployeeLeaveScreen() {
         onRequestClose={() => setShowApply(false)}
       >
         <View className="flex-1 justify-end bg-black/40">
-          <View className="max-h-[92%] overflow-hidden rounded-t-[28px] bg-[#f2f2f2] px-5 pb-8 pt-5">
+          <View className="max-h-[92%] overflow-hidden rounded-t-[28px] bg-[#f2f2f2] pb-8 pt-5">
             <View className="mb-4 flex-row items-center justify-between rounded-t-[26px] bg-[#111827] px-5 py-4">
               <View className="flex-1 pr-0">
                 <Text className="text-[16px] font-black text-[#f97316]">
@@ -543,14 +543,18 @@ export default function EmployeeLeaveScreen() {
               </Pressable>
             </View>
 
-            <ScrollView className="mt-2" keyboardShouldPersistTaps="handled">
-              <Text className="mb-2 text-[12px] font-black uppercase tracking-[2px] text-slate-500">
+            <ScrollView
+              className="mt-2 px-0"
+              keyboardShouldPersistTaps="handled"
+            >
+              <Text className="mb-2 px-5 text-[12px] font-black uppercase tracking-[2px] text-slate-500">
                 Leave type
               </Text>
               <ScrollView
                 horizontal
                 showsHorizontalScrollIndicator={false}
                 className="mb-4"
+                contentContainerStyle={{ paddingHorizontal: 20 }}
               >
                 {leaveTypes.map((type) => (
                   <Pressable
@@ -567,7 +571,7 @@ export default function EmployeeLeaveScreen() {
                 ))}
               </ScrollView>
 
-              <View className="flex-row gap-3">
+              <View className="flex-row gap-3 px-5">
                 <View className="flex-1">
                   <Text className="mb-2 text-[12px] font-black uppercase tracking-[2px] text-slate-500">
                     From (YYYY-MM-DD)
@@ -601,10 +605,10 @@ export default function EmployeeLeaveScreen() {
                 </View>
               </View>
 
-              <Text className="mb-2 mt-4 text-[12px] font-black uppercase tracking-[2px] text-slate-500">
+              <Text className="mb-2 mt-4 px-5 text-[12px] font-black uppercase tracking-[2px] text-slate-500">
                 Day type
               </Text>
-              <View className="flex-row gap-3">
+              <View className="flex-row gap-3 px-5">
                 {["Full Day", "Half Day"].map((type) => (
                   <Pressable
                     key={type}
@@ -636,7 +640,7 @@ export default function EmployeeLeaveScreen() {
                 </View>
               )}
 
-              <Text className="mb-2 mt-4 text-[12px] font-black uppercase tracking-[2px] text-slate-500">
+              <Text className="mb-2 mt-4 px-5 text-[12px] font-black uppercase tracking-[2px] text-slate-500">
                 Reason
               </Text>
               <TextInput
@@ -647,13 +651,13 @@ export default function EmployeeLeaveScreen() {
                 textAlignVertical="top"
                 placeholder="Tell us why you need leave"
                 placeholderTextColor="#94a3b8"
-                className="min-h-[100px] rounded-xl border border-slate-300 bg-white px-3 py-3 text-base text-slate-900"
+                className="mx-5 min-h-[100px] rounded-xl border border-slate-300 bg-white px-3 py-3 text-base text-slate-900"
               />
 
               <Pressable
                 disabled={submitting}
                 onPress={submitLeave}
-                className="mt-5 items-center rounded-xl bg-[#2563eb] py-4 active:bg-[#1d4ed8]"
+                className="mx-5 mt-5 items-center rounded-xl bg-[#2563eb] py-4 active:bg-[#1d4ed8]"
               >
                 {submitting ? (
                   <ActivityIndicator color="#fff" />
