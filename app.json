@@ -11,6 +11,11 @@
       "backgroundColor": "#FFFFFF",
       "barStyle": "dark-content"
     },
+    "androidNavigationBar": {
+      "visible": "always",
+      "barStyle": "dark-content",
+      "backgroundColor": "#FFFFFF"
+    },
     "ios": {
       "icon": "./assets/images/appicon.png"
     },

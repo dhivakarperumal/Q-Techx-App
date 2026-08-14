@@ -3,8 +3,10 @@ import {
     useRouter,
     useSegments,
 } from "expo-router";
+import * as NavigationBar from "expo-navigation-bar";
+import { StatusBar } from "expo-status-bar";
 import { useEffect, useState } from "react";
-import { Text, View } from "react-native";
+import { Platform, Text, View } from "react-native";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import "../../global.css";
 import { AuthProvider, useAuth } from "../auth/AuthContext";
@@ -47,6 +49,17 @@ function RootLayoutNav() {
 export default function RootLayout() {
   const [hasError, setHasError] = useState(false);
 
+  useEffect(() => {
+    if (Platform.OS === "android") {
+      try {
+        NavigationBar.setBackgroundColorAsync("#FFFFFF");
+        NavigationBar.setButtonStyleAsync("dark");
+      } catch (e) {
+        console.warn("Could not set Android navigation bar style:", e);
+      }
+    }
+  }, []);
+
   if (hasError) {
     return (
       <View style={{ flex: 1, justifyContent: "center", alignItems: "center", backgroundColor: "#fff" }}>
@@ -62,6 +75,7 @@ export default function RootLayout() {
 
   return (
     <SafeAreaProvider>
+      <StatusBar style="dark" backgroundColor="#FFFFFF" />
       <AuthProvider>
         <CustomAlertProvider>
           <RootLayoutNav />
@@ -70,3 +84,4 @@ export default function RootLayout() {
     </SafeAreaProvider>
   );
 }
+
