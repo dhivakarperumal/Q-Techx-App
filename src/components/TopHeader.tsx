@@ -155,14 +155,14 @@ export function TopHeader({ title, subtitle }: TopHeaderProps) {
         setTimeout(() => router.push("/admin/profile" as any), 150);
       },
     },
-    {
-      icon: "settings-outline" as const,
-      label: "Settings",
-      onPress: () => {
-        closeDropdown();
-        Alert.alert("Settings", "Settings page coming soon.");
-      },
-    },
+    // {
+    //   icon: "settings-outline" as const,
+    //   label: "Settings",
+    //   onPress: () => {
+    //     closeDropdown();
+    //     Alert.alert("Settings", "Settings page coming soon.");
+    //   },
+    // },
     {
       icon: "log-out-outline" as const,
       label: "Log Out",

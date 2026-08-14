@@ -844,7 +844,7 @@ export default function EmployeeTasksScreen() {
 
         {loading ? (
           <View className="mt-8 items-center py-10">
-            <ActivityIndicator size="large" color="#2563eb" />
+            <ActivityIndicator size="large" color="#f97316" />
             <Text className="mt-3 text-sm text-slate-500">
               Loading assigned tasks...
             </Text>
