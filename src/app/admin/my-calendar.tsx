@@ -160,6 +160,35 @@ const CustomSelect = ({ label, value, options, onSelect }: { label: string, valu
   );
 };
 
+const FormField = ({
+  label,
+  value,
+  onChangeText,
+  placeholder,
+  multiline = false,
+  keyboardType = "default",
+}: {
+  label: string;
+  value?: string | number;
+  onChangeText: (val: string) => void;
+  placeholder?: string;
+  multiline?: boolean;
+  keyboardType?: "default" | "email-address" | "numeric" | "phone-pad" | "number-pad" | "decimal-pad";
+}) => (
+  <View>
+    <Text style={{ fontSize: 12, fontWeight: "700", color: "#475569", marginBottom: 6 }}>{label}</Text>
+    <TextInput
+      value={value !== undefined && value !== null ? String(value) : ""}
+      onChangeText={onChangeText}
+      placeholder={placeholder}
+      placeholderTextColor="#94a3b8"
+      multiline={multiline}
+      keyboardType={keyboardType}
+      style={[inputStyle, multiline && { minHeight: 80, textAlignVertical: "top" }]}
+    />
+  </View>
+);
+
 function CreateEventModal({ visible, initialData, initialDate, userId, onClose, onSaved }: { visible: boolean; initialData?: MyEvent | null; initialDate: dayjs.Dayjs; userId?: string | number; onClose: () => void; onSaved: () => Promise<void> }) {
   const [formData, setFormData] = useState<any>(() => defaultForm(initialDate));
   const [documentFile, setDocumentFile] = useState<DocumentPicker.DocumentPickerAsset | null>(null);
@@ -242,140 +271,127 @@ function CreateEventModal({ visible, initialData, initialDate, userId, onClose, 
     }
   };
 
-  const Field = ({ label, field, placeholder, multiline = false, keyboardType = "default" }: any) => (
-    <View>
-      <Text style={{ fontSize: 12, fontWeight: "700", color: "#475569", marginBottom: 6 }}>{label}</Text>
-      <TextInput
-        value={String(formData[field] || "")}
-        onChangeText={(val) => update(field, val)}
-        placeholder={placeholder}
-        placeholderTextColor="#94a3b8"
-        multiline={multiline}
-        keyboardType={keyboardType}
-        style={[inputStyle, multiline && { minHeight: 80, textAlignVertical: "top" }]}
-      />
-    </View>
-  );
-
   return (
     <Modal visible={visible} animationType="slide" presentationStyle="pageSheet" onRequestClose={onClose}>
       <SafeAreaView style={{ flex: 1, backgroundColor: "#f8fafc" }} edges={["top"]}>
-        <View style={{ backgroundColor: "#000", paddingTop: 16, paddingHorizontal: 24, paddingBottom: 24 }}>
-          <View style={{ width: 48, height: 6, backgroundColor: "#334155", borderRadius: 3, alignSelf: "center", marginBottom: 16 }} />
-          <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
-            <View>
-              <Text style={{ color: "#f97316", fontSize: 18, fontWeight: "bold" }}>{initialData ? "Edit Event" : "Plan My Day"}</Text>
-              <Text style={{ color: "#fff", fontSize: 12, marginTop: 4 }}>{initialData ? "Update your event details" : "Create a personal calendar event"}</Text>
-            </View>
-            <TouchableOpacity onPress={onClose} style={{ backgroundColor: "#ffedd5", padding: 8, borderRadius: 20 }}>
-              <Ionicons name="close" size={20} color="#f97316" />
-            </TouchableOpacity>
-          </View>
-        </View>
-
-        <View style={{ flexDirection: "row", backgroundColor: "#fff", borderBottomWidth: 1, borderBottomColor: "#e2e8f0" }}>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: 16 }}>
-            {["Basic", "Details", "Work", "Tracking"].map(tab => (
-              <TouchableOpacity key={tab} onPress={() => setActiveTab(tab)} style={{ paddingVertical: 14, paddingHorizontal: 16, borderBottomWidth: 2, borderBottomColor: activeTab === tab ? "#f97316" : "transparent" }}>
-                <Text style={{ fontSize: 14, fontWeight: activeTab === tab ? "700" : "500", color: activeTab === tab ? "#f97316" : "#64748b" }}>{tab}</Text>
+        <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === "ios" ? "padding" : undefined}>
+          <View style={{ backgroundColor: "#000", paddingTop: 16, paddingHorizontal: 24, paddingBottom: 24 }}>
+            <View style={{ width: 48, height: 6, backgroundColor: "#334155", borderRadius: 3, alignSelf: "center", marginBottom: 16 }} />
+            <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
+              <View>
+                <Text style={{ color: "#f97316", fontSize: 18, fontWeight: "bold" }}>{initialData ? "Edit Event" : "Plan My Day"}</Text>
+                <Text style={{ color: "#fff", fontSize: 12, marginTop: 4 }}>{initialData ? "Update your event details" : "Create a personal calendar event"}</Text>
+              </View>
+              <TouchableOpacity onPress={onClose} style={{ backgroundColor: "#ffedd5", padding: 8, borderRadius: 20 }}>
+                <Ionicons name="close" size={20} color="#f97316" />
               </TouchableOpacity>
-            ))}
+            </View>
+          </View>
+
+          <View style={{ flexDirection: "row", backgroundColor: "#fff", borderBottomWidth: 1, borderBottomColor: "#e2e8f0" }}>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: 16 }}>
+              {["Basic", "Details", "Work", "Tracking"].map(tab => (
+                <TouchableOpacity key={tab} onPress={() => setActiveTab(tab)} style={{ paddingVertical: 14, paddingHorizontal: 16, borderBottomWidth: 2, borderBottomColor: activeTab === tab ? "#f97316" : "transparent" }}>
+                  <Text style={{ fontSize: 14, fontWeight: activeTab === tab ? "700" : "500", color: activeTab === tab ? "#f97316" : "#64748b" }}>{tab}</Text>
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+          </View>
+
+          <ScrollView contentContainerStyle={{ padding: 20, paddingBottom: 60 }} keyboardShouldPersistTaps="handled">
+            
+            {activeTab === "Basic" && (
+              <View>
+                <FormField label="Plan Title *" value={formData.planTitle} onChangeText={(v) => update("planTitle", v)} placeholder="Enter plan title" />
+                <View style={{ flexDirection: "row", gap: 12 }}>
+                  <View style={{ flex: 1 }}><FormField label="Plan Date *" value={formData.planDate} onChangeText={(v) => update("planDate", v)} placeholder="YYYY-MM-DD" /></View>
+                  <View style={{ flex: 1 }}><CustomSelect label="Category *" value={formData.category} options={Object.keys(CATEGORY_COLORS)} onSelect={v => update("category", v)} /></View>
+                </View>
+                <View style={{ flexDirection: "row", gap: 12 }}>
+                  <View style={{ flex: 1 }}><FormField label="Start Time *" value={formData.startTime} onChangeText={(v) => update("startTime", v)} placeholder="HH:MM" /></View>
+                  <View style={{ flex: 1 }}><FormField label="End Time *" value={formData.endTime} onChangeText={(v) => update("endTime", v)} placeholder="HH:MM" /></View>
+                </View>
+                <FormField label="Description" value={formData.description} onChangeText={(v) => update("description", v)} placeholder="Describe your plan" multiline />
+                <View style={{ flexDirection: "row", gap: 12 }}>
+                  <View style={{ flex: 1 }}><CustomSelect label="Priority" value={formData.priority} options={["Low", "Medium", "High", "Critical"]} onSelect={v => update("priority", v)} /></View>
+                  <View style={{ flex: 1 }}><CustomSelect label="Status" value={formData.status} options={["Pending", "In Progress", "Completed"]} onSelect={v => update("status", v)} /></View>
+                </View>
+                <FormField label="Location" value={formData.location} onChangeText={(v) => update("location", v)} placeholder="Office, room, or address" />
+                <FormField label="Meeting Link" value={formData.meetingLink} onChangeText={(v) => update("meetingLink", v)} placeholder="https://..." />
+              </View>
+            )}
+
+            {activeTab === "Details" && (
+              <View>
+                <FormField label="Notes" value={formData.notes} onChangeText={(v) => update("notes", v)} placeholder="Additional notes" multiline />
+                <View style={{ flexDirection: "row", gap: 12 }}>
+                  <View style={{ flex: 1 }}><FormField label="Reminder Date" value={formData.reminderDate} onChangeText={(v) => update("reminderDate", v)} placeholder="YYYY-MM-DD" /></View>
+                  <View style={{ flex: 1 }}><FormField label="Reminder Time" value={formData.reminderTime} onChangeText={(v) => update("reminderTime", v)} placeholder="HH:MM" /></View>
+                </View>
+                <View style={{ marginBottom: 16 }}>
+                  <Text style={{ fontSize: 12, fontWeight: "700", color: "#475569", marginBottom: 6 }}>Checklist Items</Text>
+                  {formData.checklistItems.map((item: string, index: number) => (
+                    <View key={`chk-${index}`} style={{ flexDirection: "row", gap: 8, marginBottom: 8 }}>
+                      <TextInput value={item} onChangeText={(val) => updateArray("checklistItems", index, val)} placeholder="Add checklist item" style={[inputStyle, { flex: 1, marginBottom: 0 }]} />
+                      <Pressable onPress={() => removeArrayItem("checklistItems", index)} style={{ justifyContent: "center", padding: 8 }}><Ionicons name="trash-outline" size={20} color="#dc2626" /></Pressable>
+                    </View>
+                  ))}
+                  <Pressable onPress={() => addArrayItem("checklistItems")} style={{ alignSelf: "flex-start", paddingVertical: 8 }}><Text style={{ color: "#f97316", fontWeight: "700" }}>+ Add Item</Text></Pressable>
+                </View>
+                <View style={{ marginBottom: 16 }}>
+                  <Text style={{ fontSize: 12, fontWeight: "700", color: "#475569", marginBottom: 6 }}>Tags</Text>
+                  {formData.tags.map((item: string, index: number) => (
+                    <View key={`tag-${index}`} style={{ flexDirection: "row", gap: 8, marginBottom: 8 }}>
+                      <TextInput value={item} onChangeText={(val) => updateArray("tags", index, val)} placeholder="Tag" style={[inputStyle, { flex: 1, marginBottom: 0 }]} />
+                      <Pressable onPress={() => removeArrayItem("tags", index)} style={{ justifyContent: "center", padding: 8 }}><Ionicons name="trash-outline" size={20} color="#dc2626" /></Pressable>
+                    </View>
+                  ))}
+                  <Pressable onPress={() => addArrayItem("tags")} style={{ alignSelf: "flex-start", paddingVertical: 8 }}><Text style={{ color: "#f97316", fontWeight: "700" }}>+ Add Tag</Text></Pressable>
+                </View>
+                <View style={{ marginBottom: 16 }}>
+                  <Text style={{ fontSize: 12, fontWeight: "700", color: "#475569", marginBottom: 6 }}>Upload Document</Text>
+                  <Pressable onPress={pickDocument} style={[inputStyle, { flexDirection: "row", alignItems: "center", gap: 8 }]}>
+                    <Ionicons name="document-attach-outline" size={20} color="#f97316" />
+                    <Text style={{ flex: 1, color: "#475569" }}>{documentFile?.name || "Choose a document"}</Text>
+                  </Pressable>
+                </View>
+              </View>
+            )}
+
+            {activeTab === "Work" && (
+              <View>
+                <FormField label="Project" value={formData.project} onChangeText={(v) => update("project", v)} placeholder="Project name" />
+                <FormField label="Module" value={formData.module} onChangeText={(v) => update("module", v)} placeholder="Module name" />
+                <FormField label="Task" value={formData.task} onChangeText={(v) => update("task", v)} placeholder="Task name" />
+                <FormField label="Daily Goal" value={formData.dailyGoal} onChangeText={(v) => update("dailyGoal", v)} placeholder="Goal for today" multiline />
+                <FormField label="Expected Outcome" value={formData.expectedOutcome} onChangeText={(v) => update("expectedOutcome", v)} placeholder="Expected outcome" multiline />
+              </View>
+            )}
+
+            {activeTab === "Tracking" && (
+              <View>
+                <View style={{ flexDirection: "row", gap: 12 }}>
+                  <View style={{ flex: 1 }}><FormField label="Planned Hrs" value={formData.plannedHours} onChangeText={(v) => update("plannedHours", v)} placeholder="e.g. 4" keyboardType="numeric" /></View>
+                  <View style={{ flex: 1 }}><FormField label="Worked Hrs" value={formData.workedHours} onChangeText={(v) => update("workedHours", v)} placeholder="e.g. 3.5" keyboardType="numeric" /></View>
+                  <View style={{ flex: 1 }}><FormField label="Progress %" value={formData.progress} onChangeText={(v) => update("progress", v)} placeholder="0-100" keyboardType="numeric" /></View>
+                </View>
+                <View style={{ flexDirection: "row", gap: 12 }}>
+                  <View style={{ flex: 1 }}><FormField label="Break Start" value={formData.breakStartTime} onChangeText={(v) => update("breakStartTime", v)} placeholder="HH:MM" /></View>
+                  <View style={{ flex: 1 }}><FormField label="Break End" value={formData.breakEndTime} onChangeText={(v) => update("breakEndTime", v)} placeholder="HH:MM" /></View>
+                </View>
+                <CustomSelect label="Energy Level" value={formData.energyLevel} options={["Low", "Medium", "High"]} onSelect={v => update("energyLevel", v)} />
+                <FormField label="Today's Achievement" value={formData.todaysAchievement} onChangeText={(v) => update("todaysAchievement", v)} placeholder="What did you achieve?" multiline />
+                <FormField label="Challenges" value={formData.challenges} onChangeText={(v) => update("challenges", v)} placeholder="Any blockers?" multiline />
+                <FormField label="Tomorrow's Plan" value={formData.tomorrowsPlan} onChangeText={(v) => update("tomorrowsPlan", v)} placeholder="Plan for tomorrow" multiline />
+              </View>
+            )}
+            
+            <Pressable disabled={saving} onPress={save} style={{ flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8, borderRadius: 14, backgroundColor: saving ? "#fdba74" : "#f97316", paddingVertical: 16, marginTop: 12 }}>
+              <Ionicons name={saving ? "hourglass-outline" : "save-outline"} size={18} color="#fff" />
+              <Text style={{ color: "#fff", fontSize: 16, fontWeight: "800" }}>{saving ? "Saving..." : initialData ? "Update Event" : "Save Event"}</Text>
+            </Pressable>
           </ScrollView>
-        </View>
-
-        <ScrollView contentContainerStyle={{ padding: 20, paddingBottom: 60 }} keyboardShouldPersistTaps="handled">
-          
-          {activeTab === "Basic" && (
-            <View>
-              <Field label="Plan Title *" field="planTitle" placeholder="Enter plan title" />
-              <View style={{ flexDirection: "row", gap: 12 }}>
-                <View style={{ flex: 1 }}><Field label="Plan Date *" field="planDate" placeholder="YYYY-MM-DD" /></View>
-                <View style={{ flex: 1 }}><CustomSelect label="Category *" value={formData.category} options={Object.keys(CATEGORY_COLORS)} onSelect={v => update("category", v)} /></View>
-              </View>
-              <View style={{ flexDirection: "row", gap: 12 }}>
-                <View style={{ flex: 1 }}><Field label="Start Time *" field="startTime" placeholder="HH:MM" /></View>
-                <View style={{ flex: 1 }}><Field label="End Time *" field="endTime" placeholder="HH:MM" /></View>
-              </View>
-              <Field label="Description" field="description" placeholder="Describe your plan" multiline />
-              <View style={{ flexDirection: "row", gap: 12 }}>
-                <View style={{ flex: 1 }}><CustomSelect label="Priority" value={formData.priority} options={["Low", "Medium", "High", "Critical"]} onSelect={v => update("priority", v)} /></View>
-                <View style={{ flex: 1 }}><CustomSelect label="Status" value={formData.status} options={["Pending", "In Progress", "Completed"]} onSelect={v => update("status", v)} /></View>
-              </View>
-              <Field label="Location" field="location" placeholder="Office, room, or address" />
-              <Field label="Meeting Link" field="meetingLink" placeholder="https://..." />
-            </View>
-          )}
-
-          {activeTab === "Details" && (
-            <View>
-              <Field label="Notes" field="notes" placeholder="Additional notes" multiline />
-              <View style={{ flexDirection: "row", gap: 12 }}>
-                <View style={{ flex: 1 }}><Field label="Reminder Date" field="reminderDate" placeholder="YYYY-MM-DD" /></View>
-                <View style={{ flex: 1 }}><Field label="Reminder Time" field="reminderTime" placeholder="HH:MM" /></View>
-              </View>
-              <View style={{ marginBottom: 16 }}>
-                <Text style={{ fontSize: 12, fontWeight: "700", color: "#475569", marginBottom: 6 }}>Checklist Items</Text>
-                {formData.checklistItems.map((item: string, index: number) => (
-                  <View key={`chk-${index}`} style={{ flexDirection: "row", gap: 8, marginBottom: 8 }}>
-                    <TextInput value={item} onChangeText={(val) => updateArray("checklistItems", index, val)} placeholder="Add checklist item" style={[inputStyle, { flex: 1, marginBottom: 0 }]} />
-                    <Pressable onPress={() => removeArrayItem("checklistItems", index)} style={{ justifyContent: "center", padding: 8 }}><Ionicons name="trash-outline" size={20} color="#dc2626" /></Pressable>
-                  </View>
-                ))}
-                <Pressable onPress={() => addArrayItem("checklistItems")} style={{ alignSelf: "flex-start", paddingVertical: 8 }}><Text style={{ color: "#f97316", fontWeight: "700" }}>+ Add Item</Text></Pressable>
-              </View>
-              <View style={{ marginBottom: 16 }}>
-                <Text style={{ fontSize: 12, fontWeight: "700", color: "#475569", marginBottom: 6 }}>Tags</Text>
-                {formData.tags.map((item: string, index: number) => (
-                  <View key={`tag-${index}`} style={{ flexDirection: "row", gap: 8, marginBottom: 8 }}>
-                    <TextInput value={item} onChangeText={(val) => updateArray("tags", index, val)} placeholder="Tag" style={[inputStyle, { flex: 1, marginBottom: 0 }]} />
-                    <Pressable onPress={() => removeArrayItem("tags", index)} style={{ justifyContent: "center", padding: 8 }}><Ionicons name="trash-outline" size={20} color="#dc2626" /></Pressable>
-                  </View>
-                ))}
-                <Pressable onPress={() => addArrayItem("tags")} style={{ alignSelf: "flex-start", paddingVertical: 8 }}><Text style={{ color: "#f97316", fontWeight: "700" }}>+ Add Tag</Text></Pressable>
-              </View>
-              <View style={{ marginBottom: 16 }}>
-                <Text style={{ fontSize: 12, fontWeight: "700", color: "#475569", marginBottom: 6 }}>Upload Document</Text>
-                <Pressable onPress={pickDocument} style={[inputStyle, { flexDirection: "row", alignItems: "center", gap: 8 }]}>
-                  <Ionicons name="document-attach-outline" size={20} color="#f97316" />
-                  <Text style={{ flex: 1, color: "#475569" }}>{documentFile?.name || "Choose a document"}</Text>
-                </Pressable>
-              </View>
-            </View>
-          )}
-
-          {activeTab === "Work" && (
-            <View>
-              <Field label="Project" field="project" placeholder="Project name" />
-              <Field label="Module" field="module" placeholder="Module name" />
-              <Field label="Task" field="task" placeholder="Task name" />
-              <Field label="Daily Goal" field="dailyGoal" placeholder="Goal for today" multiline />
-              <Field label="Expected Outcome" field="expectedOutcome" placeholder="Expected outcome" multiline />
-            </View>
-          )}
-
-          {activeTab === "Tracking" && (
-            <View>
-              <View style={{ flexDirection: "row", gap: 12 }}>
-                <View style={{ flex: 1 }}><Field label="Planned Hrs" field="plannedHours" placeholder="e.g. 4" keyboardType="numeric" /></View>
-                <View style={{ flex: 1 }}><Field label="Worked Hrs" field="workedHours" placeholder="e.g. 3.5" keyboardType="numeric" /></View>
-                <View style={{ flex: 1 }}><Field label="Progress %" field="progress" placeholder="0-100" keyboardType="numeric" /></View>
-              </View>
-              <View style={{ flexDirection: "row", gap: 12 }}>
-                <View style={{ flex: 1 }}><Field label="Break Start" field="breakStartTime" placeholder="HH:MM" /></View>
-                <View style={{ flex: 1 }}><Field label="Break End" field="breakEndTime" placeholder="HH:MM" /></View>
-              </View>
-              <CustomSelect label="Energy Level" value={formData.energyLevel} options={["Low", "Medium", "High"]} onSelect={v => update("energyLevel", v)} />
-              <Field label="Today's Achievement" field="todaysAchievement" placeholder="What did you achieve?" multiline />
-              <Field label="Challenges" field="challenges" placeholder="Any blockers?" multiline />
-              <Field label="Tomorrow's Plan" field="tomorrowsPlan" placeholder="Plan for tomorrow" multiline />
-            </View>
-          )}
-          
-          <Pressable disabled={saving} onPress={save} style={{ flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8, borderRadius: 14, backgroundColor: saving ? "#fdba74" : "#f97316", paddingVertical: 16, marginTop: 12 }}>
-            <Ionicons name={saving ? "hourglass-outline" : "save-outline"} size={18} color="#fff" />
-            <Text style={{ color: "#fff", fontSize: 16, fontWeight: "800" }}>{saving ? "Saving..." : initialData ? "Update Event" : "Save Event"}</Text>
-          </Pressable>
-        </ScrollView>
+        </KeyboardAvoidingView>
       </SafeAreaView>
     </Modal>
   );

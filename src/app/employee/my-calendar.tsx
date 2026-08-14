@@ -132,6 +132,38 @@ const createEventDefaults = (date: Date): CreateEventValues => ({
 
 const inputStyle = { borderWidth: 1, borderColor: "#e2e8f0", borderRadius: 12, backgroundColor: "#f8fafc", paddingHorizontal: 12, paddingVertical: 10, color: "#0f172a", fontSize: 14 } as const;
 
+const FormField = ({
+  label,
+  value,
+  onChangeText,
+  placeholder,
+  multiline = false,
+  numberOfLines = 1,
+  keyboardType = "default",
+}: {
+  label: string;
+  value: string;
+  onChangeText: (value: string) => void;
+  placeholder?: string;
+  multiline?: boolean;
+  numberOfLines?: number;
+  keyboardType?: "default" | "email-address" | "numeric" | "phone-pad" | "number-pad" | "decimal-pad";
+}) => (
+  <View style={{ gap: 6 }}>
+    <Text style={{ fontSize: 12, fontWeight: "700", color: "#475569" }}>{label}</Text>
+    <TextInput
+      value={value}
+      onChangeText={onChangeText}
+      placeholder={placeholder}
+      placeholderTextColor="#94a3b8"
+      multiline={multiline}
+      numberOfLines={multiline ? (numberOfLines > 1 ? numberOfLines : 3) : 1}
+      keyboardType={keyboardType}
+      style={[inputStyle, multiline && { minHeight: 78, textAlignVertical: "top" }]}
+    />
+  </View>
+);
+
 function CreateEventModal({ visible, initialDate, userId, onClose, onSaved }: { visible: boolean; initialDate: Date; userId?: string | number; onClose: () => void; onSaved: () => Promise<void> }) {
   const [values, setValues] = useState<CreateEventValues>(() => createEventDefaults(initialDate));
   const [documentFile, setDocumentFile] = useState<DocumentPicker.DocumentPickerAsset | null>(null);
@@ -180,13 +212,6 @@ function CreateEventModal({ visible, initialDate, userId, onClose, onSaved }: { 
     }
   };
 
-  const Field = ({ label, field, placeholder, multiline = false }: { label: string; field: keyof CreateEventValues; placeholder?: string; multiline?: boolean }) => (
-    <View style={{ gap: 6 }}>
-      <Text style={{ fontSize: 12, fontWeight: "700", color: "#475569" }}>{label}</Text>
-      <TextInput value={String(values[field])} onChangeText={(value) => update(field, value)} placeholder={placeholder} placeholderTextColor="#94a3b8" multiline={multiline} numberOfLines={multiline ? 3 : 1} style={[inputStyle, multiline && { minHeight: 78, textAlignVertical: "top" }]} />
-    </View>
-  );
-
   return <Modal visible={visible} animationType="slide" presentationStyle="pageSheet" onRequestClose={onClose}>
     <KeyboardAvoidingView style={{ flex: 1, backgroundColor: "#f8fafc" }} behavior={Platform.OS === "ios" ? "padding" : undefined}>
       <View style={{ backgroundColor: "#000", paddingTop: 16, paddingHorizontal: 24, paddingBottom: 24 }}>
@@ -202,14 +227,14 @@ function CreateEventModal({ visible, initialDate, userId, onClose, onSaved }: { 
         </View>
       </View>
       <ScrollView contentContainerStyle={{ gap: 14, padding: 20, paddingBottom: 36 }} keyboardShouldPersistTaps="handled">
-        <Field label="Plan title *" field="planTitle" placeholder="Enter plan title" />
-        <Field label="Description" field="description" placeholder="Describe your plan" multiline />
-        <View style={{ flexDirection: "row", gap: 10 }}><View style={{ flex: 1 }}><Field label="Plan date *" field="planDate" placeholder="YYYY-MM-DD" /></View><View style={{ flex: 1 }}><Field label="Category" field="category" placeholder="Meeting, task..." /></View></View>
-        <View style={{ flexDirection: "row", gap: 10 }}><View style={{ flex: 1 }}><Field label="Start time *" field="startTime" /></View><View style={{ flex: 1 }}><Field label="End time *" field="endTime" /></View></View>
-        <View style={{ flexDirection: "row", gap: 10 }}><View style={{ flex: 1 }}><Field label="Priority" field="priority" placeholder="Low / Medium / High" /></View><View style={{ flex: 1 }}><Field label="Status" field="status" placeholder="Pending" /></View></View>
-        <Field label="Location" field="location" placeholder="Office, room, or address" />
-        <Field label="Meeting link" field="meetingLink" placeholder="https://..." />
-        <Field label="Notes" field="notes" placeholder="Additional notes" multiline />
+        <FormField label="Plan title *" value={values.planTitle} onChangeText={(val) => update("planTitle", val)} placeholder="Enter plan title" />
+        <FormField label="Description" value={values.description} onChangeText={(val) => update("description", val)} placeholder="Describe your plan" multiline />
+        <View style={{ flexDirection: "row", gap: 10 }}><View style={{ flex: 1 }}><FormField label="Plan date *" value={values.planDate} onChangeText={(val) => update("planDate", val)} placeholder="YYYY-MM-DD" /></View><View style={{ flex: 1 }}><FormField label="Category" value={values.category} onChangeText={(val) => update("category", val)} placeholder="Meeting, task..." /></View></View>
+        <View style={{ flexDirection: "row", gap: 10 }}><View style={{ flex: 1 }}><FormField label="Start time *" value={values.startTime} onChangeText={(val) => update("startTime", val)} /></View><View style={{ flex: 1 }}><FormField label="End time *" value={values.endTime} onChangeText={(val) => update("endTime", val)} /></View></View>
+        <View style={{ flexDirection: "row", gap: 10 }}><View style={{ flex: 1 }}><FormField label="Priority" value={values.priority} onChangeText={(val) => update("priority", val)} placeholder="Low / Medium / High" /></View><View style={{ flex: 1 }}><FormField label="Status" value={values.status} onChangeText={(val) => update("status", val)} placeholder="Pending" /></View></View>
+        <FormField label="Location" value={values.location} onChangeText={(val) => update("location", val)} placeholder="Office, room, or address" />
+        <FormField label="Meeting link" value={values.meetingLink} onChangeText={(val) => update("meetingLink", val)} placeholder="https://..." />
+        <FormField label="Notes" value={values.notes} onChangeText={(val) => update("notes", val)} placeholder="Additional notes" multiline />
         <View style={{ gap: 8 }}><Text style={{ fontSize: 12, fontWeight: "700", color: "#475569" }}>Checklist items</Text>{values.checklistItems.map((item, index) => <View key={`checklist-${index}`} style={{ flexDirection: "row", gap: 8 }}><TextInput value={item} onChangeText={(value) => updateChecklist(index, value)} placeholder="Add checklist item" placeholderTextColor="#94a3b8" style={[inputStyle, { flex: 1 }]} /><Pressable onPress={() => setValues((current) => ({ ...current, checklistItems: current.checklistItems.length > 1 ? current.checklistItems.filter((_, itemIndex) => itemIndex !== index) : [""] }))} accessibilityLabel="Remove checklist item" style={{ justifyContent: "center", padding: 8 }}><Ionicons name="trash-outline" size={20} color="#dc2626" /></Pressable></View>)}<Pressable onPress={() => setValues((current) => ({ ...current, checklistItems: [...current.checklistItems, ""] }))} style={{ flexDirection: "row", alignItems: "center", gap: 6, alignSelf: "flex-start", borderRadius: 10, borderWidth: 1, borderStyle: "dashed", borderColor: "#fdba74", paddingHorizontal: 12, paddingVertical: 8 }}><Ionicons name="add" size={17} color="#f97316" /><Text style={{ color: "#f97316", fontWeight: "700" }}>Add item</Text></Pressable></View>
         <View style={{ gap: 8 }}><Text style={{ fontSize: 12, fontWeight: "700", color: "#475569" }}>Upload document (optional)</Text><Pressable onPress={pickDocument} style={{ flexDirection: "row", alignItems: "center", gap: 8, borderRadius: 12, borderWidth: 1, borderColor: "#cbd5e1", backgroundColor: "#fff", padding: 12 }}><Ionicons name="document-attach-outline" size={20} color="#f97316" /><Text style={{ flex: 1, color: "#475569" }}>{documentFile?.name || "Choose a document"}</Text></Pressable></View>
         <Pressable disabled={saving} onPress={save} style={{ flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8, borderRadius: 14, backgroundColor: saving ? "#fdba74" : "#f97316", paddingVertical: 14 }}><Ionicons name={saving ? "hourglass-outline" : "save-outline"} size={18} color="#fff" /><Text style={{ color: "#fff", fontSize: 15, fontWeight: "800" }}>{saving ? "Saving..." : "Save event"}</Text></Pressable>
@@ -282,6 +307,51 @@ function EventDetails({ event, onClose }: { event: MyEvent | null; onClose: () =
   );
 }
 
+const EventCard = ({ event, onPress }: { event: MyEvent; onPress: () => void }) => {
+  const color = eventColor(event);
+  return (
+    <Pressable
+      onPress={onPress}
+      accessibilityLabel={`View details for ${eventName(event)}`}
+      style={{
+        flexDirection: "row",
+        alignItems: "center",
+        borderRadius: 16,
+        borderWidth: 1,
+        borderColor: "#e2e8f0",
+        backgroundColor: "#fff",
+        padding: 14,
+      }}
+    >
+      <View
+        style={{
+          width: 44,
+          height: 44,
+          borderRadius: 12,
+          backgroundColor: `${color}18`,
+          alignItems: "center",
+          justifyContent: "center",
+        }}
+      >
+        <Ionicons name="calendar-outline" size={22} color={color} />
+      </View>
+      <View style={{ flex: 1, marginLeft: 12 }}>
+        <Text style={{ fontSize: 15, fontWeight: "700", color: "#0f172a" }}>
+          {eventName(event)}
+        </Text>
+        <Text style={{ marginTop: 3, fontSize: 12, fontWeight: "700", color }}>
+          {eventType(event)}
+        </Text>
+        <Text style={{ marginTop: 3, fontSize: 12, color: "#64748b" }}>
+          {formatDate(event.planDate)} · {event.startTime || "All day"}
+          {event.endTime ? ` - ${event.endTime}` : ""}
+        </Text>
+      </View>
+      <Ionicons name="chevron-forward" size={18} color="#94a3b8" />
+    </Pressable>
+  );
+};
+
 export default function MyCalendarScreen() {
   const router = useRouter();
   const { user } = useAuth();
@@ -337,11 +407,6 @@ export default function MyCalendarScreen() {
   const openEvent = (event: MyEvent) => setSelectedEvent(event);
   const currentUserId = [user?.id, user?.userId, user?.employee_id, user?.employeeId, user?.user_id, user?.uuid].find(Boolean) as string | number | undefined;
 
-  const EventCard = ({ event }: { event: MyEvent }) => {
-    const color = eventColor(event);
-    return <Pressable onPress={() => openEvent(event)} accessibilityLabel={`View details for ${eventName(event)}`} style={{ flexDirection: "row", alignItems: "center", borderRadius: 16, borderWidth: 1, borderColor: "#e2e8f0", backgroundColor: "#fff", padding: 14 }}><View style={{ width: 44, height: 44, borderRadius: 12, backgroundColor: `${color}18`, alignItems: "center", justifyContent: "center" }}><Ionicons name="calendar-outline" size={22} color={color} /></View><View style={{ flex: 1, marginLeft: 12 }}><Text style={{ fontSize: 15, fontWeight: "700", color: "#0f172a" }}>{eventName(event)}</Text><Text style={{ marginTop: 3, fontSize: 12, fontWeight: "700", color }}>{eventType(event)}</Text><Text style={{ marginTop: 3, fontSize: 12, color: "#64748b" }}>{formatDate(event.planDate)} · {event.startTime || "All day"}{event.endTime ? ` - ${event.endTime}` : ""}</Text></View><Ionicons name="chevron-forward" size={18} color="#94a3b8" /></Pressable>;
-  };
-
   return <SafeAreaView style={{ flex: 1, backgroundColor: "#f8fafc" }} edges={["top"]}>
       <View style={{
         flexDirection: "row", alignItems: "center",
@@ -367,16 +432,92 @@ export default function MyCalendarScreen() {
       <View style={{ flexDirection: "row", marginTop: 20, borderRadius: 12, backgroundColor: "#e2e8f0", padding: 3 }}>{(["Month", "Week", "Day", "Agenda"] as ViewMode[]).map((mode) => <Pressable key={mode} onPress={() => setViewMode(mode)} style={{ flex: 1, alignItems: "center", borderRadius: 9, backgroundColor: viewMode === mode ? "#fff" : "transparent", paddingVertical: 9 }}><Text style={{ color: viewMode === mode ? "#f97316" : "#64748b", fontSize: 12, fontWeight: "700" }}>{mode}</Text></Pressable>)}</View>
 
       {viewMode !== "Agenda" && <View style={{ marginTop: 16, borderRadius: 20, borderWidth: 1, borderColor: "#e2e8f0", backgroundColor: "#fff", padding: 16 }}><View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: 14 }}><Pressable onPress={() => viewMode === "Day" ? setSelectedDate((current) => new Date(current.getFullYear(), current.getMonth(), current.getDate() - 1)) : viewMode === "Week" ? setSelectedDate((current) => new Date(current.getFullYear(), current.getMonth(), current.getDate() - 7)) : changeMonth(-1)} style={{ padding: 6 }}><Ionicons name="chevron-back" size={20} color="#475569" /></Pressable><Text style={{ fontSize: 17, fontWeight: "800", color: "#0f172a" }}>{viewMode === "Day" ? selectedDate.toLocaleDateString(undefined, { weekday: "long", month: "long", day: "numeric" }) : viewMode === "Week" ? `${weekDays[0].toLocaleDateString(undefined, { month: "short", day: "numeric" })} - ${weekDays[6].toLocaleDateString(undefined, { month: "short", day: "numeric" })}` : month.toLocaleDateString(undefined, { month: "long", year: "numeric" })}</Text><Pressable onPress={() => viewMode === "Day" ? setSelectedDate((current) => new Date(current.getFullYear(), current.getMonth(), current.getDate() + 1)) : viewMode === "Week" ? setSelectedDate((current) => new Date(current.getFullYear(), current.getMonth(), current.getDate() + 7)) : changeMonth(1)} style={{ padding: 6 }}><Ionicons name="chevron-forward" size={20} color="#475569" /></Pressable></View>
-        {viewMode === "Month" && <><View style={{ flexDirection: "row", marginBottom: 6 }}>{["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"].map((day) => <Text key={day} style={{ flex: 1, textAlign: "center", fontSize: 11, fontWeight: "700", color: "#94a3b8" }}>{day}</Text>)}</View><View style={{ flexDirection: "row", flexWrap: "wrap" }}>{monthDays.map((day, index) => { const marked = day ? eventsForDay(day).length > 0 : false; const selected = day ? dateKey(day) === dateKey(selectedDate) : false; return <Pressable key={day ? dateKey(day) : `empty-${index}`} disabled={!day} onPress={() => day && setSelectedDate(day)} style={{ width: `${100 / 7}%`, aspectRatio: 1, alignItems: "center", justifyContent: "center" }}>{day && <View style={{ width: 34, height: 34, borderRadius: 17, alignItems: "center", justifyContent: "center", backgroundColor: selected ? "#f97316" : marked ? "#ffedd5" : "transparent" }}><Text style={{ color: selected ? "#fff" : marked ? "#f97316" : "#334155", fontWeight: selected ? "800" : "500" }}>{day.getDate()}</Text>{marked && !selected && <View style={{ position: "absolute", bottom: 3, width: 4, height: 4, borderRadius: 2, backgroundColor: "#f97316" }} />}</View>}</Pressable>; })}</View></>}
-        {viewMode === "Week" && <View style={{ gap: 8 }}>{weekDays.map((day) => <Pressable key={dateKey(day)} onPress={() => setSelectedDate(day)} style={{ flexDirection: "row", alignItems: "center", borderRadius: 12, backgroundColor: dateKey(day) === dateKey(selectedDate) ? "#ffedd5" : "#f8fafc", padding: 10 }}><Text style={{ width: 76, fontWeight: "700", color: "#475569" }}>{day.toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric" })}</Text><Text style={{ flex: 1, color: "#64748b" }}>{eventsForDay(day).map(eventName).join(", ") || "No events"}</Text><Text style={{ color: "#f97316", fontWeight: "700" }}>{eventsForDay(day).length || ""}</Text></Pressable>)}</View>}
-        {viewMode === "Day" && <View style={{ gap: 10 }}>{dayEvents.length ? dayEvents.map((event) => <EventCard key={event.id || event._id || eventName(event)} event={event} />) : <Text style={{ paddingVertical: 30, textAlign: "center", color: "#64748b" }}>No events for this day.</Text>}</View>}
+        {viewMode === "Month" && (
+          <>
+            <View style={{ flexDirection: "row", marginBottom: 6 }}>
+              {["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"].map((day) => (
+                <Text key={day} style={{ flex: 1, textAlign: "center", fontSize: 11, fontWeight: "700", color: "#94a3b8" }}>
+                  {day}
+                </Text>
+              ))}
+            </View>
+            <View style={{ flexDirection: "row", flexWrap: "wrap" }}>
+              {monthDays.map((day, index) => {
+                const marked = day ? eventsForDay(day).length > 0 : false;
+                const selected = day ? dateKey(day) === dateKey(selectedDate) : false;
+                return (
+                  <Pressable
+                    key={day ? dateKey(day) : `empty-${index}`}
+                    disabled={!day}
+                    onPress={() => day && setSelectedDate(day)}
+                    style={{ width: `${100 / 7}%`, aspectRatio: 1, alignItems: "center", justifyContent: "center" }}
+                  >
+                    {day && (
+                      <View
+                        style={{
+                          width: 34,
+                          height: 34,
+                          borderRadius: 17,
+                          alignItems: "center",
+                          justifyContent: "center",
+                          backgroundColor: selected ? "#f97316" : marked ? "#ffedd5" : "transparent",
+                        }}
+                      >
+                        <Text style={{ color: selected ? "#fff" : marked ? "#f97316" : "#334155", fontWeight: selected ? "800" : "500" }}>
+                          {day.getDate()}
+                        </Text>
+                        {marked && !selected && (
+                          <View style={{ position: "absolute", bottom: 3, width: 4, height: 4, borderRadius: 2, backgroundColor: "#f97316" }} />
+                        )}
+                      </View>
+                    )}
+                  </Pressable>
+                );
+              })}
+            </View>
+          </>
+        )}
+        {viewMode === "Week" && (
+          <View style={{ gap: 8 }}>
+            {weekDays.map((day) => (
+              <Pressable
+                key={dateKey(day)}
+                onPress={() => setSelectedDate(day)}
+                style={{ flexDirection: "row", alignItems: "center", borderRadius: 12, backgroundColor: dateKey(day) === dateKey(selectedDate) ? "#ffedd5" : "#f8fafc", padding: 10 }}
+              >
+                <Text style={{ width: 76, fontWeight: "700", color: "#475569" }}>
+                  {day.toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric" })}
+                </Text>
+                <Text style={{ flex: 1, color: "#64748b" }}>
+                  {eventsForDay(day).map(eventName).join(", ") || "No events"}
+                </Text>
+                <Text style={{ color: "#f97316", fontWeight: "700" }}>
+                  {eventsForDay(day).length || ""}
+                </Text>
+              </Pressable>
+            ))}
+          </View>
+        )}
+        {viewMode === "Day" && (
+          <View style={{ gap: 10 }}>
+            {dayEvents.length ? (
+              dayEvents.map((event) => (
+                <EventCard key={event.id || event._id || eventName(event)} event={event} onPress={() => openEvent(event)} />
+              ))
+            ) : (
+              <Text style={{ paddingVertical: 30, textAlign: "center", color: "#64748b" }}>No events for this day.</Text>
+            )}
+          </View>
+        )}
       </View>}
 
       <Text style={{ marginTop: 24, marginBottom: 12, fontSize: 11, fontWeight: "700", letterSpacing: 1.2, textTransform: "uppercase", color: "#94a3b8" }}>{viewMode === "Agenda" ? "Upcoming events" : "Selected day schedule"}</Text>
-      {loading ? <View style={{ alignItems: "center", paddingVertical: 40 }}><ActivityIndicator size="large" color="#f97316" /></View> : error ? <View style={{ alignItems: "center", paddingVertical: 40 }}><Text style={{ color: "#64748b", textAlign: "center" }}>{error}</Text><Pressable onPress={() => fetchEvents()} style={{ marginTop: 14, borderRadius: 10, backgroundColor: "#f97316", paddingHorizontal: 16, paddingVertical: 10 }}><Text style={{ color: "#fff", fontWeight: "700" }}>Try again</Text></Pressable></View> : viewMode === "Agenda" ? (monthEvents.length ? <View style={{ gap: 10 }}>{monthEvents.map((event, index) => <EventCard key={event.id || event._id || `${eventName(event)}-${index}`} event={event} />)}</View> : <Text style={{ paddingVertical: 30, textAlign: "center", color: "#64748b" }}>No events in this month.</Text>) : (dayEvents.length ? <View style={{ gap: 10 }}>{dayEvents.map((event) => <EventCard key={event.id || event._id || eventName(event)} event={event} />)}</View> : <Text style={{ paddingVertical: 30, textAlign: "center", color: "#64748b" }}>No events for this day.</Text>)}
+      {loading ? <View style={{ alignItems: "center", paddingVertical: 40 }}><ActivityIndicator size="large" color="#f97316" /></View> : error ? <View style={{ alignItems: "center", paddingVertical: 40 }}><Text style={{ color: "#64748b", textAlign: "center" }}>{error}</Text><Pressable onPress={() => fetchEvents()} style={{ marginTop: 14, borderRadius: 10, backgroundColor: "#f97316", paddingHorizontal: 16, paddingVertical: 10 }}><Text style={{ color: "#fff", fontWeight: "700" }}>Try again</Text></Pressable></View> : viewMode === "Agenda" ? (monthEvents.length ? <View style={{ gap: 10 }}>{monthEvents.map((event, index) => <EventCard key={event.id || event._id || `${eventName(event)}-${index}`} event={event} onPress={() => openEvent(event)} />)}</View> : <Text style={{ paddingVertical: 30, textAlign: "center", color: "#64748b" }}>No events in this month.</Text>) : (dayEvents.length ? <View style={{ gap: 10 }}>{dayEvents.map((event) => <EventCard key={event.id || event._id || eventName(event)} event={event} onPress={() => openEvent(event)} />)}</View> : <Text style={{ paddingVertical: 30, textAlign: "center", color: "#64748b" }}>No events for this day.</Text>)}
     </ScrollView>
     <FAB onPress={() => setShowCreateModal(true)} style={{ bottom: 24 }} />
     <CreateEventModal visible={showCreateModal} initialDate={selectedDate} userId={currentUserId} onClose={() => setShowCreateModal(false)} onSaved={() => fetchEvents(true)} />
     <EventDetails event={selectedEvent} onClose={() => setSelectedEvent(null)} />
   </SafeAreaView>;
 }
+
+
