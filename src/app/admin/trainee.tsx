@@ -4,7 +4,7 @@ import * as DocumentPicker from "expo-document-picker";
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 import React, { useCallback, useEffect, useState } from "react";
-import { ActivityIndicator, Alert, Modal, Platform, Pressable, RefreshControl, ScrollView, Text, TextInput, TouchableOpacity, View } from "react-native";
+import { ActivityIndicator, Alert, Modal, Platform, Pressable, RefreshControl, ScrollView, Text, TextInput, View, TouchableOpacity } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import api from "../../api";
 import { FAB } from "../../components/FAB";
@@ -642,12 +642,17 @@ export default function AdminTraineeScreen() {
     <>
       <View className="mb-6 flex-row flex-wrap justify-between">
         {[{ label: 'Total', value: stats.total, icon: 'people' }, { label: 'Active', value: stats.active, icon: 'checkmark' }, { label: 'Trainees', value: stats.trainees, icon: 'school' }, { label: 'Interns', value: stats.interns, icon: 'book' }].map((stat, idx) => (
-          <TouchableOpacity
-            key={String(idx)}
-            activeOpacity={0.9}
-            className="mb-3 w-[48%] overflow-hidden rounded-2xl border border-orange-100"
-            style={{ shadowColor: '#f97316', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.12, shadowRadius: 10, elevation: 4 }}
-          >
+          <View
+  key={String(idx)}
+  className="mb-3 w-[48%] overflow-hidden rounded-2xl border border-orange-100"
+  style={{
+    shadowColor: '#f97316',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.12,
+    shadowRadius: 10,
+    elevation: 4,
+  }}
+>
             <LinearGradient colors={["#ffffff", "#fff7ed"]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} className="px-4 py-4">
               <View className="flex-row items-center mb-3">
                 <View className="h-10 w-10 items-center justify-center rounded-xl bg-black">
@@ -662,7 +667,7 @@ export default function AdminTraineeScreen() {
                 <Text className="text-[10px] font-bold mt-0.5 text-gray-400">All Time</Text>
               </View>
             </LinearGradient>
-          </TouchableOpacity>
+          </View>
         ))}
       </View>
 
