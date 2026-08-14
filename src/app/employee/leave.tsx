@@ -525,21 +525,23 @@ export default function EmployeeLeaveScreen() {
         onRequestClose={() => setShowApply(false)}
       >
         <View className="flex-1 justify-end bg-black/40">
-          <View className="max-h-[92%] w-full overflow-hidden rounded-t-3xl bg-white pt-5">
-            <View className="mb-5 flex-row items-center justify-between bg-white px-5 py-0">
+          <View className="max-h-[92%] w-full overflow-hidden rounded-t-3xl bg-white">
+            <View className="mb-5 flex-row items-center justify-between bg-black px-5 py-4">
               <View className="flex-1">
-                <Text className="text-base font-black text-slate-900">
+                <Text className="text-base font-black text-[#f97316]">
                   Apply for leave
                 </Text>
-                <Text className="mt-0.5 text-sm text-slate-500">
+
+                <Text className="mt-0.5 text-sm text-orange-300">
                   Submit a request for approval.
                 </Text>
               </View>
+
               <Pressable
                 onPress={() => setShowApply(false)}
-                className="h-10 w-10 items-center justify-center rounded-full bg-slate-100"
+                className="h-10 w-10 items-center justify-center rounded-full bg-[#f97316]"
               >
-                <Ionicons name="close" size={22} color="#64748b" />
+                <Ionicons name="close" size={22} color="#000" />
               </Pressable>
             </View>
 
