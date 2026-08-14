@@ -1,18 +1,18 @@
 import { Ionicons } from "@expo/vector-icons";
-import { LinearGradient } from "expo-linear-gradient";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import * as DocumentPicker from "expo-document-picker";
+import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 import { useCallback, useEffect, useState } from "react";
 import {
-  ActivityIndicator,
-  Alert,
-  Modal,
-  Pressable,
-  ScrollView,
-  Text,
-  TextInput,
-  View,
+    ActivityIndicator,
+    Alert,
+    Modal,
+    Pressable,
+    ScrollView,
+    Text,
+    TextInput,
+    View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import api from "../../api";
@@ -147,14 +147,13 @@ function TaskMasterModal({
         >
           <View
             style={{
-              backgroundColor: "#111827",
+              backgroundColor: "#000",
               flexDirection: "row",
               alignItems: "center",
               justifyContent: "space-between",
               marginBottom: 18,
               paddingHorizontal: 20,
               paddingVertical: 18,
-              backgroundColor: "#000",
             }}
           >
             <Text style={{ fontSize: 24, fontWeight: "800", color: "#f97316" }}>
@@ -466,13 +465,12 @@ function TaskAssignmentModal({
         >
           <View
             style={{
-              backgroundColor: "#111827",
+              backgroundColor: "#000",
               flexDirection: "row",
               alignItems: "center",
               marginBottom: 12,
               paddingHorizontal: 20,
               paddingVertical: 18,
-              backgroundColor: "#000",
             }}
           >
             <View>
