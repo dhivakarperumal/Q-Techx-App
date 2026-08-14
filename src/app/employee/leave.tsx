@@ -389,7 +389,7 @@ export default function EmployeeLeaveScreen() {
         </ScrollView>
         <View className="mt-4 gap-3 px-4">
           {loading ? (
-            <ActivityIndicator size="small" color="#2563eb" />
+            <ActivityIndicator size="small" color="#f97316" />
           ) : filteredLeaves.length === 0 ? (
             <View className="items-center rounded-2xl border border-dashed border-slate-300 bg-white p-8">
               <Ionicons name="calendar-outline" size={28} color="#94a3b8" />

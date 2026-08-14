@@ -508,7 +508,7 @@ export default function EmployeeProjectsScreen() {
 
         {loading ? (
           <View className="items-center py-24">
-            <ActivityIndicator size="large" color="#2563eb" />
+            <ActivityIndicator size="large" color="#f97316" />
             <Text className="mt-3 text-sm text-slate-500">
               Loading your projects...
             </Text>
