@@ -1,31 +1,64 @@
 import { Ionicons } from "@expo/vector-icons";
-import { useRouter } from "expo-router";
-import { AlignLeft } from "lucide-react-native";
-import { useRef, useState } from "react";
+import { useRouter, useSegments } from "expo-router";
 import {
-    Alert,
-    Animated,
-    Dimensions,
-    Modal,
-    Pressable,
-    Text,
-    TouchableOpacity,
-    View,
+  AlignLeft,
+  CalendarDays,
+  CheckCircle2,
+  X,
+  RefreshCw,
+  CheckCircle,
+} from "lucide-react-native";
+import { useRef, useState, useEffect, useCallback } from "react";
+import {
+  Alert,
+  Animated,
+  Dimensions,
+  Modal,
+  Pressable,
+  ScrollView,
+  Text,
+  TouchableOpacity,
+  View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useAuth } from "../auth/AuthContext";
+import api from "../api";
 
 const { width } = Dimensions.get("window");
+
+const MONTH_SHORT = [
+  "Jan", "Feb", "Mar", "Apr", "May", "Jun",
+  "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
+];
 
 type TopHeaderProps = {
   title?: string;
   subtitle?: string;
 };
 
+type LeaveNotification = {
+  id?: number | string;
+  employee: string;
+  type: string;
+  date: string;
+  status: string;
+  reason?: string;
+};
+
+type TaskNotification = {
+  id?: number | string;
+  title: string;
+  project: string;
+  assigned: string;
+  assignedId: string;
+  status: string;
+};
+
 export function TopHeader({ title, subtitle }: TopHeaderProps) {
   const router = useRouter();
+  const segments = useSegments();
   const { user, logout } = useAuth();
-  
+
   // Profile Dropdown state
   const [dropdownVisible, setDropdownVisible] = useState(false);
   const fadeAnim = useRef(new Animated.Value(0)).current;
@@ -35,6 +68,20 @@ export function TopHeader({ title, subtitle }: TopHeaderProps) {
   const [sidebarVisible, setSidebarVisible] = useState(false);
   const sidebarSlideAnim = useRef(new Animated.Value(-width)).current;
   const sidebarFadeAnim = useRef(new Animated.Value(0)).current;
+
+  const [leaveNotifications, setLeaveNotifications] = useState<
+    LeaveNotification[]
+  >([]);
+
+  const [taskNotifications, setTaskNotifications] = useState<
+    TaskNotification[]
+  >([]);
+
+  const [notificationType, setNotificationType] = useState<
+    "leave" | "task" | null
+  >(null);
+
+  const [notificationsLoading, setNotificationsLoading] = useState(false);
 
   // Derive display name
   const rawName =
@@ -63,6 +110,159 @@ export function TopHeader({ title, subtitle }: TopHeaderProps) {
   const avatarLetter = displayName.charAt(0).toUpperCase();
   const userRole =
     (user?.role as string)?.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase()) || "Admin";
+
+  const rawRole = String(user?.role || user?.user_role || user?.role_name || "").toLowerCase().trim();
+  const inAdminGroup = segments.length > 0 && segments[0] === "admin";
+
+  const isAdmin =
+    inAdminGroup ||
+    rawRole === "admin" ||
+    rawRole === "administrator" ||
+    rawRole.includes("admin") ||
+    Boolean(user?.is_admin || user?.isAdmin || (user?.role_id && Number(user.role_id) === 1));
+
+  const fetchNotifications = useCallback(async () => {
+    if (!isAdmin) return;
+    try {
+      setNotificationsLoading(true);
+
+      // -----------------------------------------
+      // 1. FETCH PENDING LEAVE REQUESTS
+      // -----------------------------------------
+      try {
+        const { data } = await api.get("/employee-leaves/all");
+        const rawLeaves = data?.data ?? data?.leaves ?? data;
+        const leaves = Array.isArray(rawLeaves) ? rawLeaves : [];
+
+        const pendingLeaves = leaves
+          .filter((leave: any) => {
+            const status = String(leave?.status || "").toLowerCase().trim();
+            return !status || status === "pending" || status === "applied" || status === "requested";
+          })
+          .map((leave: any) => {
+            const empName =
+              `${leave?.first_name || ""} ${leave?.last_name || ""}`.trim() ||
+              leave?.employee_name ||
+              leave?.full_name ||
+              leave?.name ||
+              leave?.employee_code ||
+              "Employee";
+
+            let formattedDate = "";
+            if (leave?.from_date) {
+              const d = new Date(leave.from_date);
+              if (!isNaN(d.getTime())) {
+                formattedDate = `${d.getDate().toString().padStart(2, "0")} ${MONTH_SHORT[d.getMonth()] || ""} ${d.getFullYear()}`;
+              } else {
+                formattedDate = String(leave.from_date);
+              }
+            }
+
+            return {
+              id: leave?.id || leave?.leave_id || leave?.uuid,
+              employee: empName,
+              type: leave?.leave_type || leave?.type || "Leave",
+              date: formattedDate,
+              status: leave?.status || "Pending",
+              reason: leave?.reason || leave?.description || "",
+            };
+          });
+
+        setLeaveNotifications(pendingLeaves);
+      } catch (error: any) {
+        console.error(
+          "[TopHeader] Leave notification API error:",
+          error?.status || error?.response?.status,
+          error?.message
+        );
+      }
+
+      // -----------------------------------------
+      // 2. FETCH ACTIVE / PENDING TASK NOTIFICATIONS
+      // -----------------------------------------
+      try {
+        const { data } = await api.get("/tasks", {
+          params: {
+            page: 1,
+            limit: 100,
+          },
+        });
+
+        const rawTasks = data?.data?.tasks ?? data?.data ?? data?.tasks ?? data;
+        const tasks = Array.isArray(rawTasks) ? rawTasks : [];
+
+        const activeTasks = tasks
+          .filter((task: any) => {
+            const status = String(task?.status || "").toLowerCase().trim();
+            return (
+              status !== "completed" &&
+              status !== "cancelled" &&
+              status !== "canceled" &&
+              status !== "done" &&
+              status !== "closed"
+            );
+          })
+          .map((task: any) => ({
+            id: task?.id || task?.task_id || task?.uuid,
+            title:
+              task?.task_name ||
+              task?.module_name ||
+              task?.title ||
+              task?.name ||
+              "Untitled Task",
+            project: task?.project_name || task?.project_title || task?.project || "",
+            assigned:
+              task?.assigned_to_name ||
+              task?.employee_name ||
+              task?.assigned_name ||
+              (typeof task?.assigned_to === "string" ? task.assigned_to : "") ||
+              "",
+            assignedId:
+              task?.assigned_to_code ||
+              task?.employee_code ||
+              "",
+            status: task?.status || "Pending",
+          }));
+
+        setTaskNotifications(activeTasks);
+      } catch (error: any) {
+        console.error(
+          "[TopHeader] Task notification API error:",
+          error?.status || error?.response?.status,
+          error?.message
+        );
+      }
+    } finally {
+      setNotificationsLoading(false);
+    }
+  }, [isAdmin]);
+
+  useEffect(() => {
+    if (!isAdmin) {
+      setLeaveNotifications([]);
+      setTaskNotifications([]);
+      return;
+    }
+
+    fetchNotifications();
+
+    // Auto-refresh notifications every 30 seconds
+    const interval = setInterval(fetchNotifications, 30000);
+    return () => clearInterval(interval);
+  }, [isAdmin, fetchNotifications]);
+
+  const leaveCount = leaveNotifications.length;
+  const taskCount = taskNotifications.length;
+
+  const totalNotificationCount = leaveCount + taskCount;
+
+  const openNotifications = (type: "leave" | "task") => {
+    setNotificationType(type);
+  };
+
+  const closeNotifications = () => {
+    setNotificationType(null);
+  };
 
   // -- Profile Dropdown Logic --
   const openDropdown = () => {
@@ -196,18 +396,60 @@ export function TopHeader({ title, subtitle }: TopHeaderProps) {
           {subtitle ? <Text className="mt-0.5 text-xs text-slate-500">{subtitle}</Text> : null}
         </View>
 
-        {/* Right — Notification + Avatar */}
-        <View className="flex-row items-center gap-5">
-          {/* Notification Bell */}
-          <TouchableOpacity activeOpacity={0.7} className="relative">
-            <Ionicons name="notifications-outline" size={26} color="#1e293b" />
-            {/* Badge */}
-            <View className="absolute -top-1 -right-1 h-4 w-4 items-center justify-center rounded-full bg-orange-500 border border-white">
-              <Text className="text-[9px] font-bold text-white">3</Text>
-            </View>
-          </TouchableOpacity>
+        {/* Right — Admin Notifications + Avatar */}
+        <View className="flex-row items-center gap-2.5">
 
-          {/* Avatar button — tapping opens profile dropdown */}
+          {isAdmin && (
+            <>
+              {/* LEAVE NOTIFICATIONS */}
+              <TouchableOpacity
+                activeOpacity={0.7}
+                onPress={() => openNotifications("leave")}
+                accessibilityLabel="Leave requests"
+                accessibilityRole="button"
+                className="relative h-10 w-10 items-center justify-center rounded-xl bg-orange-50 border border-orange-100"
+              >
+                <CalendarDays
+                  size={20}
+                  color="#f97316"
+                  strokeWidth={2.2}
+                />
+
+                {leaveCount > 0 && (
+                  <View className="absolute -right-1.5 -top-1.5 min-w-[18px] h-[18px] px-1 items-center justify-center rounded-full bg-orange-500 border-2 border-white">
+                    <Text className="text-[9px] font-black text-white">
+                      {leaveCount > 99 ? "99+" : leaveCount}
+                    </Text>
+                  </View>
+                )}
+              </TouchableOpacity>
+
+              {/* TASK NOTIFICATIONS */}
+              <TouchableOpacity
+                activeOpacity={0.7}
+                onPress={() => openNotifications("task")}
+                accessibilityLabel="Task notifications"
+                accessibilityRole="button"
+                className="relative h-10 w-10 items-center justify-center rounded-xl bg-orange-50 border border-orange-100"
+              >
+                <CheckCircle2
+                  size={20}
+                  color="#f97316"
+                  strokeWidth={2.2}
+                />
+
+                {taskCount > 0 && (
+                  <View className="absolute -right-1.5 -top-1.5 min-w-[18px] h-[18px] px-1 items-center justify-center rounded-full bg-orange-500 border-2 border-white">
+                    <Text className="text-[9px] font-black text-white">
+                      {taskCount > 99 ? "99+" : taskCount}
+                    </Text>
+                  </View>
+                )}
+              </TouchableOpacity>
+            </>
+          )}
+
+          {/* Avatar */}
           <TouchableOpacity
             activeOpacity={0.8}
             onPress={openDropdown}
@@ -215,8 +457,11 @@ export function TopHeader({ title, subtitle }: TopHeaderProps) {
             accessibilityRole="button"
             className="h-10 w-10 items-center justify-center rounded-full bg-slate-800 shadow-sm overflow-hidden"
           >
-            <Text className="text-base font-bold text-white">{avatarLetter}</Text>
+            <Text className="text-base font-bold text-white">
+              {avatarLetter}
+            </Text>
           </TouchableOpacity>
+
         </View>
       </View>
 
@@ -234,7 +479,7 @@ export function TopHeader({ title, subtitle }: TopHeaderProps) {
             backgroundColor: "#ffffff",
             transform: [{ translateX: sidebarSlideAnim }],
             zIndex: 2,
-            opacity: sidebarFadeAnim, // Subtle fade along with the slide
+            opacity: sidebarFadeAnim,
           }}
         >
           <SafeAreaView edges={["top", "bottom"]} className="flex-1 bg-white">
@@ -280,6 +525,281 @@ export function TopHeader({ title, subtitle }: TopHeaderProps) {
             </View>
           </SafeAreaView>
         </Animated.View>
+      </Modal>
+
+      {/* ─── ADMIN NOTIFICATIONS MODAL ─── */}
+      <Modal
+        transparent
+        visible={notificationType !== null}
+        animationType="fade"
+        onRequestClose={closeNotifications}
+      >
+        <Pressable
+          className="flex-1 bg-black/30"
+          onPress={closeNotifications}
+        >
+          <Pressable
+            className="absolute right-4 top-20 w-[335px] max-h-[520px] rounded-3xl bg-white shadow-xl overflow-hidden"
+            onPress={(e) => e.stopPropagation()}
+          >
+
+            {/* Header */}
+            <View className="flex-row items-center justify-between border-b border-slate-100 px-5 py-4 bg-white">
+
+              <View className="flex-row items-center flex-1">
+                <View className="h-10 w-10 items-center justify-center rounded-xl bg-orange-50 border border-orange-100">
+                  <Ionicons
+                    name={
+                      notificationType === "leave"
+                        ? "calendar-outline"
+                        : "checkmark-circle-outline"
+                    }
+                    size={21}
+                    color="#f97316"
+                  />
+                </View>
+
+                <View className="ml-3 flex-1">
+                  <Text className="text-base font-black text-slate-900" numberOfLines={1}>
+                    {notificationType === "leave"
+                      ? "Leave Requests"
+                      : "Task Notifications"}
+                  </Text>
+
+                  <Text className="mt-0.5 text-[11px] text-slate-500">
+                    {notificationType === "leave"
+                      ? `${leaveCount} pending request${leaveCount !== 1 ? "s" : ""}`
+                      : `${taskCount} active task${taskCount !== 1 ? "s" : ""}`}
+                  </Text>
+                </View>
+              </View>
+
+              <View className="flex-row items-center gap-1.5">
+                <TouchableOpacity
+                  onPress={fetchNotifications}
+                  className="h-8 w-8 items-center justify-center rounded-full bg-slate-100"
+                  accessibilityLabel="Refresh notifications"
+                >
+                  <Ionicons
+                    name="refresh"
+                    size={16}
+                    color="#64748b"
+                  />
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  onPress={closeNotifications}
+                  className="h-8 w-8 items-center justify-center rounded-full bg-slate-100"
+                  accessibilityLabel="Close"
+                >
+                  <Ionicons
+                    name="close"
+                    size={18}
+                    color="#64748b"
+                  />
+                </TouchableOpacity>
+              </View>
+
+            </View>
+
+            {/* Loading */}
+            {notificationsLoading ? (
+              <View className="items-center justify-center py-12">
+                <Ionicons
+                  name="refresh-outline"
+                  size={28}
+                  color="#f97316"
+                />
+
+                <Text className="mt-3 text-xs text-slate-500">
+                  Loading notifications...
+                </Text>
+              </View>
+            ) : notificationType === "leave" ? (
+
+              /* LEAVE LIST */
+              <View>
+                <ScrollView style={{ maxHeight: 320 }} showsVerticalScrollIndicator={false}>
+                  {leaveNotifications.length > 0 ? (
+                    leaveNotifications.map((leave, index) => (
+                      <TouchableOpacity
+                        key={`${leave.id || index}`}
+                        activeOpacity={0.7}
+                        onPress={() => {
+                          closeNotifications();
+                          router.push("/admin/leaves" as any);
+                        }}
+                        className="border-b border-slate-100 px-5 py-3.5 flex-row items-start justify-between"
+                      >
+                        <View className="flex-row items-start flex-1 mr-2">
+                          <View className="h-9 w-9 items-center justify-center rounded-xl bg-orange-50 border border-orange-100 mt-0.5">
+                            <Ionicons
+                              name="calendar-outline"
+                              size={18}
+                              color="#f97316"
+                            />
+                          </View>
+
+                          <View className="ml-3 flex-1">
+                            <Text
+                              className="text-sm font-bold text-slate-900"
+                              numberOfLines={1}
+                            >
+                              {leave.employee}
+                            </Text>
+
+                            <Text className="mt-0.5 text-xs text-slate-500">
+                              {leave.type}
+                              {leave.date ? ` · ${leave.date}` : ""}
+                            </Text>
+
+                            {leave.reason ? (
+                              <Text className="mt-1 text-[11px] text-slate-400" numberOfLines={1}>
+                                {leave.reason}
+                              </Text>
+                            ) : null}
+                          </View>
+                        </View>
+
+                        <View className="self-center rounded-full bg-orange-50 px-2 py-1 border border-orange-200">
+                          <Text className="text-[9px] font-bold text-orange-600">
+                            {leave.status}
+                          </Text>
+                        </View>
+                      </TouchableOpacity>
+                    ))
+                  ) : (
+                    <View className="items-center justify-center py-10 px-6">
+                      <Ionicons
+                        name="checkmark-done-circle-outline"
+                        size={40}
+                        color="#cbd5e1"
+                      />
+
+                      <Text className="mt-3 text-sm font-bold text-slate-700">
+                        No pending leaves
+                      </Text>
+
+                      <Text className="mt-1 text-center text-xs text-slate-400">
+                        All leave requests are up to date.
+                      </Text>
+                    </View>
+                  )}
+                </ScrollView>
+
+                {/* Footer Action */}
+                <TouchableOpacity
+                  activeOpacity={0.85}
+                  onPress={() => {
+                    closeNotifications();
+                    router.push("/admin/leaves" as any);
+                  }}
+                  className="mx-4 my-3 items-center justify-center rounded-xl bg-orange-500 py-2.5"
+                >
+                  <Text className="text-xs font-black text-white">
+                    Manage All Leaves →
+                  </Text>
+                </TouchableOpacity>
+              </View>
+
+            ) : (
+
+              /* TASK LIST */
+              <View>
+                <ScrollView style={{ maxHeight: 320 }} showsVerticalScrollIndicator={false}>
+                  {taskNotifications.length > 0 ? (
+                    taskNotifications.map((task, index) => (
+                      <TouchableOpacity
+                        key={`${task.id || index}`}
+                        activeOpacity={0.7}
+                        onPress={() => {
+                          closeNotifications();
+                          router.push("/admin/tasks" as any);
+                        }}
+                        className="border-b border-slate-100 px-5 py-3.5 flex-row items-start justify-between"
+                      >
+                        <View className="flex-row items-start flex-1 mr-2">
+                          <View className="h-9 w-9 items-center justify-center rounded-xl bg-orange-50 border border-orange-100 mt-0.5">
+                            <Ionicons
+                              name="checkmark-circle-outline"
+                              size={18}
+                              color="#f97316"
+                            />
+                          </View>
+
+                          <View className="ml-3 flex-1">
+                            <Text
+                              className="text-sm font-bold text-slate-900"
+                              numberOfLines={1}
+                            >
+                              {task.title}
+                            </Text>
+
+                            {task.project ? (
+                              <Text
+                                className="mt-0.5 text-xs text-slate-500"
+                                numberOfLines={1}
+                              >
+                                {task.project}
+                              </Text>
+                            ) : null}
+
+                            {task.assigned ? (
+                              <Text
+                                className="mt-1 text-[11px] text-slate-400"
+                                numberOfLines={1}
+                              >
+                                Assigned to {task.assigned}
+                                {task.assignedId ? ` (${task.assignedId})` : ""}
+                              </Text>
+                            ) : null}
+                          </View>
+                        </View>
+
+                        <View className="self-center rounded-full bg-orange-50 px-2 py-1 border border-orange-200">
+                          <Text className="text-[9px] font-bold text-orange-600">
+                            {task.status}
+                          </Text>
+                        </View>
+                      </TouchableOpacity>
+                    ))
+                  ) : (
+                    <View className="items-center justify-center py-10 px-6">
+                      <Ionicons
+                        name="checkmark-done-circle-outline"
+                        size={40}
+                        color="#cbd5e1"
+                      />
+
+                      <Text className="mt-3 text-sm font-bold text-slate-700">
+                        No active tasks
+                      </Text>
+
+                      <Text className="mt-1 text-center text-xs text-slate-400">
+                        There are no pending task notifications.
+                      </Text>
+                    </View>
+                  )}
+                </ScrollView>
+
+                {/* Footer Action */}
+                <TouchableOpacity
+                  activeOpacity={0.85}
+                  onPress={() => {
+                    closeNotifications();
+                    router.push("/admin/tasks" as any);
+                  }}
+                  className="mx-4 my-3 items-center justify-center rounded-xl bg-orange-500 py-2.5"
+                >
+                  <Text className="text-xs font-black text-white">
+                    Manage All Tasks →
+                  </Text>
+                </TouchableOpacity>
+              </View>
+            )}
+
+          </Pressable>
+        </Pressable>
       </Modal>
 
       {/* ─── PROFILE DROPDOWN MODAL ─── */}
