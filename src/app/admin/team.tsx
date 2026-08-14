@@ -46,7 +46,7 @@ export default function TeamScreen() {
             ? emp.profile_photo.startsWith("http")
               ? emp.profile_photo
               : `${baseUrl}${emp.profile_photo}`
-            : "https://i.pravatar.cc/100";
+            : null;
 
           return {
             id:
@@ -385,10 +385,20 @@ export default function TeamScreen() {
                 <View className="flex-row flex-1">
                   {/* Avatar with Status Dot */}
                   <View className="mr-4 relative">
-                    <Image
-                      source={{ uri: member.avatar }}
-                      className="w-14 h-14 rounded-full bg-slate-200"
-                    />
+                    {member.avatar ? (
+                      <Image
+                        source={{ uri: member.avatar }}
+                        className="w-14 h-14 rounded-full"
+                      />
+                    ) : (
+                      <View className="w-14 h-14 rounded-full bg-orange-50 border border-orange-100 items-center justify-center">
+                        <Ionicons
+                          name="person"
+                          size={28}
+                          color="#f97316"
+                        />
+                      </View>
+                    )}
                   </View>
 
                   {/* Info Block */}
