@@ -37,8 +37,7 @@ function RootLayoutNav() {
         }
       }
     } catch (error) {
-      console.error("Navigation error:", error);
-      router.replace("/login");
+      console.error("Navigation error in root layout:", error);
     }
   }, [user, isLoading, segments, router]);
 

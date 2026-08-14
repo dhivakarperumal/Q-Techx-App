@@ -16,7 +16,20 @@ const statuses = ["All", "Active", "Completed", "On Leave", "Inactive"];
 const uploadFields = ["profile_photo", "resume", "college_id_doc", "offer_letter", "internship_letter"] as const;
 const emptyForm: Record<string, any> = { person_id: "", full_name: "", type: "Trainee", department: "", designation: "", reporting_manager: "", joining_date: "", end_date: "", status: "Active", mobile_number: "", email_address: "", current_address: "", emergency_contact_name: "", emergency_contact_number: "", college_university: "", course: "", academic_department: "", year_semester: "", college_id_number: "", guide_name: "", username: "", official_email: "", password: "" };
 const inputClass = "rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm text-slate-900";
-const nameOf = (member: Member) => member.full_name || "Unnamed member";
+
+const MONTH_NAMES = [
+  "January", "February", "March", "April", "May", "June",
+  "July", "August", "September", "October", "November", "December"
+];
+const MONTH_SHORT = [
+  "Jan", "Feb", "Mar", "Apr", "May", "Jun",
+  "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
+];
+
+const nameOf = (member?: Member | null) => {
+  if (!member) return "Unnamed member";
+  return member.full_name || member.trainee_name || member.name || "Unnamed member";
+};
 const dateValue = (value?: string | Date) => {
   if (!value) return null;
   if (value instanceof Date) return value;
@@ -32,10 +45,20 @@ const dateText = (value?: string | Date) => {
   const date = dateValue(value);
   return date ? date.toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" }) : "-";
 };
-const joiningDateOf = (member: Member) => member.joining_date || member.joiningDate || member.joined_date || member.date_joined || member.created_at || "";
-const initials = (name: string) => name.split(" ").slice(0, 2).map((part) => part[0]).join("").toUpperCase() || "?";
-const employeeName = (employee: Employee) => `${employee.first_name || ""} ${employee.last_name || ""}`.trim() || employee.employee_code || "Employee";
-const hasActiveAssignment = (member: Member) => {
+const joiningDateOf = (member?: Member | null) => {
+  if (!member) return "";
+  return member.joining_date || member.joiningDate || member.joined_date || member.date_joined || member.created_at || "";
+};
+const initials = (name?: string) => {
+  if (!name || typeof name !== "string") return "?";
+  return name.trim().split(/\s+/).filter(Boolean).slice(0, 2).map((part) => part[0] || "").join("").toUpperCase() || "?";
+};
+const employeeName = (employee?: Employee | null) => {
+  if (!employee) return "Employee";
+  return `${employee.first_name || ""} ${employee.last_name || ""}`.trim() || employee.employee_code || "Employee";
+};
+const hasActiveAssignment = (member?: Member | null) => {
+  if (!member) return false;
   const candidateValues = [
     member?.has_active_assignment,
     member?.assigned_employee_id,
@@ -586,14 +609,31 @@ export default function AdminTraineeScreen() {
   const [statusDropdownOpen, setStatusDropdownOpen] = useState(false);
   const loadMembers = useCallback(async (refresh = false) => { if (refresh) setRefreshing(true); else setLoading(true); try { const query = new URLSearchParams({ page: "1", limit: "100" }); if (search) query.set("search", search); if (type !== "All") query.set("type", type); if (status !== "All") query.set("status", status); const membersResponse = await api.get(`/trainee-intern?${query.toString()}`); setMembers(membersResponse.data?.data || []); try { const employeesResponse = await api.get("/trainee-assignments/available-employees"); setEmployees(employeesResponse.data?.data || []); } catch { const employeesResponse = await api.get("/employees?limit=200"); setEmployees(employeesResponse.data?.data || employeesResponse.data?.employees || []); } } catch (error: any) { Alert.alert("Unable to load members", error?.message || "Please try again."); } finally { setLoading(false); setRefreshing(false); } }, [search, type, status]);
   useEffect(() => { loadMembers(); }, [loadMembers]);
-  const loadAttendance = useCallback(async () => { setAttendanceLoading(true); try { const response = await api.get(`/trainee-intern-attendance/summary?month=${selectedMonth}&year=${selectedYear}`); setAttendance(response.data?.data || []); } catch (error: any) { Alert.alert("Unable to load attendance", error?.message || "Please try again."); } finally { setAttendanceLoading(false); } }, [selectedMonth, selectedYear]);
+  const loadAttendance = useCallback(async () => {
+    setAttendanceLoading(true);
+    try {
+      const response = await api.get(`/trainee-intern-attendance/summary?month=${selectedMonth}&year=${selectedYear}`);
+      const raw = response.data?.data ?? response.data?.summary ?? response.data?.attendance ?? response.data;
+      setAttendance(Array.isArray(raw) ? raw : []);
+    } catch (error: any) {
+      if (error?.status === 404 || error?.response?.status === 404) {
+        setAttendance([]);
+      } else {
+        Alert.alert("Unable to load attendance", error?.message || "Please try again.");
+      }
+    } finally {
+      setAttendanceLoading(false);
+    }
+  }, [selectedMonth, selectedYear]);
+
   const loadAttendanceDetails = useCallback(async (memberId: string) => {
     setAttendanceLoading(true);
     try {
       const response = await api.get(`/trainee-intern-attendance?trainee_intern_id=${memberId}&month=${selectedMonth}&year=${selectedYear}`);
-      setAttendanceDetails(response.data?.data || []);
+      const raw = response.data?.data ?? response.data?.records ?? response.data;
+      setAttendanceDetails(Array.isArray(raw) ? raw : []);
     } catch (error: any) {
-      if (error?.response?.status === 404) {
+      if (error?.status === 404 || error?.response?.status === 404) {
         setAttendanceDetails([]);
       } else {
         Alert.alert("Unable to load records", error?.message || "Please try again.");
@@ -602,12 +642,14 @@ export default function AdminTraineeScreen() {
       setAttendanceLoading(false);
     }
   }, [selectedMonth, selectedYear]);
+
   useEffect(() => { if (tab === "Attendance") loadAttendance(); }, [tab, loadAttendance]);
   const loadTasks = useCallback(async () => { setTaskLoading(true); try { const [tasksResponse, assignmentsResponse] = await Promise.all([api.get("/trainee-tasks"), api.get("/trainee-task-assignments")]); const taskData = tasksResponse.data?.data ?? tasksResponse.data; setTasks(Array.isArray(taskData) ? taskData : taskData?.tasks || []); const assignmentData = assignmentsResponse.data?.data ?? assignmentsResponse.data; setTaskAssignments(Array.isArray(assignmentData) ? assignmentData : assignmentData?.assignments || []); } catch (error: any) { Alert.alert("Unable to load tasks", error?.message || "Please try again."); } finally { setTaskLoading(false); } }, []);
   useEffect(() => { if (tab === "Tasks" || tab === "Assign Task") loadTasks(); }, [tab, loadTasks]);
   const remove = (member: Member) => Alert.alert("Delete member", `Delete ${nameOf(member)}?`, [{ text: "Cancel", style: "cancel" }, { text: "Delete", style: "destructive", onPress: async () => { try { await api.delete(`/trainee-intern/${member.uuid}`); setSelected(null); loadMembers(true); } catch (error: any) { Alert.alert("Delete failed", error?.message || "Please try again."); } } }]);
-  const stats = { total: members.length, active: members.filter((item) => item.status === "Active").length, trainees: members.filter((item) => item.type === "Trainee").length, interns: members.filter((item) => item.type === "Intern").length };
-  const filteredMembers = members.filter((member) => {
+  const stats = { total: (members || []).length, active: (members || []).filter((item) => item?.status === "Active").length, trainees: (members || []).filter((item) => item?.type === "Trainee").length, interns: (members || []).filter((item) => item?.type === "Intern").length };
+  const filteredMembers = (members || []).filter((member) => {
+    if (!member) return false;
     const query = search.trim().toLowerCase();
     const matchesSearch = !query || [
       member.full_name,
@@ -622,12 +664,14 @@ export default function AdminTraineeScreen() {
     const matchesStatus = status === "All" || member.status === status;
     return matchesSearch && matchesType && matchesStatus;
   });
-  const filteredTasks = tasks.filter((task) => {
+  const filteredTasks = (tasks || []).filter((task) => {
+    if (!task) return false;
     const query = search.trim().toLowerCase();
     if (!query) return true;
     return [task.task_name, task.description].some((value) => String(value || "").toLowerCase().includes(query));
   });
-  const filteredTaskAssignments = taskAssignments.filter((assignment) => {
+  const filteredTaskAssignments = (taskAssignments || []).filter((assignment) => {
+    if (!assignment) return false;
     const query = search.trim().toLowerCase();
     if (!query) return true;
     return [
@@ -741,21 +785,40 @@ export default function AdminTraineeScreen() {
     </>
   );
   const renderAttendance = () => {
-    const filteredAttendance = attendance.filter(row => {
+    const attendanceList = Array.isArray(attendance) ? attendance : [];
+    const membersList = Array.isArray(members) ? members : [];
+
+    const displayList = attendanceList.length
+      ? attendanceList
+      : membersList.map((member) => ({
+          trainee_intern_id: member?.uuid || member?.id || member?.person_id,
+          trainee_name: nameOf(member),
+          person_id: member?.person_id || member?.personId,
+          type: member?.type || "Trainee",
+          status: member?.status || "Active",
+          present_days: 0,
+          absent_days: 0,
+        }));
+
+    const filteredAttendance = displayList.filter(row => {
+      if (!row) return false;
       const query = search.trim().toLowerCase();
       const matchesSearch = !query || [row.trainee_name, row.person_id, row.type].some((v) => String(v || "").toLowerCase().includes(query));
-      const matchesType = attendanceType === "All" || row.type === attendanceType;
-      const matchesStatus = attendanceStatus === "All" || row.status === attendanceStatus;
+      const matchesType = attendanceType === "All" || (row.type || "").toLowerCase() === attendanceType.toLowerCase();
+      const matchesStatus = attendanceStatus === "All" || (row.status || "").toLowerCase() === attendanceStatus.toLowerCase();
       return matchesSearch && matchesType && matchesStatus;
     });
+
+    const totalPresentDays = attendanceList.reduce((sum, r) => sum + (Number(r?.present_days) || 0), 0);
+    const totalAbsentDays = attendanceList.reduce((sum, r) => sum + (Number(r?.absent_days) || 0), 0);
 
     return (
       <>
         <View className="mb-6 flex-row flex-wrap justify-between">
           {[
-            { label: 'Total', value: members.length, icon: 'people' },
-            { label: 'Present Days', value: attendance.reduce((sum, r) => sum + (r.present_days || 0), 0), icon: 'checkmark' },
-            { label: 'Absent Days', value: attendance.reduce((sum, r) => sum + (r.absent_days || 0), 0), icon: 'close' }
+            { label: 'Total', value: membersList.length, icon: 'people' },
+            { label: 'Present Days', value: totalPresentDays, icon: 'checkmark' },
+            { label: 'Absent Days', value: totalAbsentDays, icon: 'close' }
           ].map((stat, idx) => (
             <TouchableOpacity
               key={String(idx)}
@@ -793,7 +856,7 @@ export default function AdminTraineeScreen() {
                     className={`px-3 py-1.5 rounded-full border ${selectedMonth === month ? 'border-orange-500 bg-orange-50' : 'border-slate-200 bg-white'}`}
                   >
                     <Text className={`text-xs font-bold ${selectedMonth === month ? 'text-orange-600' : 'text-slate-500'}`}>
-                      {new Date(2024, month - 1).toLocaleString("en", { month: "short" })}
+                      {MONTH_SHORT[month - 1] || `${month}`}
                     </Text>
                   </Pressable>
                 ))}
@@ -853,7 +916,7 @@ export default function AdminTraineeScreen() {
         <View className="mt-5 flex-row items-center justify-between">
           <View>
             <Text className="text-xl font-black text-slate-900">Attendance</Text>
-            <Text className="mt-1 text-sm text-slate-500">{new Date(selectedYear, selectedMonth - 1).toLocaleString("en", { month: "long", year: "numeric" })}</Text>
+            <Text className="mt-1 text-sm text-slate-500">{MONTH_NAMES[selectedMonth - 1] || ""} {selectedYear}</Text>
           </View>
         </View>
 
@@ -862,45 +925,53 @@ export default function AdminTraineeScreen() {
             <ActivityIndicator color="#f97316" />
           </View>
         ) : filteredAttendance.length ? (
-          filteredAttendance.map((row, index) => (
-            <View
-              key={row.trainee_intern_id || index}
-              className="p-4 mb-3 bg-white rounded-2xl shadow-sm"
-              style={{ shadowColor: "#cbd5e1", shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.1, shadowRadius: 4, elevation: 2 }}
-            >
-              <View className="flex-row items-center justify-between">
-                <View className="flex-row items-center flex-1">
-                  <View className="h-11 w-11 items-center justify-center rounded-2xl bg-orange-50">
-                    <Text className="font-black text-orange-600">{initials(row.trainee_name || "Trainee")}</Text>
+          filteredAttendance.map((row, index) => {
+            const rowId = row?.trainee_intern_id || row?.uuid || row?.id || index;
+            const traineeName = row?.trainee_name || nameOf(row) || "Trainee";
+            return (
+              <View
+                key={String(rowId)}
+                className="p-4 mb-3 bg-white rounded-2xl shadow-sm"
+                style={{ shadowColor: "#cbd5e1", shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.1, shadowRadius: 4, elevation: 2 }}
+              >
+                <View className="flex-row items-center justify-between">
+                  <View className="flex-row items-center flex-1">
+                    <View className="h-11 w-11 items-center justify-center rounded-2xl bg-orange-50">
+                      <Text className="font-black text-orange-600">{initials(traineeName)}</Text>
+                    </View>
+                    <View className="ml-3 flex-1">
+                      <Text className="font-bold text-slate-900">{traineeName}</Text>
+                      <Text className="mt-1 text-xs text-slate-500">{row?.person_id || "No person ID"} • {row?.type || "Trainee / Intern"}</Text>
+                    </View>
                   </View>
-                  <View className="ml-3 flex-1">
-                    <Text className="font-bold text-slate-900">{row.trainee_name || "Unnamed member"}</Text>
-                    <Text className="mt-1 text-xs text-slate-500">{row.person_id || "No person ID"} • {row.type || "Trainee / Intern"}</Text>
+                  <Pressable
+                    onPress={() => {
+                      setSelectedAttendanceMember(row);
+                      if (row?.trainee_intern_id) {
+                        loadAttendanceDetails(String(row.trainee_intern_id));
+                      } else {
+                        setAttendanceDetails([]);
+                      }
+                      setAttendanceDetailVisible(true);
+                    }}
+                    className="ml-2 h-8 w-8 items-center justify-center rounded-full border border-orange-200 bg-orange-50"
+                  >
+                    <Ionicons name="arrow-forward" size={16} color="#f97316" />
+                  </Pressable>
+                </View>
+                <View className="mt-3 flex-row gap-3">
+                  <View className="flex-1 rounded-xl bg-emerald-50 p-3">
+                    <Text className="text-xs text-emerald-700">Present</Text>
+                    <Text className="mt-1 text-lg font-black text-emerald-700">{Number(row?.present_days) || 0}</Text>
+                  </View>
+                  <View className="flex-1 rounded-xl bg-rose-50 p-3">
+                    <Text className="text-xs text-rose-700">Absent</Text>
+                    <Text className="mt-1 text-lg font-black text-rose-700">{Number(row?.absent_days) || 0}</Text>
                   </View>
                 </View>
-                <Pressable
-                  onPress={() => {
-                    setSelectedAttendanceMember(row);
-                    loadAttendanceDetails(String(row.trainee_intern_id));
-                    setAttendanceDetailVisible(true);
-                  }}
-                  className="ml-2 h-8 w-8 items-center justify-center rounded-full border border-orange-200 bg-orange-50"
-                >
-                  <Ionicons name="arrow-forward" size={16} color="#f97316" />
-                </Pressable>
               </View>
-              <View className="mt-3 flex-row gap-3">
-                <View className="flex-1 rounded-xl bg-emerald-50 p-3">
-                  <Text className="text-xs text-emerald-700">Present</Text>
-                  <Text className="mt-1 text-lg font-black text-emerald-700">{row.present_days || 0}</Text>
-                </View>
-                <View className="flex-1 rounded-xl bg-rose-50 p-3">
-                  <Text className="text-xs text-rose-700">Absent</Text>
-                  <Text className="mt-1 text-lg font-black text-rose-700">{row.absent_days || 0}</Text>
-                </View>
-              </View>
-            </View>
-          ))
+            );
+          })
         ) : (
           <View className="mt-5 items-center rounded-3xl border border-dashed border-slate-200 bg-white p-8">
             <Ionicons name="calendar-outline" size={34} color="#cbd5e1" />
