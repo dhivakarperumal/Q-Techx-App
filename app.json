@@ -15,7 +15,6 @@
       "icon": "./assets/images/appicon.png"
     },
     "android": {
-      "usesCleartextTraffic": true,
       "predictiveBackGestureEnabled": false
     },
     "web": {
