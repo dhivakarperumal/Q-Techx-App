@@ -430,25 +430,99 @@ type TaskAssignment = { uuid?: string; trainee_name?: string; task_name?: string
 function TaskMasterModal({ visible, onClose, onSaved }: { visible: boolean; onClose: () => void; onSaved: () => void }) {
   const [taskName, setTaskName] = useState("");
   const [description, setDescription] = useState("");
+  const [taskDocument, setTaskDocument] =
+    useState<DocumentPicker.DocumentPickerAsset | null>(null);
   const [saving, setSaving] = useState(false);
   const save = async () => {
     if (!taskName.trim()) return Alert.alert("Required field", "Please enter a task name.");
     setSaving(true);
     try {
       const body = new FormData();
+
       body.append("task_name", taskName.trim());
       body.append("description", description.trim());
-      await api.post("/trainee-tasks", body, { headers: { "Content-Type": "multipart/form-data" } });
+
+      if (taskDocument) {
+        body.append(
+          "task_document",
+          {
+            uri: taskDocument.uri,
+            name: taskDocument.name || "task-document",
+            type: taskDocument.mimeType || "application/octet-stream",
+          } as any
+        );
+      }
+
+      await api.post("/trainee-tasks", body, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      });
       Alert.alert("Saved", "Task created successfully.");
       setTaskName("");
       setDescription("");
+      setTaskDocument(null);
       onSaved();
       onClose();
     } catch (error: any) {
       Alert.alert("Unable to create task", error?.message || "Please try again.");
     } finally { setSaving(false); }
   };
-  return <Modal visible={visible} animationType="slide" onRequestClose={onClose}><View className="flex-1 bg-[#f8fafc]"><View className="bg-black pt-4 px-6 pb-6"><View className="w-12 h-1.5 bg-slate-700 rounded-full mx-auto mb-4" /><View className="flex-row justify-between items-center"><View><Text className="text-lg font-black text-orange-500">Create Task</Text><Text className="mt-1 text-xs text-white/70">Add a reusable task for trainees and interns.</Text></View><Pressable onPress={onClose}><Ionicons name="close-circle" size={28} color="#f97316" /></Pressable></View></View><ScrollView contentContainerStyle={{ padding: 20, paddingTop: 10 }}><View className="rounded-3xl bg-white p-4 shadow-sm"><Field label="Task Name *" value={taskName} onChange={setTaskName} placeholder="Enter task name" /><Field label="Description" value={description} onChange={setDescription} placeholder="Optional task description" multiline /><Pressable disabled={saving} onPress={save} className="items-center rounded-xl bg-orange-500 py-3 disabled:opacity-50"><Text className="font-bold text-white">{saving ? "Saving..." : "Save Task"}</Text></Pressable></View></ScrollView></View></Modal>;
+  const chooseDocument = async () => {
+    try {
+      const result = await DocumentPicker.getDocumentAsync({
+        type: "*/*",
+        copyToCacheDirectory: true,
+      });
+
+      if (!result.canceled && result.assets?.[0]) {
+        setTaskDocument(result.assets[0]);
+      }
+    } catch (error) {
+      console.error("Document picker error:", error);
+      Alert.alert(
+        "Unable to select document",
+        "Please try again."
+      );
+    }
+  };
+  return <Modal visible={visible} animationType="slide" onRequestClose={onClose}><View className="flex-1 bg-[#f8fafc]"><View className="bg-black pt-4 px-6 pb-6"><View className="w-12 h-1.5 bg-slate-700 rounded-full mx-auto mb-4" /><View className="flex-row justify-between items-center"><View><Text className="text-lg font-black text-orange-500">Create Task</Text><Text className="mt-1 text-xs text-white/70">Add a reusable task for trainees and interns.</Text></View><Pressable onPress={onClose}><Ionicons name="close-circle" size={28} color="#f97316" /></Pressable></View></View><ScrollView contentContainerStyle={{ padding: 20, paddingTop: 10 }}><View className="rounded-3xl bg-white p-4 shadow-sm"><Field label="Task Name *" value={taskName} onChange={setTaskName} placeholder="Enter task name" />
+    <Field label="Description" value={description} onChange={setDescription} placeholder="Optional task description" multiline />
+    <Text className="mb-2 text-xs font-bold text-slate-500">
+      Upload Document
+    </Text>
+
+    <Pressable
+      onPress={chooseDocument}
+      className="mb-4 flex-row items-center rounded-2xl border border-dashed border-orange-200 bg-orange-50 px-4 py-4"
+    >
+      <View className="h-11 w-11 items-center justify-center rounded-xl bg-orange-100">
+        <Ionicons
+          name="cloud-upload-outline"
+          size={22}
+          color="#f97316"
+        />
+      </View>
+
+      <View className="ml-3 flex-1">
+        <Text className="text-sm font-bold text-slate-800">
+          {taskDocument?.name || "Choose a document"}
+        </Text>
+
+        <Text className="mt-1 text-xs text-slate-500">
+          {taskDocument
+            ? "Tap to change document"
+            : "PDF, DOC, DOCX, XLS, XLSX, PPT, images, ZIP, etc."}
+        </Text>
+      </View>
+
+      <Ionicons
+        name="chevron-forward"
+        size={18}
+        color="#f97316"
+      />
+    </Pressable>
+    <Pressable disabled={saving} onPress={save} className="items-center rounded-xl bg-orange-500 py-3 disabled:opacity-50"><Text className="font-bold text-white">{saving ? "Saving..." : "Save Task"}</Text></Pressable></View></ScrollView></View></Modal>;
 }
 
 function TaskAssignmentModal({ visible, members, tasks, onClose, onSaved }: { visible: boolean; members: Member[]; tasks: TraineeTask[]; onClose: () => void; onSaved: () => void }) {
@@ -480,35 +554,35 @@ function TaskAssignmentModal({ visible, members, tasks, onClose, onSaved }: { vi
 
 export default function AdminTraineeScreen() {
   const router = useRouter();
-  const [members, setMembers] = useState<Member[]>([]); 
-  const [employees, setEmployees] = useState<Employee[]>([]); 
-  const [attendance, setAttendance] = useState<AttendanceRow[]>([]); 
+  const [members, setMembers] = useState<Member[]>([]);
+  const [employees, setEmployees] = useState<Employee[]>([]);
+  const [attendance, setAttendance] = useState<AttendanceRow[]>([]);
   const [attendanceDetails, setAttendanceDetails] = useState<AttendanceDetail[]>([]);
-  const [tasks, setTasks] = useState<TraineeTask[]>([]); 
-  const [taskAssignments, setTaskAssignments] = useState<TaskAssignment[]>([]); 
-  const [loading, setLoading] = useState(true); 
-  const [attendanceLoading, setAttendanceLoading] = useState(false); 
-  const [taskLoading, setTaskLoading] = useState(false); 
-  const [refreshing, setRefreshing] = useState(false); 
-  const [search, setSearch] = useState(""); 
-  const [type, setType] = useState("All"); 
+  const [tasks, setTasks] = useState<TraineeTask[]>([]);
+  const [taskAssignments, setTaskAssignments] = useState<TaskAssignment[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [attendanceLoading, setAttendanceLoading] = useState(false);
+  const [taskLoading, setTaskLoading] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
+  const [search, setSearch] = useState("");
+  const [type, setType] = useState("All");
   const [status, setStatus] = useState("All");
   const [attendanceType, setAttendanceType] = useState("All");
   const [attendanceStatus, setAttendanceStatus] = useState("All");
   const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth() + 1);
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
-  const [tab, setTab] = useState("Members"); 
-  const [attendanceVisible, setAttendanceVisible] = useState(false); 
+  const [tab, setTab] = useState("Members");
+  const [attendanceVisible, setAttendanceVisible] = useState(false);
   const [attendanceDetailVisible, setAttendanceDetailVisible] = useState(false);
   const [selectedAttendanceMember, setSelectedAttendanceMember] = useState<AttendanceRow | null>(null);
-  const [taskVisible, setTaskVisible] = useState(false); 
-  const [taskAssignmentVisible, setTaskAssignmentVisible] = useState(false); 
-  const [formVisible, setFormVisible] = useState(false); 
-  const [assignmentVisible, setAssignmentVisible] = useState(false); 
-  const [editing, setEditing] = useState<Member | null>(null); 
-  const [selected, setSelected] = useState<Member | null>(null); 
-  const [assignmentMember, setAssignmentMember] = useState<Member | null>(null); 
-  const [typeDropdownOpen, setTypeDropdownOpen] = useState(false); 
+  const [taskVisible, setTaskVisible] = useState(false);
+  const [taskAssignmentVisible, setTaskAssignmentVisible] = useState(false);
+  const [formVisible, setFormVisible] = useState(false);
+  const [assignmentVisible, setAssignmentVisible] = useState(false);
+  const [editing, setEditing] = useState<Member | null>(null);
+  const [selected, setSelected] = useState<Member | null>(null);
+  const [assignmentMember, setAssignmentMember] = useState<Member | null>(null);
+  const [typeDropdownOpen, setTypeDropdownOpen] = useState(false);
   const [statusDropdownOpen, setStatusDropdownOpen] = useState(false);
   const loadMembers = useCallback(async (refresh = false) => { if (refresh) setRefreshing(true); else setLoading(true); try { const query = new URLSearchParams({ page: "1", limit: "100" }); if (search) query.set("search", search); if (type !== "All") query.set("type", type); if (status !== "All") query.set("status", status); const membersResponse = await api.get(`/trainee-intern?${query.toString()}`); setMembers(membersResponse.data?.data || []); try { const employeesResponse = await api.get("/trainee-assignments/available-employees"); setEmployees(employeesResponse.data?.data || []); } catch { const employeesResponse = await api.get("/employees?limit=200"); setEmployees(employeesResponse.data?.data || employeesResponse.data?.employees || []); } } catch (error: any) { Alert.alert("Unable to load members", error?.message || "Please try again."); } finally { setLoading(false); setRefreshing(false); } }, [search, type, status]);
   useEffect(() => { loadMembers(); }, [loadMembers]);
@@ -777,7 +851,7 @@ export default function AdminTraineeScreen() {
             <Text className="mt-1 text-sm text-slate-500">{new Date(selectedYear, selectedMonth - 1).toLocaleString("en", { month: "long", year: "numeric" })}</Text>
           </View>
         </View>
-        
+
         {attendanceLoading ? (
           <View className="items-center py-12">
             <ActivityIndicator color="#f97316" />
