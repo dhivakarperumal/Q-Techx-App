@@ -1,9 +1,10 @@
 import { Ionicons } from "@expo/vector-icons";
+import DateTimePicker, { DateTimePickerEvent } from "@react-native-community/datetimepicker";
 import * as DocumentPicker from "expo-document-picker";
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 import React, { useCallback, useEffect, useState } from "react";
-import { ActivityIndicator, Alert, Modal, Pressable, RefreshControl, ScrollView, Text, TextInput, TouchableOpacity, View } from "react-native";
+import { ActivityIndicator, Alert, Modal, Platform, Pressable, RefreshControl, ScrollView, Text, TextInput, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import api from "../../api";
 import { FAB } from "../../components/FAB";
@@ -155,6 +156,8 @@ function AttendanceModal({ visible, members, onClose, onSaved }: { visible: bool
   const [form, setForm] = useState({ trainee_intern_id: "", date: attendanceDate(), check_in_time: "", check_out_time: "", attendance_status: "Present", location: "" });
   const [metrics, setMetrics] = useState({ working_hours: '0h 0m', late_entry: 'No', early_exit: 'No', overtime: 'No' });
   const [saving, setSaving] = useState(false);
+  const [activePicker, setActivePicker] = useState<"date" | "check_in_time" | "check_out_time" | null>(null);
+
   const set = (key: string, value: string) => {
     const updated = { ...form, [key]: value };
     setForm(updated);
@@ -162,7 +165,48 @@ function AttendanceModal({ visible, members, onClose, onSaved }: { visible: bool
       setMetrics(calculateMetrics(updated.check_in_time, updated.check_out_time));
     }
   };
-  useEffect(() => { if (visible) setForm((current) => ({ ...current, date: attendanceDate() })); }, [visible]);
+
+  useEffect(() => {
+    if (visible) {
+      setForm((current) => ({ ...current, date: attendanceDate() }));
+      setActivePicker(null);
+    }
+  }, [visible]);
+
+  const setNowTime = (field: "check_in_time" | "check_out_time") => {
+    const d = new Date();
+    const hh = String(d.getHours()).padStart(2, "0");
+    const mm = String(d.getMinutes()).padStart(2, "0");
+    set(field, `${hh}:${mm}`);
+  };
+
+  const getTimeDate = (timeStr?: string) => {
+    const d = new Date();
+    if (!timeStr) return d;
+    const parts = timeStr.split(":");
+    if (parts.length >= 2) {
+      const h = parseInt(parts[0], 10);
+      const m = parseInt(parts[1], 10);
+      if (!isNaN(h) && !isNaN(m)) {
+        d.setHours(h, m, 0, 0);
+        return d;
+      }
+    }
+    return d;
+  };
+
+  const format12H = (timeStr?: string) => {
+    if (!timeStr) return null;
+    const parts = timeStr.split(":");
+    if (parts.length < 2) return timeStr;
+    const h = parseInt(parts[0], 10);
+    const m = parts[1].slice(0, 2);
+    if (isNaN(h)) return timeStr;
+    const ampm = h >= 12 ? "PM" : "AM";
+    const dh = h % 12 || 12;
+    return `${String(dh).padStart(2, "0")}:${m} ${ampm}`;
+  };
+
   const save = async () => {
     if (!form.trainee_intern_id) return Alert.alert("Required field", "Please select a trainee or intern.");
     if (!form.date) return Alert.alert("Required field", "Please enter the attendance date.");
@@ -189,7 +233,191 @@ function AttendanceModal({ visible, members, onClose, onSaved }: { visible: bool
       Alert.alert("Unable to save attendance", error?.message || "Please try again.");
     } finally { setSaving(false); }
   };
-  return <Modal visible={visible} animationType="slide" onRequestClose={onClose}><View className="flex-1 bg-[#f8fafc]"><View className="bg-black pt-4 px-6 pb-6"><View className="w-12 h-1.5 bg-slate-700 rounded-full mx-auto mb-4" /><View className="flex-row justify-between items-center"><View><Text className="text-lg font-black text-orange-500">Mark Attendance</Text><Text className="mt-1 text-xs text-white/70">Create or update a trainee/intern record.</Text></View><Pressable onPress={onClose}><Ionicons name="close-circle" size={28} color="#f97316" /></Pressable></View></View><ScrollView contentContainerStyle={{ padding: 20, paddingBottom: 40, paddingTop: 10 }}><View className="rounded-3xl border border-slate-100 bg-white p-4 shadow-sm"><Text className="mb-3 text-xs font-bold text-slate-500">Trainee / Intern</Text><ScrollView horizontal showsHorizontalScrollIndicator={false} className="mb-4">{members.map((member) => <Pressable key={String(member.uuid)} onPress={() => set("trainee_intern_id", String(member.uuid))} className={`mr-2 rounded-full border px-3 py-2 ${form.trainee_intern_id === String(member.uuid) ? "border-orange-500 bg-orange-50" : "border-slate-200 bg-white"}`}><Text className={`text-xs font-bold ${form.trainee_intern_id === String(member.uuid) ? "text-orange-600" : "text-slate-500"}`}>{nameOf(member)}</Text></Pressable>)}</ScrollView><Field label="Date (YYYY-MM-DD)" value={form.date} onChange={(value) => set("date", value)} /><Text className="mb-2 text-xs font-bold text-slate-500">Attendance Status</Text><View className="mb-3 flex-row flex-wrap gap-2">{["Present", "Absent"].map((status) => <Pressable key={status} onPress={() => set("attendance_status", status)} className={`rounded-full border px-3 py-2 ${form.attendance_status === status ? "border-orange-500 bg-orange-50" : "border-slate-200"}`}><Text className={`text-xs font-bold ${form.attendance_status === status ? "text-orange-600" : "text-slate-500"}`}>{status}</Text></Pressable>)}</View><Field label="Check-in Time" value={form.check_in_time} onChange={(value) => set("check_in_time", value)} placeholder="HH:MM" /><Field label="Check-out Time" value={form.check_out_time} onChange={(value) => set("check_out_time", value)} placeholder="HH:MM" /><View className="mb-3 rounded-2xl border border-slate-100 bg-slate-50 p-3"><View className="flex-row flex-wrap gap-2"><View className="flex-1"><Text className="text-xs text-slate-500">Working Hours</Text><Text className="mt-1 font-bold text-slate-900">{metrics.working_hours}</Text></View><View className="flex-1"><Text className="text-xs text-slate-500">Late Entry</Text><Text className="mt-1 font-bold text-slate-900">{metrics.late_entry}</Text></View><View className="flex-1"><Text className="text-xs text-slate-500">Early Exit</Text><Text className="mt-1 font-bold text-slate-900">{metrics.early_exit}</Text></View><View className="flex-1"><Text className="text-xs text-slate-500">Overtime</Text><Text className="mt-1 font-bold text-slate-900">{metrics.overtime}</Text></View></View></View><Field label="Check-in Time (HH:MM)" value={form.check_in_time} onChange={(value) => set("check_in_time", value)} placeholder="09:30" /><Field label="Check-out Time (HH:MM)" value={form.check_out_time} onChange={(value) => set("check_out_time", value)} placeholder="18:00" /><Field label="Location" value={form.location} onChange={(value) => set("location", value)} placeholder="Optional location" /><Pressable disabled={saving} onPress={save} className="mt-2 items-center rounded-xl bg-orange-500 py-3 disabled:opacity-50"><Text className="font-bold text-white">{saving ? "Saving..." : "Save / Update"}</Text></Pressable></View></ScrollView></View></Modal>;
+
+  return (
+    <Modal visible={visible} animationType="slide" onRequestClose={onClose}>
+      <View className="flex-1 bg-[#f8fafc]">
+        <View className="bg-black pt-4 px-6 pb-6">
+          <View className="w-12 h-1.5 bg-slate-700 rounded-full mx-auto mb-4" />
+          <View className="flex-row justify-between items-center">
+            <View>
+              <Text className="text-lg font-black text-orange-500">Mark Attendance</Text>
+              <Text className="mt-1 text-xs text-white/70">Create or update a trainee/intern record.</Text>
+            </View>
+            <Pressable onPress={onClose}><Ionicons name="close-circle" size={28} color="#f97316" /></Pressable>
+          </View>
+        </View>
+        <ScrollView contentContainerStyle={{ padding: 20, paddingBottom: 40, paddingTop: 10 }}>
+          <View className="rounded-3xl border border-slate-100 bg-white p-4 shadow-sm">
+            <Text className="mb-3 text-xs font-bold text-slate-500">Trainee / Intern</Text>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} className="mb-4">
+              {members.map((member) => (
+                <Pressable
+                  key={String(member.uuid)}
+                  onPress={() => set("trainee_intern_id", String(member.uuid))}
+                  className={`mr-2 rounded-full border px-3 py-2 ${form.trainee_intern_id === String(member.uuid) ? "border-orange-500 bg-orange-50" : "border-slate-200 bg-white"}`}
+                >
+                  <Text className={`text-xs font-bold ${form.trainee_intern_id === String(member.uuid) ? "text-orange-600" : "text-slate-500"}`}>{nameOf(member)}</Text>
+                </Pressable>
+              ))}
+            </ScrollView>
+
+            {/* Date Picker Tile */}
+            <Text className="mb-1.5 text-xs font-bold text-slate-500">Date</Text>
+            <TouchableOpacity
+              onPress={() => setActivePicker("date")}
+              className="mb-4 flex-row items-center justify-between rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-3"
+            >
+              <View className="flex-row items-center">
+                <Ionicons name="calendar-outline" size={18} color="#f97316" />
+                <Text className="ml-2.5 text-sm font-bold text-slate-900">{form.date}</Text>
+              </View>
+              <Ionicons name="chevron-forward" size={16} color="#cbd5e1" />
+            </TouchableOpacity>
+
+            <Text className="mb-2 text-xs font-bold text-slate-500">Attendance Status</Text>
+            <View className="mb-4 flex-row flex-wrap gap-2">
+              {["Present", "Absent"].map((status) => (
+                <Pressable
+                  key={status}
+                  onPress={() => set("attendance_status", status)}
+                  className={`rounded-full border px-3 py-2 ${form.attendance_status === status ? "border-orange-500 bg-orange-50" : "border-slate-200"}`}
+                >
+                  <Text className={`text-xs font-bold ${form.attendance_status === status ? "text-orange-600" : "text-slate-500"}`}>{status}</Text>
+                </Pressable>
+              ))}
+            </View>
+
+            {/* Check In Time Tile */}
+            <View className="mb-3">
+              <View className="flex-row items-center justify-between mb-1.5">
+                <Text className="text-xs font-bold text-slate-500">Check-in Time</Text>
+                <TouchableOpacity onPress={() => setNowTime("check_in_time")} className="bg-slate-900 px-2 py-0.5 rounded">
+                  <Text className="text-[10px] font-bold text-white">Now</Text>
+                </TouchableOpacity>
+              </View>
+              <TouchableOpacity
+                onPress={() => setActivePicker("check_in_time")}
+                className="flex-row items-center justify-between rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-3"
+              >
+                <View className="flex-row items-center">
+                  <Ionicons name="log-in-outline" size={18} color="#10b981" />
+                  <Text className={`ml-2.5 text-sm font-bold ${form.check_in_time ? "text-slate-900" : "text-slate-400"}`}>
+                    {format12H(form.check_in_time) || "Select check-in time"}
+                  </Text>
+                </View>
+                {form.check_in_time ? (
+                  <View className="flex-row items-center gap-1.5">
+                    <Text className="text-xs font-extrabold text-slate-600">{form.check_in_time}</Text>
+                    <TouchableOpacity onPress={() => set("check_in_time", "")}>
+                      <Ionicons name="close-circle" size={16} color="#94a3b8" />
+                    </TouchableOpacity>
+                  </View>
+                ) : (
+                  <Ionicons name="chevron-forward" size={16} color="#cbd5e1" />
+                )}
+              </TouchableOpacity>
+            </View>
+
+            {/* Check Out Time Tile */}
+            <View className="mb-3">
+              <View className="flex-row items-center justify-between mb-1.5">
+                <Text className="text-xs font-bold text-slate-500">Check-out Time</Text>
+                <TouchableOpacity onPress={() => setNowTime("check_out_time")} className="bg-slate-900 px-2 py-0.5 rounded">
+                  <Text className="text-[10px] font-bold text-white">Now</Text>
+                </TouchableOpacity>
+              </View>
+              <TouchableOpacity
+                onPress={() => setActivePicker("check_out_time")}
+                className="flex-row items-center justify-between rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-3"
+              >
+                <View className="flex-row items-center">
+                  <Ionicons name="log-out-outline" size={18} color="#ef4444" />
+                  <Text className={`ml-2.5 text-sm font-bold ${form.check_out_time ? "text-slate-900" : "text-slate-400"}`}>
+                    {format12H(form.check_out_time) || "Select check-out time"}
+                  </Text>
+                </View>
+                {form.check_out_time ? (
+                  <View className="flex-row items-center gap-1.5">
+                    <Text className="text-xs font-extrabold text-slate-600">{form.check_out_time}</Text>
+                    <TouchableOpacity onPress={() => set("check_out_time", "")}>
+                      <Ionicons name="close-circle" size={16} color="#94a3b8" />
+                    </TouchableOpacity>
+                  </View>
+                ) : (
+                  <Ionicons name="chevron-forward" size={16} color="#cbd5e1" />
+                )}
+              </TouchableOpacity>
+            </View>
+
+            {/* Metrics calculation preview */}
+            <View className="mb-3 rounded-2xl border border-slate-100 bg-slate-50 p-3">
+              <View className="flex-row flex-wrap gap-2">
+                <View className="flex-1">
+                  <Text className="text-xs text-slate-500">Working Hours</Text>
+                  <Text className="mt-1 font-bold text-slate-900">{metrics.working_hours}</Text>
+                </View>
+                <View className="flex-1">
+                  <Text className="text-xs text-slate-500">Late Entry</Text>
+                  <Text className="mt-1 font-bold text-slate-900">{metrics.late_entry}</Text>
+                </View>
+                <View className="flex-1">
+                  <Text className="text-xs text-slate-500">Early Exit</Text>
+                  <Text className="mt-1 font-bold text-slate-900">{metrics.early_exit}</Text>
+                </View>
+                <View className="flex-1">
+                  <Text className="text-xs text-slate-500">Overtime</Text>
+                  <Text className="mt-1 font-bold text-slate-900">{metrics.overtime}</Text>
+                </View>
+              </View>
+            </View>
+
+            <Field label="Location" value={form.location} onChange={(value) => set("location", value)} placeholder="Optional location" />
+            <Pressable disabled={saving} onPress={save} className="mt-2 items-center rounded-xl bg-orange-500 py-3.5 disabled:opacity-50">
+              <Text className="font-bold text-white">{saving ? "Saving..." : "Save / Update"}</Text>
+            </Pressable>
+          </View>
+        </ScrollView>
+
+        {activePicker === "date" && (
+          <DateTimePicker
+            value={new Date(form.date || attendanceDate())}
+            mode="date"
+            display={Platform.OS === "ios" ? "inline" : "default"}
+            onChange={(event, selectedDate) => {
+              if (Platform.OS === "android") setActivePicker(null);
+              if (event.type === "set" && selectedDate) {
+                const year = selectedDate.getFullYear();
+                const month = String(selectedDate.getMonth() + 1).padStart(2, "0");
+                const day = String(selectedDate.getDate()).padStart(2, "0");
+                set("date", `${year}-${month}-${day}`);
+              }
+            }}
+            accentColor="#f97316"
+          />
+        )}
+
+        {activePicker && activePicker !== "date" && (
+          <DateTimePicker
+            value={getTimeDate(form[activePicker])}
+            mode="time"
+            is24Hour={false}
+            display={Platform.OS === "ios" ? "spinner" : "default"}
+            onChange={(event, selectedDate) => {
+              const field = activePicker as "check_in_time" | "check_out_time";
+              if (Platform.OS === "android") setActivePicker(null);
+              if (event.type === "set" && selectedDate) {
+                const hh = String(selectedDate.getHours()).padStart(2, "0");
+                const mm = String(selectedDate.getMinutes()).padStart(2, "0");
+                set(field, `${hh}:${mm}`);
+              }
+            }}
+            accentColor="#f97316"
+          />
+        )}
+      </View>
+    </Modal>
+  );
 }
 
 function AttendanceDetailModal({ visible, member, attendanceRecords, onClose }: { visible: boolean; member: AttendanceRow | null; attendanceRecords: AttendanceDetail[]; onClose: () => void }) {
