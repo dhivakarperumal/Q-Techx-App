@@ -660,7 +660,7 @@ export default function ProjectsScreen() {
         <View>
           {loading || assigning ? (
             <View className="items-center py-10">
-              <ActivityIndicator size="small" color="#2563eb" />
+              <ActivityIndicator size="small" color="#f97316" />
               <Text className="text-center text-slate-500 mt-2">
                 {assigning ? "Updating assignment..." : "Loading projects..."}
               </Text>
