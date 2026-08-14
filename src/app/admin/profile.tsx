@@ -1,8 +1,7 @@
-import React from 'react';
-import { View, Text, ScrollView, TouchableOpacity, Image } from 'react-native';
-import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { useRouter } from 'expo-router';
+import React from 'react';
+import { ScrollView, Text, TouchableOpacity, View } from 'react-native';
 import { useAuth } from '../../auth/AuthContext';
 import { AdminBottomBar } from '../../components/admin-bottom-bar';
 
@@ -23,9 +22,9 @@ export default function ProfileScreen() {
   const userRole = (user?.role as string)?.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase()) || 'Super Administrator';
   const userPhone = (user?.phone as string) || 'Not provided';
   const userDepartment = (user?.department as string) || (user?.team as string) || (user?.department_name as string) || 'Administration';
-  const userJoinDate = user?.created_at
+  const userJoinDate = user?.created_at && typeof user.created_at === 'string'
     ? new Date(user.created_at).toLocaleDateString()
-    : user?.joined_at
+    : user?.joined_at && typeof user.joined_at === 'string'
       ? new Date(user.joined_at).toLocaleDateString()
       : 'Jan 10, 2024';
   const userLocation = (user?.location as string) || 'Chennai, India';

@@ -1,6 +1,6 @@
-import React, { createContext, useContext, useState, ReactNode, useEffect, useCallback } from "react";
-import { Modal, View, Text, TouchableOpacity, StyleSheet, Dimensions, Alert } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
+import React, { createContext, ReactNode, useCallback, useContext, useEffect, useState } from "react";
+import { Alert, Dimensions, Modal, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 
 export type AlertButton = {
   text?: string;
@@ -42,10 +42,25 @@ export const CustomAlertProvider = ({ children }: { children: ReactNode }) => {
   }, []);
 
   useEffect(() => {
-    // Globally override React Native's Alert.alert to use our custom popup
-    // This allows all existing Alert.alert calls across the app to use this beautiful modal!
-    Alert.alert = (alertTitle, alertMessage, alertButtons) => {
-      showAlert(alertTitle, alertMessage, alertButtons as any);
+    // Store the original Alert.alert function to prevent issues
+    const originalAlert = Alert.alert;
+    
+    // Safely override React Native's Alert.alert to use our custom popup
+    const newAlert = (alertTitle: string, alertMessage?: string, alertButtons?: AlertButton[]) => {
+      try {
+        showAlert(alertTitle, alertMessage, alertButtons);
+      } catch (error) {
+        // Fallback to original alert if custom alert fails
+        originalAlert(alertTitle, alertMessage);
+      }
+    };
+    
+    // Type assertion needed due to Alert API differences
+    (Alert as any).alert = newAlert;
+    
+    // Cleanup: restore original Alert.alert
+    return () => {
+      (Alert as any).alert = originalAlert;
     };
   }, [showAlert]);
 
