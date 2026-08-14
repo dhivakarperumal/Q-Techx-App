@@ -4,11 +4,11 @@ import {
   AlignLeft,
   CalendarDays,
   CheckCircle2,
-  X,
-  RefreshCw,
-  CheckCircle,
+  Bell,
+  Video,
+  CheckSquare,
 } from "lucide-react-native";
-import { useRef, useState, useEffect, useCallback } from "react";
+import { useRef, useState, useEffect, useCallback, useMemo } from "react";
 import {
   Alert,
   Animated,
@@ -54,6 +54,67 @@ type TaskNotification = {
   status: string;
 };
 
+type EmployeeAlert = {
+  id: string | number;
+  type: "task" | "leave" | "meeting";
+  title: string;
+  sub: string;
+  time: string;
+  link: string;
+  status?: string;
+};
+
+const getEmployeeReference = (user: Record<string, unknown> | null | undefined): string[] => {
+  if (!user) return [];
+  const u = user as any;
+  return [
+    u?.employee_id,
+    u?.employeeId,
+    u?.user_id,
+    u?.id,
+    u?._id,
+    u?.userId,
+    u?.uuid,
+    u?.employee_code,
+    u?.employeeCode,
+    u?.employee?.employee_id,
+    u?.employee?.employeeId,
+    u?.employee?.id,
+  ]
+    .filter(Boolean)
+    .map(String);
+};
+
+function formatTimeSafe(dateStr?: string | Date | null): string {
+  if (!dateStr) return "";
+  const d = new Date(dateStr);
+  if (isNaN(d.getTime())) return String(dateStr);
+  let hours = d.getHours();
+  const minutes = d.getMinutes().toString().padStart(2, "0");
+  const ampm = hours >= 12 ? "PM" : "AM";
+  hours = hours % 12;
+  hours = hours ? hours : 12;
+  return `${hours}:${minutes} ${ampm}`;
+}
+
+function formatDateSafe(dateStr?: string | Date | null): string {
+  if (!dateStr) return "";
+  const d = new Date(dateStr);
+  if (isNaN(d.getTime())) return String(dateStr);
+  return `${d.getDate().toString().padStart(2, "0")} ${MONTH_SHORT[d.getMonth()] || ""} ${d.getFullYear()}`;
+}
+
+function isSameDaySafe(dateStr?: string | Date | null, compare = new Date()): boolean {
+  if (!dateStr) return false;
+  const d = new Date(dateStr);
+  if (isNaN(d.getTime())) return false;
+  return (
+    d.getFullYear() === compare.getFullYear() &&
+    d.getMonth() === compare.getMonth() &&
+    d.getDate() === compare.getDate()
+  );
+}
+
 export function TopHeader({ title, subtitle }: TopHeaderProps) {
   const router = useRouter();
   const segments = useSegments();
@@ -69,17 +130,19 @@ export function TopHeader({ title, subtitle }: TopHeaderProps) {
   const sidebarSlideAnim = useRef(new Animated.Value(-width)).current;
   const sidebarFadeAnim = useRef(new Animated.Value(0)).current;
 
-  const [leaveNotifications, setLeaveNotifications] = useState<
-    LeaveNotification[]
-  >([]);
+  // Admin Notification state
+  const [leaveNotifications, setLeaveNotifications] = useState<LeaveNotification[]>([]);
+  const [taskNotifications, setTaskNotifications] = useState<TaskNotification[]>([]);
+  const [adminNotificationType, setAdminNotificationType] = useState<"leave" | "task" | null>(null);
 
-  const [taskNotifications, setTaskNotifications] = useState<
-    TaskNotification[]
-  >([]);
-
-  const [notificationType, setNotificationType] = useState<
-    "leave" | "task" | null
-  >(null);
+  // Employee Notification state
+  const [employeeAlerts, setEmployeeAlerts] = useState<{
+    tasks: EmployeeAlert[];
+    leaves: EmployeeAlert[];
+    meetings: EmployeeAlert[];
+  }>({ tasks: [], leaves: [], meetings: [] });
+  const [employeeModalVisible, setEmployeeModalVisible] = useState(false);
+  const [employeeFilterTab, setEmployeeFilterTab] = useState<"All" | "Tasks" | "Leaves" | "Meetings">("All");
 
   const [notificationsLoading, setNotificationsLoading] = useState(false);
 
@@ -109,7 +172,7 @@ export function TopHeader({ title, subtitle }: TopHeaderProps) {
 
   const avatarLetter = displayName.charAt(0).toUpperCase();
   const userRole =
-    (user?.role as string)?.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase()) || "Admin";
+    (user?.role as string)?.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase()) || "Staff";
 
   const rawRole = String(user?.role || user?.user_role || user?.role_name || "").toLowerCase().trim();
   const inAdminGroup = segments.length > 0 && segments[0] === "admin";
@@ -121,14 +184,15 @@ export function TopHeader({ title, subtitle }: TopHeaderProps) {
     rawRole.includes("admin") ||
     Boolean(user?.is_admin || user?.isAdmin || (user?.role_id && Number(user.role_id) === 1));
 
-  const fetchNotifications = useCallback(async () => {
+  // -------------------------------------------------------------
+  // ADMIN NOTIFICATIONS FETCH
+  // -------------------------------------------------------------
+  const fetchAdminNotifications = useCallback(async () => {
     if (!isAdmin) return;
     try {
       setNotificationsLoading(true);
 
-      // -----------------------------------------
       // 1. FETCH PENDING LEAVE REQUESTS
-      // -----------------------------------------
       try {
         const { data } = await api.get("/employee-leaves/all");
         const rawLeaves = data?.data ?? data?.leaves ?? data;
@@ -171,15 +235,13 @@ export function TopHeader({ title, subtitle }: TopHeaderProps) {
         setLeaveNotifications(pendingLeaves);
       } catch (error: any) {
         console.error(
-          "[TopHeader] Leave notification API error:",
+          "[TopHeader] Admin Leave notification API error:",
           error?.status || error?.response?.status,
           error?.message
         );
       }
 
-      // -----------------------------------------
       // 2. FETCH ACTIVE / PENDING TASK NOTIFICATIONS
-      // -----------------------------------------
       try {
         const { data } = await api.get("/tasks", {
           params: {
@@ -227,7 +289,7 @@ export function TopHeader({ title, subtitle }: TopHeaderProps) {
         setTaskNotifications(activeTasks);
       } catch (error: any) {
         console.error(
-          "[TopHeader] Task notification API error:",
+          "[TopHeader] Admin Task notification API error:",
           error?.status || error?.response?.status,
           error?.message
         );
@@ -237,32 +299,282 @@ export function TopHeader({ title, subtitle }: TopHeaderProps) {
     }
   }, [isAdmin]);
 
-  useEffect(() => {
-    if (!isAdmin) {
-      setLeaveNotifications([]);
-      setTaskNotifications([]);
-      return;
+  // -------------------------------------------------------------
+  // EMPLOYEE ALERTS FETCH (Tasks, Leaves, Meetings)
+  // -------------------------------------------------------------
+  const fetchEmployeeAlerts = useCallback(async () => {
+    if (!user || isAdmin) return;
+    try {
+      setNotificationsLoading(true);
+      const possibleIds = getEmployeeReference(user);
+      const currentUserName = (
+        (user?.name as string) ||
+        (user?.full_name as string) ||
+        (user?.username as string) ||
+        (user?.employee_name as string) ||
+        ""
+      ).trim().toLowerCase();
+
+      let taskAlerts: EmployeeAlert[] = [];
+      let leaveAlerts: EmployeeAlert[] = [];
+      let meetingAlerts: EmployeeAlert[] = [];
+
+      // 1. Fetch Employee Tasks
+      try {
+        const [assignRes, taskRes] = await Promise.all([
+          api.get("/tasks/assignments").catch(() => ({ data: [] })),
+          api.get("/tasks", { params: { page: 1, limit: 100 } }).catch(() => ({ data: [] })),
+        ]);
+
+        const rawAssignments = assignRes.data?.data ?? assignRes.data ?? [];
+        const rawTasks = taskRes.data?.data?.tasks ?? taskRes.data?.data ?? taskRes.data?.tasks ?? taskRes.data ?? [];
+
+        const assignList = Array.isArray(rawAssignments) ? rawAssignments : [];
+        const taskList = Array.isArray(rawTasks) ? rawTasks : [];
+
+        const combinedTasks = [...assignList, ...taskList];
+        const uniqueTaskMap = new Map<string, any>();
+
+        for (const t of combinedTasks) {
+          const tId = String(t?.uuid || t?.id || t?.task_id || "");
+          if (tId && !uniqueTaskMap.has(tId)) {
+            uniqueTaskMap.set(tId, t);
+          }
+        }
+
+        const employeeTasks = Array.from(uniqueTaskMap.values()).filter((t: any) => {
+          const assignedId = String(
+            t?.assigned_to ??
+            t?.assigned_employee_id ??
+            t?.employee_id ??
+            t?.employeeId ??
+            t?.user_id ??
+            t?.assigned_to_code ??
+            ""
+          );
+          const assignedName = String(
+            t?.assigned_to_name ??
+            t?.employee_name ??
+            t?.assigned_name ??
+            ""
+          ).trim().toLowerCase();
+
+          const isAssigned =
+            (assignedId && possibleIds.includes(assignedId)) ||
+            (currentUserName && assignedName && assignedName === currentUserName);
+
+          if (!isAssigned && possibleIds.length > 0) return false;
+
+          const status = String(t?.status || t?.task_status || t?.current_status || "").toLowerCase().trim();
+          const isFinished = ["completed", "done", "cancelled", "closed"].includes(status);
+          const isToday = isSameDaySafe(t?.assignment_date || t?.created_at);
+
+          return !isFinished || isToday;
+        });
+
+        taskAlerts = employeeTasks.slice(0, 15).map((t: any) => {
+          const isToday = isSameDaySafe(t?.assignment_date || t?.created_at);
+          const dateVal = t?.assignment_date || t?.created_at || t?.updated_at;
+          return {
+            id: t?.uuid || t?.id || t?.task_id || Math.random(),
+            type: "task",
+            title: isToday ? "Today Assigned Task" : "Assigned Task",
+            sub: t?.task_name || t?.module_name || t?.title || t?.name || "Untitled Task",
+            time: formatTimeSafe(dateVal),
+            link: "/employee/tasks",
+            status: t?.status || "Pending",
+          };
+        });
+      } catch (err) {
+        console.error("[TopHeader] Employee Tasks error:", err);
+      }
+
+      // 2. Fetch Employee Leaves
+      try {
+        const { data } = await api.get("/employee-leaves/my-leaves");
+        const rawLeaves = data?.data?.leaves ?? data?.data ?? data?.leaves ?? data;
+        const leaves = Array.isArray(rawLeaves) ? rawLeaves : [];
+
+        const myLeaves = leaves.filter((l: any) => {
+          const s = String(l?.status || "").toLowerCase().trim();
+          return s === "approved" || s === "pending" || s === "rejected" || !s;
+        });
+
+        leaveAlerts = myLeaves.slice(0, 15).map((l: any) => {
+          const status = String(l?.status || "Pending");
+          const isApproved = status.toLowerCase() === "approved";
+          const fromStr = formatDateSafe(l?.from_date);
+          const toStr = formatDateSafe(l?.to_date || l?.from_date);
+          const dateRange = fromStr === toStr ? fromStr : `${fromStr} - ${toStr}`;
+          const leaveType = l?.leave_type || l?.type || "Leave";
+
+          return {
+            id: l?.id || l?.leave_id || l?.uuid || Math.random(),
+            type: "leave",
+            title: isApproved ? "Leave approved" : `Leave ${status.toLowerCase()}`,
+            sub: `${dateRange} · ${leaveType}`,
+            time: formatTimeSafe(l?.updated_at || l?.created_at),
+            link: "/employee/leave",
+            status: status,
+          };
+        });
+      } catch (err) {
+        console.error("[TopHeader] Employee Leaves error:", err);
+      }
+
+      // 3. Fetch Employee Meetings / Events
+      try {
+        const [eventsRes, myEventsRes] = await Promise.all([
+          api.get("/events").catch(() => ({ data: [] })),
+          api.get("/myevents").catch(() => ({ data: [] })),
+        ]);
+
+        const normalizeList = (payload: any) => {
+          if (!payload) return [];
+          if (Array.isArray(payload)) return payload;
+          if (Array.isArray(payload?.data)) return payload.data;
+          if (Array.isArray(payload?.rows)) return payload.rows;
+          if (Array.isArray(payload?.events)) return payload.events;
+          return [];
+        };
+
+        let personalEvents = normalizeList(myEventsRes?.data);
+        let officeEvents = normalizeList(eventsRes?.data);
+
+        if (possibleIds.length > 0) {
+          personalEvents = personalEvents.filter((evt: any) =>
+            possibleIds.includes(String(evt?.user_id || evt?.userId || evt?.employeeId || evt?.employee_id || ""))
+          );
+          officeEvents = officeEvents.filter((evt: any) => {
+            const participants = evt?.participants;
+            if (!participants) return true;
+            const normalizedParticipants =
+              typeof participants === "string"
+                ? (() => {
+                    try {
+                      return JSON.parse(participants);
+                    } catch {
+                      return [];
+                    }
+                  })()
+                : participants;
+            if (!Array.isArray(normalizedParticipants)) return true;
+            return normalizedParticipants.some((part: any) => {
+              if (typeof part === "object" && part !== null) {
+                const partId = String(part.user_id || part.userId || part.employee_id || part.employeeId || "");
+                const partName = String(part.name || part.full_name || part.username || "").trim().toLowerCase();
+                return (
+                  (partId && possibleIds.includes(partId)) ||
+                  (currentUserName && partName && partName === currentUserName)
+                );
+              }
+              return (
+                typeof part === "string" &&
+                currentUserName &&
+                String(part).trim().toLowerCase() === currentUserName
+              );
+            });
+          });
+        }
+
+        const allEvents = [...personalEvents, ...officeEvents];
+        const uniqueEvents = Array.from(
+          new Map(
+            allEvents.map((evt: any) => [
+              evt?.id ||
+                evt?.uuid ||
+                `${evt?.title || evt?.event_name || "event"}-${evt?.planDate || evt?.startDate || evt?.plan_date || evt?.start_time || evt?.date || ""}`,
+              evt,
+            ])
+          ).values()
+        );
+
+        const now = new Date();
+        now.setHours(0, 0, 0, 0);
+
+        const upcomingEvents = uniqueEvents.filter((evt: any) => {
+          const dateVal =
+            evt?.planDate ||
+            evt?.startDate ||
+            evt?.plan_date ||
+            evt?.start_time ||
+            evt?.date ||
+            evt?.start ||
+            evt?.event_date;
+          if (!dateVal) return false;
+          const d = new Date(dateVal);
+          if (isNaN(d.getTime())) return false;
+          return d >= now;
+        });
+
+        meetingAlerts = upcomingEvents.slice(0, 10).map((evt: any) => {
+          const dateVal =
+            evt?.planDate ||
+            evt?.startDate ||
+            evt?.plan_date ||
+            evt?.start_time ||
+            evt?.date ||
+            evt?.start ||
+            evt?.event_date;
+          const meetingTime = formatTimeSafe(dateVal);
+          const meetingDateStr = formatDateSafe(dateVal);
+
+          return {
+            id:
+              evt?.id ||
+              evt?.uuid ||
+              `${evt?.title || evt?.event_name || evt?.planTitle || "meeting"}-${dateVal || ""}`,
+            type: "meeting",
+            title: "Meeting allotted",
+            sub: `${evt?.title || evt?.event_name || evt?.planTitle || "Meeting"} · ${meetingDateStr}`,
+            time: meetingTime,
+            link: "/employee/meetings",
+          };
+        });
+      } catch (err) {
+        console.error("[TopHeader] Employee Meetings error:", err);
+      }
+
+      setEmployeeAlerts({
+        tasks: taskAlerts,
+        leaves: leaveAlerts,
+        meetings: meetingAlerts,
+      });
+    } finally {
+      setNotificationsLoading(false);
     }
+  }, [user, isAdmin]);
 
-    fetchNotifications();
+  // Initial & periodic fetch based on role
+  useEffect(() => {
+    if (isAdmin) {
+      fetchAdminNotifications();
+      const interval = setInterval(fetchAdminNotifications, 30000);
+      return () => clearInterval(interval);
+    } else {
+      fetchEmployeeAlerts();
+      const interval = setInterval(fetchEmployeeAlerts, 30000);
+      return () => clearInterval(interval);
+    }
+  }, [isAdmin, fetchAdminNotifications, fetchEmployeeAlerts]);
 
-    // Auto-refresh notifications every 30 seconds
-    const interval = setInterval(fetchNotifications, 30000);
-    return () => clearInterval(interval);
-  }, [isAdmin, fetchNotifications]);
-
+  // Admin Counts
   const leaveCount = leaveNotifications.length;
   const taskCount = taskNotifications.length;
 
-  const totalNotificationCount = leaveCount + taskCount;
+  // Employee Combined Alerts & Unread Count
+  const allEmployeeAlerts = useMemo(
+    () => [...employeeAlerts.tasks, ...employeeAlerts.leaves, ...employeeAlerts.meetings],
+    [employeeAlerts]
+  );
+  const employeeUnreadCount = allEmployeeAlerts.length;
 
-  const openNotifications = (type: "leave" | "task") => {
-    setNotificationType(type);
-  };
-
-  const closeNotifications = () => {
-    setNotificationType(null);
-  };
+  const filteredEmployeeAlerts = useMemo(() => {
+    if (employeeFilterTab === "Tasks") return employeeAlerts.tasks;
+    if (employeeFilterTab === "Leaves") return employeeAlerts.leaves;
+    if (employeeFilterTab === "Meetings") return employeeAlerts.meetings;
+    return allEmployeeAlerts;
+  }, [employeeFilterTab, employeeAlerts, allEmployeeAlerts]);
 
   // -- Profile Dropdown Logic --
   const openDropdown = () => {
@@ -352,17 +664,12 @@ export function TopHeader({ title, subtitle }: TopHeaderProps) {
       label: "My Profile",
       onPress: () => {
         closeDropdown();
-        setTimeout(() => router.push("/admin/profile" as any), 150);
+        setTimeout(() => {
+          if (isAdmin) router.push("/admin/profile" as any);
+          else router.push("/employee/profile" as any);
+        }, 150);
       },
     },
-    // {
-    //   icon: "settings-outline" as const,
-    //   label: "Settings",
-    //   onPress: () => {
-    //     closeDropdown();
-    //     Alert.alert("Settings", "Settings page coming soon.");
-    //   },
-    // },
     {
       icon: "log-out-outline" as const,
       label: "Log Out",
@@ -371,13 +678,26 @@ export function TopHeader({ title, subtitle }: TopHeaderProps) {
     },
   ];
 
-  const sidebarItems = [
+  const adminSidebarItems = [
     { label: "Dashboard", icon: "home-outline" as const, route: "/admin" },
     { label: "Projects", icon: "folder-outline" as const, route: "/admin/projects" },
     { label: "Tasks", icon: "checkmark-outline" as const, route: "/admin/tasks" },
     { label: "Team", icon: "people-outline" as const, route: "/admin/team" },
-    { label: "Settings", icon: "settings-outline" as const, route: null },
+    { label: "Leaves", icon: "calendar-outline" as const, route: "/admin/leaves" },
+    { label: "More", icon: "grid-outline" as const, route: "/admin/more" },
   ];
+
+  const employeeSidebarItems = [
+    { label: "Dashboard", icon: "home-outline" as const, route: "/employee" },
+    { label: "Attendance", icon: "time-outline" as const, route: "/employee/attendance" },
+    { label: "Leave", icon: "calendar-outline" as const, route: "/employee/leave" },
+    { label: "Projects", icon: "folder-outline" as const, route: "/employee/projects" },
+    { label: "Tasks", icon: "checkmark-outline" as const, route: "/employee/tasks" },
+    { label: "Meetings", icon: "videocam-outline" as const, route: "/employee/meetings" },
+    { label: "More", icon: "grid-outline" as const, route: "/employee/more" },
+  ];
+
+  const sidebarItems = isAdmin ? adminSidebarItems : employeeSidebarItems;
 
   return (
     <SafeAreaView edges={["top"]} className="bg-white">
@@ -396,15 +716,15 @@ export function TopHeader({ title, subtitle }: TopHeaderProps) {
           {subtitle ? <Text className="mt-0.5 text-xs text-slate-500">{subtitle}</Text> : null}
         </View>
 
-        {/* Right — Admin Notifications + Avatar */}
+        {/* Right — Notifications + Avatar */}
         <View className="flex-row items-center gap-2.5">
 
-          {isAdmin && (
+          {isAdmin ? (
             <>
-              {/* LEAVE NOTIFICATIONS */}
+              {/* ADMIN LEAVE NOTIFICATIONS */}
               <TouchableOpacity
                 activeOpacity={0.7}
-                onPress={() => openNotifications("leave")}
+                onPress={() => setAdminNotificationType("leave")}
                 accessibilityLabel="Leave requests"
                 accessibilityRole="button"
                 className="relative h-10 w-10 items-center justify-center rounded-xl bg-orange-50 border border-orange-100"
@@ -424,10 +744,10 @@ export function TopHeader({ title, subtitle }: TopHeaderProps) {
                 )}
               </TouchableOpacity>
 
-              {/* TASK NOTIFICATIONS */}
+              {/* ADMIN TASK NOTIFICATIONS */}
               <TouchableOpacity
                 activeOpacity={0.7}
-                onPress={() => openNotifications("task")}
+                onPress={() => setAdminNotificationType("task")}
                 accessibilityLabel="Task notifications"
                 accessibilityRole="button"
                 className="relative h-10 w-10 items-center justify-center rounded-xl bg-orange-50 border border-orange-100"
@@ -447,6 +767,29 @@ export function TopHeader({ title, subtitle }: TopHeaderProps) {
                 )}
               </TouchableOpacity>
             </>
+          ) : (
+            /* EMPLOYEE NOTIFICATIONS BELL */
+            <TouchableOpacity
+              activeOpacity={0.7}
+              onPress={() => setEmployeeModalVisible(true)}
+              accessibilityLabel="Notifications"
+              accessibilityRole="button"
+              className="relative h-10 w-10 items-center justify-center rounded-xl bg-orange-50 border border-orange-100"
+            >
+              <Bell
+                size={20}
+                color="#f97316"
+                strokeWidth={2.2}
+              />
+
+              {employeeUnreadCount > 0 && (
+                <View className="absolute -right-1.5 -top-1.5 min-w-[18px] h-[18px] px-1 items-center justify-center rounded-full bg-orange-500 border-2 border-white">
+                  <Text className="text-[9px] font-black text-white">
+                    {employeeUnreadCount > 99 ? "99+" : employeeUnreadCount}
+                  </Text>
+                </View>
+              )}
+            </TouchableOpacity>
           )}
 
           {/* Avatar */}
@@ -465,7 +808,7 @@ export function TopHeader({ title, subtitle }: TopHeaderProps) {
         </View>
       </View>
 
-      {/* ─── FULL-SCREEN MENU MODAL ─── */}
+      {/* ─── FULL-SCREEN SIDEBAR MODAL ─── */}
       <Modal
         transparent
         visible={sidebarVisible}
@@ -484,7 +827,10 @@ export function TopHeader({ title, subtitle }: TopHeaderProps) {
         >
           <SafeAreaView edges={["top", "bottom"]} className="flex-1 bg-white">
             <View className="px-6 py-6 border-b border-slate-100 flex-row items-center justify-between">
-              <Text className="text-xl font-black text-slate-900 tracking-tight">Q TECHX</Text>
+              <View>
+                <Text className="text-xl font-black text-slate-900 tracking-tight">Q TECHX</Text>
+                <Text className="text-xs text-orange-600 font-bold mt-0.5">{isAdmin ? "Admin Workspace" : "Employee Portal"}</Text>
+              </View>
               {/* Close Button */}
               <TouchableOpacity onPress={closeSidebar} className="p-2 bg-slate-50 rounded-full">
                 <Ionicons name="close" size={24} color="#64748b" />
@@ -530,13 +876,13 @@ export function TopHeader({ title, subtitle }: TopHeaderProps) {
       {/* ─── ADMIN NOTIFICATIONS MODAL ─── */}
       <Modal
         transparent
-        visible={notificationType !== null}
+        visible={adminNotificationType !== null}
         animationType="fade"
-        onRequestClose={closeNotifications}
+        onRequestClose={() => setAdminNotificationType(null)}
       >
         <Pressable
           className="flex-1 bg-black/30"
-          onPress={closeNotifications}
+          onPress={() => setAdminNotificationType(null)}
         >
           <Pressable
             className="absolute right-4 top-20 w-[335px] max-h-[520px] rounded-3xl bg-white shadow-xl overflow-hidden"
@@ -550,7 +896,7 @@ export function TopHeader({ title, subtitle }: TopHeaderProps) {
                 <View className="h-10 w-10 items-center justify-center rounded-xl bg-orange-50 border border-orange-100">
                   <Ionicons
                     name={
-                      notificationType === "leave"
+                      adminNotificationType === "leave"
                         ? "calendar-outline"
                         : "checkmark-circle-outline"
                     }
@@ -561,13 +907,13 @@ export function TopHeader({ title, subtitle }: TopHeaderProps) {
 
                 <View className="ml-3 flex-1">
                   <Text className="text-base font-black text-slate-900" numberOfLines={1}>
-                    {notificationType === "leave"
+                    {adminNotificationType === "leave"
                       ? "Leave Requests"
                       : "Task Notifications"}
                   </Text>
 
                   <Text className="mt-0.5 text-[11px] text-slate-500">
-                    {notificationType === "leave"
+                    {adminNotificationType === "leave"
                       ? `${leaveCount} pending request${leaveCount !== 1 ? "s" : ""}`
                       : `${taskCount} active task${taskCount !== 1 ? "s" : ""}`}
                   </Text>
@@ -576,7 +922,7 @@ export function TopHeader({ title, subtitle }: TopHeaderProps) {
 
               <View className="flex-row items-center gap-1.5">
                 <TouchableOpacity
-                  onPress={fetchNotifications}
+                  onPress={fetchAdminNotifications}
                   className="h-8 w-8 items-center justify-center rounded-full bg-slate-100"
                   accessibilityLabel="Refresh notifications"
                 >
@@ -588,7 +934,7 @@ export function TopHeader({ title, subtitle }: TopHeaderProps) {
                 </TouchableOpacity>
 
                 <TouchableOpacity
-                  onPress={closeNotifications}
+                  onPress={() => setAdminNotificationType(null)}
                   className="h-8 w-8 items-center justify-center rounded-full bg-slate-100"
                   accessibilityLabel="Close"
                 >
@@ -615,7 +961,7 @@ export function TopHeader({ title, subtitle }: TopHeaderProps) {
                   Loading notifications...
                 </Text>
               </View>
-            ) : notificationType === "leave" ? (
+            ) : adminNotificationType === "leave" ? (
 
               /* LEAVE LIST */
               <View>
@@ -626,7 +972,7 @@ export function TopHeader({ title, subtitle }: TopHeaderProps) {
                         key={`${leave.id || index}`}
                         activeOpacity={0.7}
                         onPress={() => {
-                          closeNotifications();
+                          setAdminNotificationType(null);
                           router.push("/admin/leaves" as any);
                         }}
                         className="border-b border-slate-100 px-5 py-3.5 flex-row items-start justify-between"
@@ -691,7 +1037,7 @@ export function TopHeader({ title, subtitle }: TopHeaderProps) {
                 <TouchableOpacity
                   activeOpacity={0.85}
                   onPress={() => {
-                    closeNotifications();
+                    setAdminNotificationType(null);
                     router.push("/admin/leaves" as any);
                   }}
                   className="mx-4 my-3 items-center justify-center rounded-xl bg-orange-500 py-2.5"
@@ -713,7 +1059,7 @@ export function TopHeader({ title, subtitle }: TopHeaderProps) {
                         key={`${task.id || index}`}
                         activeOpacity={0.7}
                         onPress={() => {
-                          closeNotifications();
+                          setAdminNotificationType(null);
                           router.push("/admin/tasks" as any);
                         }}
                         className="border-b border-slate-100 px-5 py-3.5 flex-row items-start justify-between"
@@ -786,7 +1132,7 @@ export function TopHeader({ title, subtitle }: TopHeaderProps) {
                 <TouchableOpacity
                   activeOpacity={0.85}
                   onPress={() => {
-                    closeNotifications();
+                    setAdminNotificationType(null);
                     router.push("/admin/tasks" as any);
                   }}
                   className="mx-4 my-3 items-center justify-center rounded-xl bg-orange-500 py-2.5"
@@ -795,6 +1141,217 @@ export function TopHeader({ title, subtitle }: TopHeaderProps) {
                     Manage All Tasks →
                   </Text>
                 </TouchableOpacity>
+              </View>
+            )}
+
+          </Pressable>
+        </Pressable>
+      </Modal>
+
+      {/* ─── EMPLOYEE NOTIFICATIONS MODAL ─── */}
+      <Modal
+        transparent
+        visible={employeeModalVisible}
+        animationType="fade"
+        onRequestClose={() => setEmployeeModalVisible(false)}
+      >
+        <Pressable
+          className="flex-1 bg-black/30"
+          onPress={() => setEmployeeModalVisible(false)}
+        >
+          <Pressable
+            className="absolute right-4 top-20 w-[335px] max-h-[540px] rounded-3xl bg-white shadow-xl overflow-hidden"
+            onPress={(e) => e.stopPropagation()}
+          >
+
+            {/* Header */}
+            <View className="flex-row items-center justify-between border-b border-slate-100 px-5 py-4 bg-white">
+              <View className="flex-row items-center flex-1">
+                <View className="h-10 w-10 items-center justify-center rounded-xl bg-orange-50 border border-orange-100">
+                  <Bell size={20} color="#f97316" strokeWidth={2.2} />
+                </View>
+
+                <View className="ml-3 flex-1">
+                  <Text className="text-base font-black text-slate-900" numberOfLines={1}>
+                    Notifications
+                  </Text>
+                  <Text className="mt-0.5 text-[11px] text-slate-500">
+                    {employeeUnreadCount} new update{employeeUnreadCount !== 1 ? "s" : ""}
+                  </Text>
+                </View>
+              </View>
+
+              <View className="flex-row items-center gap-1.5">
+                <TouchableOpacity
+                  onPress={fetchEmployeeAlerts}
+                  className="h-8 w-8 items-center justify-center rounded-full bg-slate-100"
+                  accessibilityLabel="Refresh notifications"
+                >
+                  <Ionicons name="refresh" size={16} color="#64748b" />
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  onPress={() => setEmployeeModalVisible(false)}
+                  className="h-8 w-8 items-center justify-center rounded-full bg-slate-100"
+                  accessibilityLabel="Close"
+                >
+                  <Ionicons name="close" size={18} color="#64748b" />
+                </TouchableOpacity>
+              </View>
+            </View>
+
+            {/* Category Filter Tabs */}
+            <View className="flex-row items-center px-4 py-2 bg-slate-50 border-b border-slate-100 gap-1.5">
+              {(["All", "Tasks", "Leaves", "Meetings"] as const).map((tab) => {
+                const isSelected = employeeFilterTab === tab;
+                const count =
+                  tab === "All"
+                    ? allEmployeeAlerts.length
+                    : tab === "Tasks"
+                    ? employeeAlerts.tasks.length
+                    : tab === "Leaves"
+                    ? employeeAlerts.leaves.length
+                    : employeeAlerts.meetings.length;
+
+                return (
+                  <TouchableOpacity
+                    key={tab}
+                    onPress={() => setEmployeeFilterTab(tab)}
+                    className={`px-3 py-1.5 rounded-full border ${
+                      isSelected
+                        ? "bg-orange-500 border-orange-500"
+                        : "bg-white border-slate-200"
+                    }`}
+                  >
+                    <Text
+                      className={`text-[11px] font-bold ${
+                        isSelected ? "text-white" : "text-slate-600"
+                      }`}
+                    >
+                      {tab} ({count})
+                    </Text>
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
+
+            {/* Content List */}
+            {notificationsLoading ? (
+              <View className="items-center justify-center py-12">
+                <Ionicons name="refresh-outline" size={28} color="#f97316" />
+                <Text className="mt-3 text-xs text-slate-500">
+                  Loading notifications...
+                </Text>
+              </View>
+            ) : (
+              <View>
+                <ScrollView style={{ maxHeight: 310 }} showsVerticalScrollIndicator={false}>
+                  {filteredEmployeeAlerts.length > 0 ? (
+                    filteredEmployeeAlerts.map((alert, index) => {
+                      const isTask = alert.type === "task";
+                      const isLeave = alert.type === "leave";
+                      const isMeeting = alert.type === "meeting";
+
+                      return (
+                        <TouchableOpacity
+                          key={`${alert.type}-${alert.id || index}`}
+                          activeOpacity={0.7}
+                          onPress={() => {
+                            setEmployeeModalVisible(false);
+                            if (alert.link) router.push(alert.link as any);
+                          }}
+                          className="border-b border-slate-100 px-5 py-3.5 flex-row items-start justify-between"
+                        >
+                          <View className="flex-row items-start flex-1 mr-2">
+                            <View
+                              className={`h-9 w-9 items-center justify-center rounded-xl border mt-0.5 ${
+                                isTask
+                                  ? "bg-blue-50 border-blue-200"
+                                  : isLeave
+                                  ? "bg-green-50 border-green-200"
+                                  : "bg-pink-50 border-pink-200"
+                              }`}
+                            >
+                              {isTask ? (
+                                <CheckSquare size={17} color="#3b82f6" />
+                              ) : isLeave ? (
+                                <CheckCircle2 size={17} color="#10b981" />
+                              ) : (
+                                <Video size={17} color="#ec4899" />
+                              )}
+                            </View>
+
+                            <View className="ml-3 flex-1">
+                              <Text
+                                className="text-sm font-bold text-slate-900"
+                                numberOfLines={1}
+                              >
+                                {alert.title}
+                              </Text>
+
+                              <Text className="mt-0.5 text-xs text-slate-500" numberOfLines={2}>
+                                {alert.sub}
+                              </Text>
+                            </View>
+                          </View>
+
+                          {alert.time ? (
+                            <Text className="text-[10px] text-slate-400 mt-1">
+                              {alert.time}
+                            </Text>
+                          ) : null}
+                        </TouchableOpacity>
+                      );
+                    })
+                  ) : (
+                    <View className="items-center justify-center py-12 px-6">
+                      <Ionicons
+                        name="checkmark-done-circle-outline"
+                        size={40}
+                        color="#cbd5e1"
+                      />
+                      <Text className="mt-3 text-sm font-bold text-slate-700">
+                        No notifications
+                      </Text>
+                      <Text className="mt-1 text-center text-xs text-slate-400">
+                        You are all caught up for {employeeFilterTab.toLowerCase()}!
+                      </Text>
+                    </View>
+                  )}
+                </ScrollView>
+
+                {/* Employee Quick Actions Footer */}
+                <View className="flex-row items-center justify-between p-3 border-t border-slate-100 bg-slate-50">
+                  <TouchableOpacity
+                    onPress={() => {
+                      setEmployeeModalVisible(false);
+                      router.push("/employee/tasks" as any);
+                    }}
+                    className="flex-1 items-center py-1.5 mx-1 bg-white rounded-lg border border-slate-200"
+                  >
+                    <Text className="text-[11px] font-bold text-slate-700">Tasks</Text>
+                  </TouchableOpacity>
+
+                  <TouchableOpacity
+                    onPress={() => {
+                      setEmployeeModalVisible(false);
+                      router.push("/employee/leave" as any);
+                    }}
+                    className="flex-1 items-center py-1.5 mx-1 bg-white rounded-lg border border-slate-200"
+                  >
+                    <Text className="text-[11px] font-bold text-slate-700">Leave</Text>
+                  </TouchableOpacity>
+
+                  <TouchableOpacity
+                    onPress={() => {
+                      setEmployeeModalVisible(false);
+                      router.push("/employee/meetings" as any);
+                    }}
+                    className="flex-1 items-center py-1.5 mx-1 bg-white rounded-lg border border-slate-200"
+                  >
+                    <Text className="text-[11px] font-bold text-slate-700">Meetings</Text>
+                  </TouchableOpacity>
+                </View>
               </View>
             )}
 
