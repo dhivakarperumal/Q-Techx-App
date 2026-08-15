@@ -1,9 +1,9 @@
+import * as NavigationBar from "expo-navigation-bar";
 import {
     Stack,
     useRouter,
     useSegments,
 } from "expo-router";
-import * as NavigationBar from "expo-navigation-bar";
 import { StatusBar } from "expo-status-bar";
 import { useEffect, useState } from "react";
 import { Platform, Text, View } from "react-native";
@@ -12,7 +12,6 @@ import "../../global.css";
 import { AuthProvider, useAuth } from "../auth/AuthContext";
 import { getRoleHome } from "../auth/roleUtils";
 import { CustomAlertProvider } from "../context/CustomAlertContext";
-
 function RootLayoutNav() {
   const { user, isLoading } = useAuth();
   const segments = useSegments();
