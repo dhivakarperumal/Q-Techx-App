@@ -1193,28 +1193,29 @@ export default function EmployeeTasksScreen() {
             className="absolute inset-0 bg-black/40"
             onPress={closeStatusSheet}
           />
-          <View className="max-h-[70%] rounded-t-[28px] bg-white px-5 pb-8 pt-5">
-            <View className="mb-5 flex-row items-center justify-between">
-              <View>
-                <Text className="text-xl font-black text-slate-900">
+          <View className="max-h-[85%] rounded-t-[32px] bg-white">
+            <View className="bg-black px-6 py-5 flex-row justify-between items-center rounded-t-[32px]">
+              <View className="flex-1 pr-3">
+                <Text className="text-xl font-bold text-orange-500">
                   Update Status
                 </Text>
-                <Text className="mt-1 text-xs text-slate-500">
+                <Text className="mt-1 text-xs text-orange-200" numberOfLines={1}>
                   {activeTask ? getTaskTitle(activeTask) : "Select a status"}
                 </Text>
               </View>
               <Pressable
                 accessibilityLabel="Close"
                 onPress={closeStatusSheet}
-                className="h-9 w-9 items-center justify-center rounded-full bg-slate-100"
+                className="h-9 w-9 items-center justify-center rounded-full bg-orange-100"
               >
-                <Ionicons name="close" size={20} color="#64748b" />
+                <Ionicons name="close" size={20} color="#c2410c" />
               </Pressable>
             </View>
 
             <ScrollView
               keyboardShouldPersistTaps="handled"
               showsVerticalScrollIndicator={false}
+              contentContainerStyle={{ padding: 24 }}
             >
               {statusUpdateError ? (
                 <View className="mb-4 rounded-2xl border border-rose-200 bg-rose-50 p-4">
@@ -1223,10 +1224,10 @@ export default function EmployeeTasksScreen() {
                   </Text>
                 </View>
               ) : null}
-              <Text className="mb-3 text-sm font-bold text-slate-600">
-                Pick a new status
+              <Text className="mb-3 text-[10px] font-bold uppercase tracking-widest text-slate-500">
+                CLIENT STATUS
               </Text>
-              <View className="flex-row flex-wrap gap-3">
+              <View className="flex-row flex-wrap gap-2">
                 {statusOptions.map((value) => {
                   const isActive = activeTask
                     ? getTaskStatus(
@@ -1242,10 +1243,10 @@ export default function EmployeeTasksScreen() {
                         activeTask && updateTaskStatus(activeTask, value)
                       }
                       disabled={updatingStatus}
-                      className={`rounded-2xl border px-4 py-3 ${isActive ? "border-orange-500 bg-orange-50" : "border-slate-200 bg-white"}`}
+                      className={`rounded-full border px-4 py-2 ${isActive ? "border-orange-500 bg-orange-50" : "border-slate-200 bg-white"}`}
                     >
                       <Text
-                        className={`text-xs font-bold ${isActive ? "text-orange-600" : "text-slate-700"}`}
+                        className={`text-sm font-semibold ${isActive ? "text-orange-600" : "text-slate-700"}`}
                       >
                         {value}
                       </Text>
@@ -1256,7 +1257,7 @@ export default function EmployeeTasksScreen() {
               <TouchableOpacity
                 onPress={closeStatusSheet}
                 disabled={updatingStatus}
-                className="mt-6 items-center rounded-2xl border border-slate-200 bg-white py-4"
+                className="mt-8 items-center rounded-2xl border border-slate-200 bg-white py-4"
               >
                 <Text className="font-bold text-slate-700">Cancel</Text>
               </TouchableOpacity>
@@ -1280,25 +1281,36 @@ export default function EmployeeTasksScreen() {
             className="absolute inset-0 bg-black/40"
             onPress={closeReasonSheet}
           />
-          <View className="rounded-t-[28px] bg-white px-5 pb-10 pt-6">
-            <Text
-              className="text-xl font-black"
-              style={{
-                color: pendingStatus === "Cancelled" ? "#e11d48" : "#f97316",
-              }}
-            >
-              {pendingStatus === "Cancelled" ? "Cancel Task" : "Report Issue"}
-            </Text>
-            <Text className="mt-1 mb-4 text-sm text-slate-500">
-              Please provide a reason for{" "}
-              {pendingStatus === "Cancelled"
-                ? "cancelling"
-                : "reporting an issue with"}{" "}
-              <Text className="font-bold text-slate-800">
-                {activeTask ? getTaskTitle(activeTask) : "this task"}
+          <View className="max-h-[85%] rounded-t-[32px] bg-white">
+            <View className="bg-black px-6 py-5 flex-row justify-between items-center rounded-t-[32px]">
+              <View className="flex-1 pr-3">
+                <Text
+                  className="text-xl font-bold"
+                  style={{
+                    color: pendingStatus === "Cancelled" ? "#ef4444" : "#f97316",
+                  }}
+                >
+                  {pendingStatus === "Cancelled" ? "Cancel Task" : "Report Issue"}
+                </Text>
+                <Text className="mt-1 text-xs text-orange-200" numberOfLines={1}>
+                  {activeTask ? getTaskTitle(activeTask) : "this task"}
+                </Text>
+              </View>
+              <Pressable
+                onPress={closeReasonSheet}
+                className="h-9 w-9 items-center justify-center rounded-full bg-orange-100"
+              >
+                <Ionicons name="close" size={20} color="#c2410c" />
+              </Pressable>
+            </View>
+            <View className="p-6">
+              <Text className="mb-4 text-sm text-slate-500">
+                Please provide a reason for{" "}
+                {pendingStatus === "Cancelled"
+                  ? "cancelling this task"
+                  : "reporting an issue"}
+                .
               </Text>
-              .
-            </Text>
             <TextInput
               value={reasonText}
               onChangeText={setReasonText}
@@ -1311,7 +1323,7 @@ export default function EmployeeTasksScreen() {
               multiline
               numberOfLines={4}
               textAlignVertical="top"
-              className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-slate-900 mb-5"
+              className="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-slate-900 mb-5"
               style={{ minHeight: 110 }}
             />
             {statusUpdateError ? (
@@ -1325,7 +1337,7 @@ export default function EmployeeTasksScreen() {
               <TouchableOpacity
                 onPress={closeReasonSheet}
                 disabled={updatingStatus}
-                className="flex-1 items-center rounded-2xl border border-slate-200 bg-white py-3.5"
+                className="flex-1 items-center rounded-2xl border border-slate-200 bg-white py-4"
               >
                 <Text className="font-bold text-slate-700">Go Back</Text>
               </TouchableOpacity>
@@ -1336,22 +1348,23 @@ export default function EmployeeTasksScreen() {
                   submitStatusUpdate(activeTask, pendingStatus, reasonText)
                 }
                 disabled={updatingStatus}
-                className="flex-1 items-center rounded-2xl py-3.5"
+                className="flex-1 items-center rounded-2xl py-4"
                 style={{
                   backgroundColor:
-                    pendingStatus === "Cancelled" ? "#e11d48" : "#f97316",
+                    pendingStatus === "Cancelled" ? "#ef4444" : "#f97316",
                 }}
               >
                 {updatingStatus ? (
                   <ActivityIndicator color="#fff" />
                 ) : (
-                  <Text className="font-black text-white">
+                  <Text className="font-bold text-white">
                     {pendingStatus === "Cancelled"
                       ? "Confirm Cancel"
                       : "Submit Issue"}
                   </Text>
                 )}
               </TouchableOpacity>
+            </View>
             </View>
           </View>
         </KeyboardAvoidingView>
