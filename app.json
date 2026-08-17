@@ -20,7 +20,7 @@
         "android.permission.ACCESS_COARSE_LOCATION",
         "android.permission.ACCESS_FINE_LOCATION"
       ],
-      "package": "com.anonymous.qtechxapp"
+      "package": "com.thenugar.qtechxapp"
     },
     "web": {
       "output": "static",

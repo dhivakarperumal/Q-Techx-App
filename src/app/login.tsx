@@ -2,16 +2,16 @@ import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import { useState } from "react";
 import {
-  ActivityIndicator,
-  Alert,
-  KeyboardAvoidingView,
-  Linking,
-  Platform,
-  Pressable,
-  ScrollView,
-  Text,
-  TextInput,
-  View,
+    ActivityIndicator,
+    Alert,
+    KeyboardAvoidingView,
+    Linking,
+    Platform,
+    Pressable,
+    ScrollView,
+    Text,
+    TextInput,
+    View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import api from "../api";
@@ -88,21 +88,23 @@ export default function LoginScreen() {
       <KeyboardAvoidingView
         className="flex-1"
         behavior={Platform.OS === "ios" ? "padding" : "height"}
-        keyboardVerticalOffset={Platform.OS === "ios" ? 12 : 0}
+        keyboardVerticalOffset={Platform.OS === "ios" ? 24 : 0}
+        enabled
       >
         <ScrollView
           className="flex-1"
           contentContainerStyle={{
             flexGrow: 1,
-            justifyContent: "center",
             paddingHorizontal: 20,
-            paddingVertical: 32,
-            paddingBottom: 96,
+            paddingTop: 24,
+            paddingBottom: 120,
           }}
           keyboardShouldPersistTaps="handled"
           keyboardDismissMode={
             Platform.OS === "ios" ? "interactive" : "on-drag"
           }
+          showsVerticalScrollIndicator={false}
+          bounces={false}
           automaticallyAdjustKeyboardInsets
         >
           <View className="rounded-[28px] border border-gray-800 bg-[#181a1f] p-6">

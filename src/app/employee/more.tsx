@@ -37,6 +37,8 @@ export default function EmployeeMoreScreen() {
         className="flex-1"
         contentContainerStyle={{ paddingBottom: 120, paddingHorizontal: 0 }}
       >
+        
+
         {/* ── PROFILE CARD ── */}
         <TouchableOpacity
           activeOpacity={0.85}

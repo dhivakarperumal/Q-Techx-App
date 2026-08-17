@@ -1,17 +1,18 @@
 import { Ionicons } from "@expo/vector-icons";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import * as DocumentPicker from "expo-document-picker";
+import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 import { useCallback, useEffect, useState } from "react";
 import {
-  ActivityIndicator,
-  Alert,
-  Modal,
-  Pressable,
-  ScrollView,
-  Text,
-  TextInput,
-  View,
+    ActivityIndicator,
+    Alert,
+    Modal,
+    Pressable,
+    ScrollView,
+    Text,
+    TextInput,
+    View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import api from "../../api";
@@ -136,44 +137,40 @@ function TaskMasterModal({
         <View
           style={{
             backgroundColor: "#ffffff",
-            borderTopLeftRadius: 28,
-            borderTopRightRadius: 28,
-            overflow: "hidden",
-            maxHeight: "92%",
+            borderTopLeftRadius: 24,
+            borderTopRightRadius: 24,
+            borderWidth: 1,
+            borderColor: "rgba(148, 163, 184, 0.18)",
+            paddingBottom: 18,
+            overflow: "hidden"
           }}
         >
           <View
             style={{
-              backgroundColor: "#111827",
+              backgroundColor: "#000",
               flexDirection: "row",
               alignItems: "center",
               justifyContent: "space-between",
+              marginBottom: 18,
               paddingHorizontal: 20,
               paddingVertical: 18,
             }}
           >
-            <View>
-              <Text
-                style={{ fontSize: 22, fontWeight: "800", color: "#f97316" }}
-              >
-                Add New Task
-              </Text>
-              <Text style={{ fontSize: 14, color: "#cbd5e1", marginTop: 4 }}>
-                Create a new training task
-              </Text>
-            </View>
+            <Text style={{ fontSize: 24, fontWeight: "800", color: "#f97316" }}>
+              Add New Task
+            </Text>
             <Pressable
               onPress={closeModal}
               style={{
-                width: 40,
-                height: 40,
-                borderRadius: 999,
-                backgroundColor: "#fef3c7",
+                width: 36,
+                height: 36,
+                borderRadius: 12,
+                backgroundColor: "#1e293b",
                 alignItems: "center",
                 justifyContent: "center",
               }}
             >
-              <Ionicons name="close" size={22} color="#f97316" />
+              <Ionicons name="close" size={20} color="#f97316" />
             </Pressable>
           </View>
 
@@ -456,25 +453,33 @@ function TaskAssignmentModal({
         <View
           style={{
             backgroundColor: "#ffffff",
-            borderTopLeftRadius: 28,
-            borderTopRightRadius: 28,
-            overflow: "hidden",
-            maxHeight: "92%",
+            borderTopLeftRadius: 24,
+            borderTopRightRadius: 24,
+            borderWidth: 1,
+            borderColor: "rgba(148, 163, 184, 0.18)",
+            paddingHorizontal: 0,
+            paddingBottom: 22,
+            maxHeight: "90%",
+            overflow: "hidden"
           }}
         >
           <View
             style={{
-              backgroundColor: "#111827",
+              backgroundColor: "#000",
               flexDirection: "row",
               alignItems: "center",
-              justifyContent: "space-between",
+              marginBottom: 12,
               paddingHorizontal: 20,
               paddingVertical: 18,
             }}
           >
             <View>
               <Text
-                style={{ fontSize: 22, fontWeight: "800", color: "#f97316" }}
+                style={{
+                  color: "#f97316",
+                  fontSize: 24,
+                  fontWeight: "800",
+                }}
               >
                 Assign Task
               </Text>
@@ -485,15 +490,15 @@ function TaskAssignmentModal({
             <Pressable
               onPress={closeModal}
               style={{
-                width: 40,
-                height: 40,
-                borderRadius: 999,
-                backgroundColor: "#fef3c7",
+                width: 36,
+                height: 36,
+                borderRadius: 12,
+                backgroundColor: "#1e293b",
                 alignItems: "center",
                 justifyContent: "center",
               }}
             >
-              <Ionicons name="close" size={22} color="#f97316" />
+              <Ionicons name="close" size={20} color="#f97316" />
             </Pressable>
           </View>
 
@@ -877,6 +882,7 @@ export default function TraineeScreen() {
   const [taskAssignments, setTaskAssignments] = useState<TaskAssignment[]>([]);
   const [taskVisible, setTaskVisible] = useState(false);
   const [taskAssignmentVisible, setTaskAssignmentVisible] = useState(false);
+  const [fabMenuVisible, setFabMenuVisible] = useState(false);
 
   const [statsData, setStatsData] = useState({
     total: 0,
@@ -1038,23 +1044,23 @@ export default function TraineeScreen() {
     {
       label: "Assigned",
       value: String(statsData.total),
-      icon: "people-outline" as const,
-      color: "#2563eb",
-      bg: "#eff6ff",
+      sub: "Total",
+      icon: "people",
+      subColor: "text-orange-500",
     },
     {
       label: "Trainees",
       value: String(statsData.trainees),
-      icon: "book-outline" as const,
-      color: "#f97316",
-      bg: "#fff7ed",
+      sub: "Active",
+      icon: "book",
+      subColor: "text-blue-500",
     },
     {
       label: "Interns",
       value: String(statsData.interns),
-      icon: "briefcase-outline" as const,
-      color: "#7c3aed",
-      bg: "#f5f3ff",
+      sub: "Active",
+      icon: "briefcase",
+      subColor: "text-emerald-500",
     },
   ];
 
@@ -1116,110 +1122,49 @@ export default function TraineeScreen() {
         <View
           style={{
             flexDirection: "row",
-            flexWrap: "wrap",
-            gap: 10,
+            justifyContent: "space-between",
             marginTop: 20,
           }}
         >
-          {stats.map((s) => (
+          {stats.map((s, idx) => (
             <View
-              key={s.label}
+              key={idx}
+              className="w-[32%] overflow-hidden rounded-2xl bg-white border border-orange-100"
               style={{
-                width: "31%",
-                borderRadius: 16,
-                backgroundColor: "#fff",
-                borderWidth: 1,
-                borderColor: "#e2e8f0",
-                padding: 14,
-                alignItems: "flex-start",
+                shadowColor: "#f97316",
+                shadowOffset: { width: 0, height: 4 },
+                shadowOpacity: 0.12,
+                shadowRadius: 10,
+                elevation: 4,
               }}
             >
-              <View
-                style={{
-                  width: 38,
-                  height: 38,
-                  borderRadius: 10,
-                  backgroundColor: s.bg,
-                  alignItems: "center",
-                  justifyContent: "center",
-                }}
+              <LinearGradient
+                colors={["#ffffff", "#fff7ed"]}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+                style={{ paddingHorizontal: 8, paddingVertical: 12 }}
               >
-                <Ionicons name={s.icon} size={20} color={s.color} />
-              </View>
-              <Text
-                style={{
-                  fontSize: 22,
-                  fontWeight: "800",
-                  color: "#0f172a",
-                  marginTop: 10,
-                }}
-              >
-                {s.value}
-              </Text>
-              <Text style={{ fontSize: 12, color: "#64748b", marginTop: 2 }}>
-                {s.label}
-              </Text>
+                <View className="flex-col items-start mb-2">
+                  <View className="h-8 w-8 items-center justify-center rounded-xl bg-black mb-2">
+                    <Ionicons name={s.icon as any} size={16} color="#f97316" />
+                  </View>
+                  <Text className="text-[10px] font-bold uppercase tracking-[0.5px] text-gray-500" numberOfLines={1}>
+                    {s.label}
+                  </Text>
+                </View>
+                <View className="flex-col items-start">
+                  <Text className="text-xl font-black text-black">
+                    {s.value}
+                  </Text>
+                  <Text className={`text-[9px] font-bold ${s.subColor || "text-gray-400"}`}>
+                    {s.sub}
+                  </Text>
+                </View>
+              </LinearGradient>
             </View>
           ))}
         </View>
 
-        <View
-          style={{
-            flexDirection: "row",
-            gap: 12,
-            marginTop: 24,
-            marginBottom: 4,
-          }}
-        >
-          <Pressable
-            onPress={() => setTaskVisible(true)}
-            style={{
-              flex: 1,
-              flexDirection: "row",
-              alignItems: "center",
-              justifyContent: "center",
-              backgroundColor: "#f97316",
-              paddingVertical: 14,
-              borderRadius: 16,
-            }}
-          >
-            <Ionicons name="add-circle-outline" size={20} color="white" />
-            <Text
-              style={{
-                marginLeft: 6,
-                fontSize: 14,
-                fontWeight: "700",
-                color: "white",
-              }}
-            >
-              Add Task
-            </Text>
-          </Pressable>
-          <Pressable
-            onPress={() => setTaskAssignmentVisible(true)}
-            style={{
-              flex: 1,
-              flexDirection: "row",
-              alignItems: "center",
-              justifyContent: "center",
-              backgroundColor: "#10b981",
-              paddingVertical: 14,
-              borderRadius: 16,
-            }}
-          >
-            <Ionicons name="person-add-outline" size={20} color="white" />
-            <Text
-              style={{
-                marginLeft: 6,
-                fontSize: 14,
-                fontWeight: "700",
-                color: "white",
-              }}
-            >
-              Assign Task
-            </Text>
-          </Pressable>
-        </View>
 
         <Text
           style={{
@@ -1253,23 +1198,24 @@ export default function TraineeScreen() {
                 <View
                   key={`${member.id || member.uuid || index}`}
                   style={{
-                    borderRadius: 18,
+                    borderRadius: 20,
                     backgroundColor: "#fff",
                     borderWidth: 1,
-                    borderColor: "#e2e8f0",
-                    padding: 16,
-                    shadowColor: "#000",
-                    shadowOpacity: 0.04,
-                    shadowRadius: 6,
-                    elevation: 1,
+                    borderColor: "#f1f5f9",
+                    padding: 18,
+                    shadowColor: "#94a3b8",
+                    shadowOffset: { width: 0, height: 4 },
+                    shadowOpacity: 0.1,
+                    shadowRadius: 12,
+                    elevation: 4,
                   }}
                 >
-                  <View style={{ flexDirection: "row", alignItems: "center" }}>
+                  <View style={{ flexDirection: "row", alignItems: "center", marginBottom: 12 }}>
                     <View
                       style={{
-                        width: 46,
-                        height: 46,
-                        borderRadius: 14,
+                        width: 50,
+                        height: 50,
+                        borderRadius: 16,
                         backgroundColor:
                           type.toLowerCase() === "intern"
                             ? "#f5f3ff"
@@ -1280,7 +1226,8 @@ export default function TraineeScreen() {
                     >
                       <Text
                         style={{
-                          fontWeight: "800",
+                          fontSize: 16,
+                          fontWeight: "900",
                           color:
                             type.toLowerCase() === "intern"
                               ? "#7c3aed"
@@ -1291,18 +1238,18 @@ export default function TraineeScreen() {
                       </Text>
                     </View>
 
-                    <View style={{ flex: 1, marginLeft: 12 }}>
+                    <View style={{ flex: 1, marginLeft: 14 }}>
                       <Text
                         style={{
-                          fontSize: 15,
-                          fontWeight: "700",
+                          fontSize: 17,
+                          fontWeight: "800",
                           color: "#0f172a",
                         }}
                       >
                         {name}
                       </Text>
                       <Text
-                        style={{ fontSize: 12, color: "#64748b", marginTop: 2 }}
+                        style={{ fontSize: 13, color: "#64748b", marginTop: 2 }}
                       >
                         {member.person_id || "No ID"} • {type}
                       </Text>
@@ -1312,17 +1259,17 @@ export default function TraineeScreen() {
                       style={{
                         backgroundColor:
                           status.toLowerCase() === "active"
-                            ? "#ecfdf5"
-                            : "#f8fafc",
-                        borderRadius: 999,
-                        paddingHorizontal: 10,
-                        paddingVertical: 5,
+                            ? "#d1fae5"
+                            : "#f1f5f9",
+                        borderRadius: 12,
+                        paddingHorizontal: 12,
+                        paddingVertical: 6,
                       }}
                     >
                       <Text
                         style={{
-                          fontSize: 10,
-                          fontWeight: "700",
+                          fontSize: 11,
+                          fontWeight: "800",
                           color:
                             status.toLowerCase() === "active"
                               ? "#059669"
@@ -1334,20 +1281,23 @@ export default function TraineeScreen() {
                     </View>
                   </View>
 
-                  <View style={{ marginTop: 12, gap: 6 }}>
-                    <Text style={{ fontSize: 12, color: "#64748b" }}>
-                      Department: {member.department || "-"}
-                    </Text>
-                    <Text style={{ fontSize: 12, color: "#64748b" }}>
-                      Designation: {member.designation || "-"}
-                    </Text>
-                    <Text style={{ fontSize: 12, color: "#64748b" }}>
-                      Manager: {member.reporting_manager || "-"}
-                    </Text>
-                    <Text style={{ fontSize: 12, color: "#64748b" }}>
-                      Joining:{" "}
-                      {formatDate(member.joining_date || member.created_at)}
-                    </Text>
+                  <View style={{ backgroundColor: "#f8fafc", borderRadius: 12, padding: 12, gap: 8 }}>
+                    <View style={{ flexDirection: "row", justifyContent: "space-between" }}>
+                      <Text style={{ fontSize: 13, color: "#64748b", fontWeight: "600" }}>Department</Text>
+                      <Text style={{ fontSize: 13, color: "#0f172a", fontWeight: "700" }}>{member.department || "-"}</Text>
+                    </View>
+                    <View style={{ flexDirection: "row", justifyContent: "space-between" }}>
+                      <Text style={{ fontSize: 13, color: "#64748b", fontWeight: "600" }}>Designation</Text>
+                      <Text style={{ fontSize: 13, color: "#0f172a", fontWeight: "700" }}>{member.designation || "-"}</Text>
+                    </View>
+                    <View style={{ flexDirection: "row", justifyContent: "space-between" }}>
+                      <Text style={{ fontSize: 13, color: "#64748b", fontWeight: "600" }}>Manager</Text>
+                      <Text style={{ fontSize: 13, color: "#0f172a", fontWeight: "700" }}>{member.reporting_manager || "-"}</Text>
+                    </View>
+                    <View style={{ flexDirection: "row", justifyContent: "space-between" }}>
+                      <Text style={{ fontSize: 13, color: "#64748b", fontWeight: "600" }}>Joining Date</Text>
+                      <Text style={{ fontSize: 13, color: "#0f172a", fontWeight: "700" }}>{formatDate(member.joining_date || member.created_at)}</Text>
+                    </View>
                   </View>
                 </View>
               );
@@ -1411,15 +1361,16 @@ export default function TraineeScreen() {
               <View
                 key={assignment.uuid || index}
                 style={{
-                  borderRadius: 18,
+                  borderRadius: 20,
                   backgroundColor: "#fff",
                   borderWidth: 1,
-                  borderColor: "#e2e8f0",
-                  padding: 16,
-                  shadowColor: "#000",
-                  shadowOpacity: 0.04,
-                  shadowRadius: 6,
-                  elevation: 1,
+                  borderColor: "#f1f5f9",
+                  padding: 18,
+                  shadowColor: "#94a3b8",
+                  shadowOffset: { width: 0, height: 4 },
+                  shadowOpacity: 0.1,
+                  shadowRadius: 12,
+                  elevation: 4,
                 }}
               >
                 <View
@@ -1429,35 +1380,40 @@ export default function TraineeScreen() {
                     alignItems: "flex-start",
                   }}
                 >
-                  <View style={{ flex: 1 }}>
-                    <Text
-                      style={{
-                        fontSize: 15,
-                        fontWeight: "700",
-                        color: "#0f172a",
-                      }}
-                    >
-                      {assignment.task_name || "Untitled task"}
-                    </Text>
-                    <Text
-                      style={{ fontSize: 13, color: "#64748b", marginTop: 2 }}
-                    >
-                      Assigned to:{" "}
-                      {assignment.trainee_name || "Trainee / Intern"}
-                    </Text>
+                  <View style={{ flex: 1, flexDirection: "row" }}>
+                    <View style={{ width: 44, height: 44, borderRadius: 12, backgroundColor: "#fff7ed", alignItems: "center", justifyContent: "center", marginRight: 12 }}>
+                      <Ionicons name="document-text" size={22} color="#f97316" />
+                    </View>
+                    <View style={{ flex: 1 }}>
+                      <Text
+                        style={{
+                          fontSize: 16,
+                          fontWeight: "800",
+                          color: "#0f172a",
+                        }}
+                      >
+                        {assignment.task_name || "Untitled task"}
+                      </Text>
+                      <Text
+                        style={{ fontSize: 13, color: "#64748b", marginTop: 2, fontWeight: "600" }}
+                      >
+                        Assigned to:{" "}
+                        <Text style={{ color: "#334155", fontWeight: "700" }}>{assignment.trainee_name || "Trainee / Intern"}</Text>
+                      </Text>
+                    </View>
                   </View>
                   <View
                     style={{
                       backgroundColor: "#fff7ed",
-                      borderRadius: 999,
-                      paddingHorizontal: 10,
-                      paddingVertical: 5,
+                      borderRadius: 12,
+                      paddingHorizontal: 12,
+                      paddingVertical: 6,
                     }}
                   >
                     <Text
                       style={{
-                        fontSize: 10,
-                        fontWeight: "700",
+                        fontSize: 11,
+                        fontWeight: "800",
                         color: "#ea580c",
                       }}
                     >
@@ -1465,26 +1421,34 @@ export default function TraineeScreen() {
                     </Text>
                   </View>
                 </View>
+                
+                <View style={{ height: 1, backgroundColor: "#f1f5f9", marginVertical: 14 }} />
+
                 <View
                   style={{
-                    marginTop: 12,
                     flexDirection: "row",
                     justifyContent: "space-between",
+                    alignItems: "center"
                   }}
                 >
-                  <Text style={{ fontSize: 12, color: "#64748b" }}>
-                    Assigned: {assignment.assigned_date?.slice?.(0, 10) || "-"}{" "}
-                    {assignment.assigned_time || ""}
-                  </Text>
-                  <Text
-                    style={{
-                      fontSize: 12,
-                      fontWeight: "700",
-                      color: "#ea580c",
-                    }}
-                  >
-                    {assignment.progress || 0}% Progress
-                  </Text>
+                  <View style={{ flexDirection: "row", alignItems: "center" }}>
+                    <Ionicons name="calendar-outline" size={16} color="#94a3b8" />
+                    <Text style={{ fontSize: 13, color: "#64748b", marginLeft: 6, fontWeight: "600" }}>
+                      {assignment.assigned_date?.slice?.(0, 10) || "-"} {assignment.assigned_time || ""}
+                    </Text>
+                  </View>
+                  <View style={{ flexDirection: "row", alignItems: "center", backgroundColor: "#f8fafc", paddingHorizontal: 10, paddingVertical: 4, borderRadius: 8 }}>
+                    <Ionicons name="pie-chart" size={14} color="#f97316" style={{ marginRight: 6 }} />
+                    <Text
+                      style={{
+                        fontSize: 12,
+                        fontWeight: "800",
+                        color: "#ea580c",
+                      }}
+                    >
+                      {assignment.progress || 0}%
+                    </Text>
+                  </View>
                 </View>
               </View>
             ))}
@@ -1547,6 +1511,38 @@ export default function TraineeScreen() {
         onClose={() => setTaskAssignmentVisible(false)}
         onSaved={loadTasks}
       />
+
+      {/* FAB Menu */}
+      <View style={{ position: "absolute", bottom: 24, right: 24, alignItems: "flex-end", zIndex: 100 }}>
+        {fabMenuVisible && (
+          <View style={{ gap: 14, marginBottom: 16 }}>
+            <Pressable 
+              onPress={() => { setTaskVisible(true); setFabMenuVisible(false); }} 
+              style={{ flexDirection: "row", alignItems: "center", justifyContent: "flex-end", gap: 12 }}
+            >
+              <Text style={{ backgroundColor: "#fff", paddingHorizontal: 14, paddingVertical: 8, borderRadius: 10, overflow: "hidden", fontWeight: "700", elevation: 3, shadowColor: "#000", shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.1, shadowRadius: 4, color: "#334155" }}>Add Task</Text>
+              <View style={{ width: 48, height: 48, borderRadius: 24, backgroundColor: "#fff", alignItems: "center", justifyContent: "center", elevation: 3, shadowColor: "#000", shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.1, shadowRadius: 4 }}>
+                <Ionicons name="add" size={24} color="#f97316" />
+              </View>
+            </Pressable>
+            <Pressable 
+              onPress={() => { setTaskAssignmentVisible(true); setFabMenuVisible(false); }} 
+              style={{ flexDirection: "row", alignItems: "center", justifyContent: "flex-end", gap: 12 }}
+            >
+              <Text style={{ backgroundColor: "#fff", paddingHorizontal: 14, paddingVertical: 8, borderRadius: 10, overflow: "hidden", fontWeight: "700", elevation: 3, shadowColor: "#000", shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.1, shadowRadius: 4, color: "#334155" }}>Assign Task</Text>
+              <View style={{ width: 48, height: 48, borderRadius: 24, backgroundColor: "#fff", alignItems: "center", justifyContent: "center", elevation: 3, shadowColor: "#000", shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.1, shadowRadius: 4 }}>
+                <Ionicons name="person-add" size={20} color="#f97316" />
+              </View>
+            </Pressable>
+          </View>
+        )}
+        <Pressable 
+          onPress={() => setFabMenuVisible(!fabMenuVisible)}
+          style={{ width: 60, height: 60, borderRadius: 30, backgroundColor: "#f97316", alignItems: "center", justifyContent: "center", elevation: 5, shadowColor: "#f97316", shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.3, shadowRadius: 6 }}
+        >
+          <Ionicons name={fabMenuVisible ? "close" : "add"} size={32} color="#fff" />
+        </Pressable>
+      </View>
     </SafeAreaView>
   );
 }

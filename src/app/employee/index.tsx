@@ -1,18 +1,18 @@
 import { Ionicons } from "@expo/vector-icons";
+import { LinearGradient } from "expo-linear-gradient";
 import { useCallback, useEffect, useState } from "react";
 import {
-  ActivityIndicator,
-  Pressable,
-  RefreshControl,
-  ScrollView,
-  Text,
-  View,
+    ActivityIndicator,
+    Pressable,
+    RefreshControl,
+    ScrollView,
+    Text,
+    View,
 } from "react-native";
 import api from "../../api";
 import { useAuth } from "../../auth/AuthContext";
 import { BottomHome } from "../../components/BottomHome";
 import { TopHeader } from "../../components/TopHeader";
-import { LinearGradient } from "expo-linear-gradient";
 
 type Dashboard = {
   employee?: { first_name?: string; employee_code?: string };
@@ -45,6 +45,7 @@ type Dashboard = {
   tasks?: {
     assigned?: number;
     completed?: number;
+    overdue?: number;
     today?: { task_name?: string; title?: string; status?: string }[];
   };
 };
