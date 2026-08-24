@@ -9,6 +9,7 @@ import {
   ScrollView,
   Text,
   TextInput,
+  RefreshControl,
   TouchableOpacity,
   View,
 } from "react-native";
@@ -23,68 +24,98 @@ export default function TeamScreen() {
   const [team, setTeam] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
-  const [statusFilter, setStatusFilter] = useState("");
+  const [statusFilter, setStatusFilter] = useState("Active");
   const [roleFilter, setRoleFilter] = useState("");
+  const [refreshing, setRefreshing] = useState(false);
 
   const [statusDropdownOpen, setStatusDropdownOpen] = useState(false);
   const [roleDropdownOpen, setRoleDropdownOpen] = useState(false);
 
-  useEffect(() => {
-    const fetchTeam = async () => {
-      try {
-        const { data } = await api.get("/employees");
 
-        // Handle both possible response shapes: { data: [...] } or just [...]
-        const usersArray = Array.isArray(data)
-          ? data
-          : data?.data || data?.users || [];
-
-        const mappedTeam = usersArray.map((emp: any) => {
-          // Resolve profile photo URL (e.g., /uploads/... -> http://192.168.1.4:5000/uploads/...)
-          const baseUrl = API_BASE_URL.replace(/\/api$/, "");
-          const avatarUrl = emp.profile_photo
-            ? emp.profile_photo.startsWith("http")
-              ? emp.profile_photo
-              : `${baseUrl}${emp.profile_photo}`
-            : null;
-
-          return {
-            id:
-              emp.employee_id ||
-              emp.employeeId ||
-              emp.id ||
-              emp.uuid ||
-              emp._id ||
-              emp.employee_code ||
-              emp.employeeCode,
-            name:
-              `${emp.first_name || ""} ${emp.last_name || ""}`.trim() ||
-              "Unknown",
-            role: emp.role || "Employee",
-            roleColor: "text-orange-500",
-            roleBg: "bg-orange-50",
-            team: emp.department || emp.team || emp.employee_code || "General",
-            email: emp.email || "N/A",
-            phone: emp.phone || emp.mobile || "N/A",
-            status: emp.employment_status || emp.status || "Active",
-            statusColor:
-              emp.status === "Inactive" ? "text-red-600" : "text-green-600",
-            statusBg:
-              emp.status === "Inactive" ? "bg-red-100" : "bg-green-100",
-            avatar: avatarUrl,
-            onlineDot:
-              emp.status === "Inactive" ? "bg-slate-300" : "bg-orange-500",
-          };
-        });
-        setTeam(mappedTeam);
-      } catch (error) {
-        console.error("Failed to fetch team members:", error);
-      } finally {
-        setLoading(false);
+  const fetchTeam = async (isRefresh = false) => {
+    try {
+      if (isRefresh) {
+        setRefreshing(true);
+      } else {
+        setLoading(true);
       }
-    };
+
+      const { data } = await api.get("/employees");
+
+      const usersArray = Array.isArray(data)
+        ? data
+        : data?.data || data?.users || [];
+
+      const mappedTeam = usersArray.map((emp: any) => {
+        const baseUrl = API_BASE_URL.replace(/\/api$/, "");
+
+        const avatarUrl = emp.profile_photo
+          ? emp.profile_photo.startsWith("http")
+            ? emp.profile_photo
+            : `${baseUrl}${emp.profile_photo}`
+          : null;
+
+        return {
+          id:
+            emp.employee_id ||
+            emp.employeeId ||
+            emp.id ||
+            emp.uuid ||
+            emp._id ||
+            emp.employee_code ||
+            emp.employeeCode,
+
+          name:
+            `${emp.first_name || ""} ${emp.last_name || ""}`.trim() ||
+            "Unknown",
+
+          role: emp.role || "Employee",
+          roleColor: "text-orange-500",
+          roleBg: "bg-orange-50",
+
+          team:
+            emp.department ||
+            emp.team ||
+            emp.employee_code ||
+            "General",
+
+          email: emp.email || "N/A",
+          phone: emp.phone || emp.mobile || "N/A",
+
+          status: emp.employment_status || emp.status || "Active",
+
+          statusColor:
+            (emp.employment_status || emp.status) === "Inactive"
+              ? "text-red-600"
+              : "text-green-600",
+
+          statusBg:
+            (emp.employment_status || emp.status) === "Inactive"
+              ? "bg-red-100"
+              : "bg-green-100",
+
+          avatar: avatarUrl,
+
+          onlineDot:
+            (emp.employment_status || emp.status) === "Inactive"
+              ? "bg-slate-300"
+              : "bg-orange-500",
+        };
+      });
+
+      setTeam(mappedTeam);
+    } catch (error) {
+      console.error("Failed to fetch team members:", error);
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+    }
+  };
+
+  useEffect(() => {
     fetchTeam();
   }, []);
+
 
   // Calculate stats dynamically based on the fetched team data
   const total = team.length;
@@ -153,7 +184,18 @@ export default function TeamScreen() {
     <View className="flex-1 bg-white">
       <TopHeader />
 
-      <ScrollView className="flex-1" contentContainerClassName="pb-32 pt-2">
+      <ScrollView
+        className="flex-1"
+        contentContainerClassName="pb-32 pt-2"
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={() => fetchTeam(true)}
+            colors={["#f97316"]}
+            tintColor="#f97316"
+          />
+        }
+      >
         {/* ── STATS SECTION ── */}
         <View className="px-5 mb-6 flex-row flex-wrap justify-between">
           {dynamicStats.map((stat, idx) => (

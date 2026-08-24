@@ -3,14 +3,15 @@ import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import {
-    ActivityIndicator,
-    Modal,
-    Pressable,
-    ScrollView,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View,
+  ActivityIndicator,
+  Modal,
+  Pressable,
+  ScrollView,
+  Text,
+  TextInput,
+  RefreshControl,
+  TouchableOpacity,
+  View,
 } from "react-native";
 
 import api from "../../api";
@@ -34,10 +35,10 @@ const formatDate = (value?: string) => {
   return Number.isNaN(date.getTime())
     ? value
     : date.toLocaleDateString(undefined, {
-        month: "short",
-        day: "numeric",
-        year: "numeric",
-      });
+      month: "short",
+      day: "numeric",
+      year: "numeric",
+    });
 };
 
 export default function ProjectsScreen() {
@@ -64,6 +65,7 @@ export default function ProjectsScreen() {
   const [assigning, setAssigning] = useState(false);
   const [statusDropdownOpen, setStatusDropdownOpen] = useState(false);
   const [assignmentDropdownOpen, setAssignmentDropdownOpen] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
 
   const openProject = useCallback(
     (project: any) => {
@@ -104,10 +106,10 @@ export default function ProjectsScreen() {
       proj.projectStartDate;
     const endDate =
       proj.end_date || proj.estimated_completion_date || proj.project_end_date;
-    
+
     const formattedStart = formatDate(dateValue);
     const formattedEnd = formatDate(endDate);
-    
+
     const fromDate = formattedStart
       ? `${formattedStart}${formattedEnd ? ` – ${formattedEnd}` : ""}`
       : "No Date Provided";
@@ -116,11 +118,11 @@ export default function ProjectsScreen() {
       rawId: rawUuid,
       projectId: String(
         proj.id ??
-          proj.project_id ??
-          proj.projectId ??
-          proj.uuid ??
-          rawUuid ??
-          "",
+        proj.project_id ??
+        proj.projectId ??
+        proj.uuid ??
+        rawUuid ??
+        "",
       ),
       uuid: String(
         rawUuid ?? proj.id ?? proj.project_id ?? proj.projectId ?? "",
@@ -156,13 +158,19 @@ export default function ProjectsScreen() {
     };
   }, []);
 
-  const fetchProjects = useCallback(async () => {
+  const fetchProjects = useCallback(async (isRefresh = false) => {
     try {
-      setLoading(true);
+      if (isRefresh) {
+        setRefreshing(true);
+      } else {
+        setLoading(true);
+      }
+
       const [projectsResponse, assignmentsResponse] = await Promise.all([
         api
           .get("/projects?limit=1000&page=1")
           .catch(() => ({ data: { data: [] } })),
+
         api
           .get("/projects/assignments/all?limit=1000&page=1")
           .catch(() => ({ data: { grouped: [] } })),
@@ -172,9 +180,9 @@ export default function ProjectsScreen() {
       const projectsArray = Array.isArray(projectsPayload)
         ? projectsPayload
         : projectsPayload?.data ||
-          projectsPayload?.projects ||
-          projectsPayload?.rows ||
-          [];
+        projectsPayload?.projects ||
+        projectsPayload?.rows ||
+        [];
 
       const assignmentsPayload = assignmentsResponse.data;
       const groups =
@@ -310,7 +318,7 @@ export default function ProjectsScreen() {
           }
         });
         setProgressMap(newProgressMap);
-      } catch (_) {}
+      } catch (_) { }
     } catch (error) {
       console.error("Failed to fetch projects:", error);
       setProjects([]);
@@ -318,6 +326,7 @@ export default function ProjectsScreen() {
       setUnassignedProjects([]);
     } finally {
       setLoading(false);
+      setRefreshing(false);
     }
   }, [normalizeProject]);
 
@@ -348,12 +357,12 @@ export default function ProjectsScreen() {
             "Employee",
           activeProjectCount: Number(
             employee.active_projects ||
-              employee.activeProjects ||
-              employee.active_project_count ||
-              employee.activeProjectCount ||
-              employee.project_count ||
-              employee.current_projects ||
-              0,
+            employee.activeProjects ||
+            employee.active_project_count ||
+            employee.activeProjectCount ||
+            employee.project_count ||
+            employee.current_projects ||
+            0,
           ),
           raw: employee,
         }),
@@ -520,7 +529,27 @@ export default function ProjectsScreen() {
     <View className="flex-1 bg-[#F9FAFB]">
       <TopHeader />
 
-      <ScrollView className="flex-1" contentContainerStyle={{ paddingHorizontal: 20, paddingTop: 14, paddingBottom: 120 }}>
+      <ScrollView
+        className="flex-1"
+        contentContainerStyle={{
+          paddingHorizontal: 20,
+          paddingTop: 14,
+          paddingBottom: 120,
+        }}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={async () => {
+              await Promise.all([
+                fetchProjects(true),
+                fetchEmployees(),
+              ]);
+            }}
+            colors={["#f97316"]}
+            tintColor="#f97316"
+          />
+        }
+      >
         <View className="mt-5 mb-2 flex-row flex-wrap justify-between">
           {statCards.map((stat, idx) => (
             <View
@@ -669,7 +698,7 @@ export default function ProjectsScreen() {
           </Pressable>
         </Modal>
 
-        
+
 
         <View>
           {loading || assigning ? (
