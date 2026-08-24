@@ -64,7 +64,7 @@ export default function ProfileScreen() {
     setIsChangingPassword(true);
 
     try {
-      const response = await post('/users/change-password', {
+      const response = await api.post('/users/change-password', {
         currentPassword,
         newPassword,
       });
