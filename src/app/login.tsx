@@ -1,6 +1,6 @@
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
@@ -21,6 +21,7 @@ import { getRoleHome } from "../auth/roleUtils";
 export default function LoginScreen() {
   const router = useRouter();
   const { login } = useAuth();
+  const isAttemptingRef = useRef(false);
 
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
@@ -49,6 +50,66 @@ export default function LoginScreen() {
     setFieldError("");
     setServerError("");
     setIsSubmitting(true);
+
+    useEffect(() => {
+      const trimmedUsername = username.trim();
+
+      // Don't attempt login until both fields are filled
+      if (
+        !trimmedUsername ||
+        !password ||
+        password.length < 6 ||
+        isAttemptingRef.current ||
+        isSubmitting
+      ) {
+        return;
+      }
+
+      // Wait until user stops typing
+      const timer = setTimeout(async () => {
+        if (isAttemptingRef.current) return;
+
+        isAttemptingRef.current = true;
+        setIsSubmitting(true);
+        setServerError("");
+        setFieldError("");
+
+        try {
+          const { data } = await api.post("/users/login", {
+            identifier: trimmedUsername,
+            password,
+          });
+
+          const roleHome = getRoleHome(data.user?.role);
+
+          if (!roleHome || !data.user || !data.token) {
+            throw new Error(
+              "Your account has no supported admin or employee role"
+            );
+          }
+
+          await login(data.user, data.token);
+
+          // Automatically go to dashboard
+          router.replace(roleHome);
+
+        } catch (error) {
+          // Keep silent while typing.
+          // User can continue changing the credentials.
+        } finally {
+          isAttemptingRef.current = false;
+          setIsSubmitting(false);
+        }
+      }, 700);
+
+      return () => clearTimeout(timer);
+    }, [
+      username,
+      password,
+      isSubmitting,
+      login,
+      router,
+    ]);
 
     try {
       const { data } = await api.post("/users/login", {
