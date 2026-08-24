@@ -5,6 +5,7 @@ import React, { useEffect, useState } from "react";
 import { ActivityIndicator, Alert, Modal, Pressable, RefreshControl, ScrollView, Text, TextInput, TouchableOpacity, View } from "react-native";
 import api from "../../api";
 import { FAB } from "../FAB";
+import DateTimePicker from "@react-native-community/datetimepicker";
 
 export default function CompanyIncomeTab() {
   const [interns, setInterns] = useState([]);
