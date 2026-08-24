@@ -1,4 +1,5 @@
 import { Ionicons } from "@expo/vector-icons";
+import DateTimePicker, { DateTimePickerEvent } from "@react-native-community/datetimepicker";
 import dayjs from "dayjs";
 import isSameOrAfter from "dayjs/plugin/isSameOrAfter";
 import * as DocumentPicker from "expo-document-picker";
@@ -195,6 +196,7 @@ function CreateEventModal({ visible, initialData, initialDate, userId, onClose, 
   const [documentFile, setDocumentFile] = useState<DocumentPicker.DocumentPickerAsset | null>(null);
   const [saving, setSaving] = useState(false);
   const [activeTab, setActiveTab] = useState("Basic");
+  const [picker, setPicker] = useState<"date" | "startTime" | "endTime" | null>(null);
 
   useEffect(() => {
     if (visible) {
@@ -222,6 +224,28 @@ function CreateEventModal({ visible, initialData, initialDate, userId, onClose, 
       newArr[index] = value;
       return { ...c, [field]: newArr };
     });
+  };
+
+  const pickerValue = () => {
+    if (picker === "date") {
+      const parsed = dayjs(formData.planDate);
+      return parsed.isValid() ? parsed.toDate() : new Date();
+    }
+    const value = picker === "startTime" ? formData.startTime : formData.endTime;
+    const [hours, minutes] = String(value || "09:00").split(":").map(Number);
+    const date = new Date();
+    date.setHours(hours || 0, minutes || 0, 0, 0);
+    return date;
+  };
+
+  const handlePickerChange = (event: DateTimePickerEvent, value?: Date) => {
+    if (event.type === "dismissed" || !value || !picker) {
+      setPicker(null);
+      return;
+    }
+    if (picker === "date") update("planDate", dayjs(value).format("YYYY-MM-DD"));
+    else update(picker, dayjs(value).format("HH:mm"));
+    setPicker(null);
   };
   const removeArrayItem = (field: "checklistItems" | "tags", index: number) => {
     setFormData((c: any) => {
@@ -313,12 +337,12 @@ function CreateEventModal({ visible, initialData, initialDate, userId, onClose, 
               <View>
                 <FormField label="Plan Title *" value={formData.planTitle} onChangeText={(v) => update("planTitle", v)} placeholder="Enter plan title" />
                 <View style={{ flexDirection: "row", gap: 12 }}>
-                  <View style={{ flex: 1 }}><FormField label="Plan Date *" value={formData.planDate} onChangeText={(v) => update("planDate", v)} placeholder="YYYY-MM-DD" /></View>
+                  <View style={{ flex: 1 }}><FormField label="Plan Date *" value={formData.planDate} onChangeText={(v) => update("planDate", v)} placeholder="YYYY-MM-DD" /><TouchableOpacity onPress={() => setPicker("date")} style={{ position: "absolute", right: 12, bottom: 20 }}><Ionicons name="calendar-outline" size={20} color="#f97316" /></TouchableOpacity></View>
                   <View style={{ flex: 1 }}><CustomSelect label="Category *" value={formData.category} options={Object.keys(CATEGORY_COLORS)} onSelect={v => update("category", v)} /></View>
                 </View>
                 <View style={{ flexDirection: "row", gap: 12 }}>
-                  <View style={{ flex: 1 }}><FormField label="Start Time *" value={formData.startTime} onChangeText={(v) => update("startTime", v)} placeholder="09:00 - 20:00" /></View>
-                  <View style={{ flex: 1 }}><FormField label="End Time *" value={formData.endTime} onChangeText={(v) => update("endTime", v)} placeholder="09:00 - 20:00" /></View>
+                  <View style={{ flex: 1 }}><FormField label="Start Time *" value={formData.startTime} onChangeText={(v) => update("startTime", v)} placeholder="09:00 - 20:00" /><TouchableOpacity onPress={() => setPicker("startTime")} style={{ position: "absolute", right: 12, bottom: 20 }}><Ionicons name="time-outline" size={20} color="#f97316" /></TouchableOpacity></View>
+                  <View style={{ flex: 1 }}><FormField label="End Time *" value={formData.endTime} onChangeText={(v) => update("endTime", v)} placeholder="09:00 - 20:00" /><TouchableOpacity onPress={() => setPicker("endTime")} style={{ position: "absolute", right: 12, bottom: 20 }}><Ionicons name="time-outline" size={20} color="#f97316" /></TouchableOpacity></View>
                 </View>
                 <FormField label="Description" value={formData.description} onChangeText={(v) => update("description", v)} placeholder="Describe your plan" multiline />
                 <View style={{ flexDirection: "row", gap: 12 }}>
@@ -400,6 +424,7 @@ function CreateEventModal({ visible, initialData, initialDate, userId, onClose, 
               <Text style={{ color: "#fff", fontSize: 16, fontWeight: "800" }}>{saving ? "Saving..." : initialData ? "Update Event" : "Save Event"}</Text>
             </Pressable>
           </ScrollView>
+          {picker && <DateTimePicker value={pickerValue()} mode={picker === "date" ? "date" : "time"} minimumDate={picker === "date" ? new Date() : undefined} onChange={handlePickerChange} />}
         </KeyboardAvoidingView>
       </SafeAreaView>
     </Modal>

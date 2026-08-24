@@ -1,4 +1,5 @@
 import { Ionicons } from "@expo/vector-icons";
+import DateTimePicker, { DateTimePickerEvent } from "@react-native-community/datetimepicker";
 import { useFocusEffect, useRouter } from "expo-router";
 import { useCallback, useMemo, useState } from "react";
 import {
@@ -12,9 +13,6 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import api from "../../api";
-import { BottomHome } from "../../components/BottomHome";
-import { TopHeader } from "../../components/TopHeader";
-import { FAB } from "../../components/FAB";
 
 type OfficeEvent = {
   id?: string;
@@ -176,6 +174,14 @@ export default function OfficeCalendarScreen() {
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState("");
   const [selectedEvent, setSelectedEvent] = useState<OfficeEvent | null>(null);
+  const [showMonthPicker, setShowMonthPicker] = useState(false);
+
+  const handleMonthPickerChange = (event: DateTimePickerEvent, value?: Date) => {
+    setShowMonthPicker(false);
+    if (event.type !== "dismissed" && value) {
+      setMonth(new Date(value.getFullYear(), value.getMonth(), 1));
+    }
+  };
 
   const fetchEvents = useCallback(async (isRefresh = false) => {
     if (isRefresh) setRefreshing(true);
@@ -264,7 +270,7 @@ export default function OfficeCalendarScreen() {
             <Pressable onPress={() => setMonth((current) => new Date(current.getFullYear(), current.getMonth() - 1, 1))} accessibilityLabel="Previous month" style={{ padding: 6 }}>
               <Ionicons name="chevron-back" size={20} color="#475569" />
             </Pressable>
-            <Text style={{ fontSize: 17, fontWeight: "800", color: "#0f172a" }}>{month.toLocaleDateString(undefined, { month: "long", year: "numeric" })}</Text>
+            <Pressable onPress={() => setShowMonthPicker(true)} accessibilityLabel="Choose calendar month"><Text style={{ fontSize: 17, fontWeight: "800", color: "#0f172a" }}>{month.toLocaleDateString(undefined, { month: "long", year: "numeric" })}</Text></Pressable>
             <Pressable onPress={() => setMonth((current) => new Date(current.getFullYear(), current.getMonth() + 1, 1))} accessibilityLabel="Next month" style={{ padding: 6 }}>
               <Ionicons name="chevron-forward" size={20} color="#475569" />
             </Pressable>
@@ -316,6 +322,7 @@ export default function OfficeCalendarScreen() {
           </View>
         )}
       </ScrollView>
+      {showMonthPicker && <DateTimePicker value={month} mode="date" onChange={handleMonthPickerChange} />}
       <EventDetailsModal event={selectedEvent} onClose={() => setSelectedEvent(null)} />
     </SafeAreaView>
   );

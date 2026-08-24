@@ -1,4 +1,5 @@
 import { Ionicons } from "@expo/vector-icons";
+import { DateTimePickerEvent } from "@react-native-community/datetimepicker";
 import dayjs from "dayjs";
 import isSameOrAfter from "dayjs/plugin/isSameOrAfter";
 import { useRouter } from "expo-router";
@@ -6,6 +7,7 @@ import React, { useEffect, useState } from "react";
 import { ActivityIndicator, Alert, Modal, RefreshControl, ScrollView, Text, TextInput, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import api from "../../api"; // Assuming api is at src/api.js
+import { isAllowedEventTime, isTodayOrFutureDate } from "../../auth/calendarUtils";
 import { activeEmployeesOnly } from "../../auth/employeeUtils";
 import { FAB } from "../../components/FAB";
 
@@ -41,6 +43,18 @@ const getEmployeeFullName = (emp: any) => {
   if (!emp) return '';
   if (typeof emp === 'string') return emp;
   return emp.full_name || `${emp.first_name || ''} ${emp.last_name || ''}`.trim() || emp.employee_code || '';
+};
+
+const dateFromValue = (value: string) => {
+  const date = new Date(`${value}T12:00:00`);
+  return Number.isNaN(date.getTime()) ? new Date() : date;
+};
+
+const timeFromValue = (value: string) => {
+  const [hours, minutes] = value.split(":").map(Number);
+  const date = new Date();
+  date.setHours(hours || 0, minutes || 0, 0, 0);
+  return date;
 };
 
 const CustomSelect = ({ label, value, options, onSelect }: any) => {
@@ -88,6 +102,8 @@ export default function AdminCalendarScreen() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const [formData, setFormData] = useState(defaultForm);
+  const [datePickerField, setDatePickerField] = useState<"startDate" | "endDate" | null>(null);
+  const [timePickerField, setTimePickerField] = useState<"startTime" | "endTime" | null>(null);
   
   const [selectedEvent, setSelectedEvent] = useState<any>(null);
 
@@ -122,6 +138,24 @@ export default function AdminCalendarScreen() {
     setFormData(c => ({ ...c, [name]: value }));
   };
 
+  const handleDatePickerChange = (event: DateTimePickerEvent, value?: Date) => {
+    if (event.type === "dismissed" || !value || !datePickerField) {
+      setDatePickerField(null);
+      return;
+    }
+    handleFieldChange(datePickerField, dayjs(value).format("YYYY-MM-DD"));
+    setDatePickerField(null);
+  };
+
+  const handleTimePickerChange = (event: DateTimePickerEvent, value?: Date) => {
+    if (event.type === "dismissed" || !value || !timePickerField) {
+      setTimePickerField(null);
+      return;
+    }
+    handleFieldChange(timePickerField, dayjs(value).format("HH:mm"));
+    setTimePickerField(null);
+  };
+
   const handleToggleParticipant = (empObj: any) => {
     setFormData(c => {
       const parts = c.participants || [];
@@ -151,6 +185,14 @@ export default function AdminCalendarScreen() {
   const handleSubmit = async () => {
     if (!formData.title || !formData.eventType || !formData.startDate || !formData.endDate) {
       Alert.alert('Error', 'Please complete required fields.');
+      return;
+    }
+    if (!isTodayOrFutureDate(formData.startDate) || !isTodayOrFutureDate(formData.endDate)) {
+      Alert.alert("Invalid date", "Events can only be scheduled for today or a future date.");
+      return;
+    }
+    if (!isAllowedEventTime(formData.startTime, formData.endTime)) {
+      Alert.alert("Invalid time", "Events must be scheduled between 9:00 AM and 8:00 PM, with the end time after the start time.");
       return;
     }
     setIsSubmitting(true);
@@ -375,7 +417,7 @@ export default function AdminCalendarScreen() {
             {formData.eventType === 'Meeting' && (
               <>
                 <Text style={{ fontSize: 13, fontWeight: "600", color: "#334155", marginBottom: 6 }}>Date *</Text>
-                <TextInput style={{ borderWidth: 1, borderColor: "#cbd5e1", borderRadius: 10, padding: 12, backgroundColor: "#fff", marginBottom: 12 }} value={formData.startDate} onChangeText={t => handleFieldChange("startDate", t)} placeholder="YYYY-MM-DD" />
+                <TouchableOpacity onPress={() => setDatePickerField("startDate")} style={{ borderWidth: 1, borderColor: "#cbd5e1", borderRadius: 10, padding: 12, backgroundColor: "#fff", marginBottom: 12, flexDirection: "row", justifyContent: "space-between" }}><Text style={{ color: "#0f172a" }}>{formData.startDate}</Text><Ionicons name="calendar-outline" size={20} color="#f97316" /></TouchableOpacity>
                 
                 <Text style={{ fontSize: 13, fontWeight: "600", color: "#334155", marginBottom: 6 }}>Meeting Link</Text>
                 <TextInput style={{ borderWidth: 1, borderColor: "#cbd5e1", borderRadius: 10, padding: 12, backgroundColor: "#fff", marginBottom: 12 }} value={formData.meetingLink} onChangeText={t => handleFieldChange("meetingLink", t)} placeholder="https://" autoCapitalize="none" />
@@ -383,11 +425,11 @@ export default function AdminCalendarScreen() {
                 <View style={{ flexDirection: "row", gap: 12, marginBottom: 12 }}>
                   <View style={{ flex: 1 }}>
                     <Text style={{ fontSize: 13, fontWeight: "600", color: "#334155", marginBottom: 6 }}>Start Time</Text>
-                    <TextInput style={{ borderWidth: 1, borderColor: "#cbd5e1", borderRadius: 10, padding: 12, backgroundColor: "#fff" }} value={formData.startTime} onChangeText={t => handleFieldChange("startTime", t)} placeholder="HH:MM" />
+                    <TouchableOpacity onPress={() => setTimePickerField("startTime")} style={{ borderWidth: 1, borderColor: "#cbd5e1", borderRadius: 10, padding: 12, backgroundColor: "#fff", flexDirection: "row", justifyContent: "space-between" }}><Text style={{ color: "#0f172a" }}>{formData.startTime}</Text><Ionicons name="time-outline" size={20} color="#f97316" /></TouchableOpacity>
                   </View>
                   <View style={{ flex: 1 }}>
                     <Text style={{ fontSize: 13, fontWeight: "600", color: "#334155", marginBottom: 6 }}>End Time</Text>
-                    <TextInput style={{ borderWidth: 1, borderColor: "#cbd5e1", borderRadius: 10, padding: 12, backgroundColor: "#fff" }} value={formData.endTime} onChangeText={t => handleFieldChange("endTime", t)} placeholder="HH:MM" />
+                    <TouchableOpacity onPress={() => setTimePickerField("endTime")} style={{ borderWidth: 1, borderColor: "#cbd5e1", borderRadius: 10, padding: 12, backgroundColor: "#fff", flexDirection: "row", justifyContent: "space-between" }}><Text style={{ color: "#0f172a" }}>{formData.endTime}</Text><Ionicons name="time-outline" size={20} color="#f97316" /></TouchableOpacity>
                   </View>
                 </View>
                 
@@ -423,7 +465,7 @@ export default function AdminCalendarScreen() {
                 <View style={{ flexDirection: "row", gap: 12, marginBottom: 12 }}>
                   <View style={{ flex: 1 }}>
                     <Text style={{ fontSize: 13, fontWeight: "600", color: "#334155", marginBottom: 6 }}>Start Date *</Text>
-                    <TextInput style={{ borderWidth: 1, borderColor: "#cbd5e1", borderRadius: 10, padding: 12, backgroundColor: "#fff" }} value={formData.startDate} onChangeText={t => handleFieldChange("startDate", t)} placeholder="YYYY-MM-DD" />
+                    <TouchableOpacity onPress={() => setDatePickerField("startDate")} style={{ borderWidth: 1, borderColor: "#cbd5e1", borderRadius: 10, padding: 12, backgroundColor: "#fff", flexDirection: "row", justifyContent: "space-between" }}><Text style={{ color: "#0f172a" }}>{formData.startDate}</Text><Ionicons name="calendar-outline" size={20} color="#f97316" /></TouchableOpacity>
                   </View>
                   <View style={{ flex: 1 }}>
                     <Text style={{ fontSize: 13, fontWeight: "600", color: "#334155", marginBottom: 6 }}>End Date *</Text>
@@ -442,16 +484,16 @@ export default function AdminCalendarScreen() {
             {formData.eventType === 'Office Event' && (
               <>
                 <Text style={{ fontSize: 13, fontWeight: "600", color: "#334155", marginBottom: 6 }}>Date *</Text>
-                <TextInput style={{ borderWidth: 1, borderColor: "#cbd5e1", borderRadius: 10, padding: 12, backgroundColor: "#fff", marginBottom: 12 }} value={formData.startDate} onChangeText={t => handleFieldChange("startDate", t)} placeholder="YYYY-MM-DD" />
+                <TouchableOpacity onPress={() => setDatePickerField("startDate")} style={{ borderWidth: 1, borderColor: "#cbd5e1", borderRadius: 10, padding: 12, backgroundColor: "#fff", marginBottom: 12, flexDirection: "row", justifyContent: "space-between" }}><Text style={{ color: "#0f172a" }}>{formData.startDate}</Text><Ionicons name="calendar-outline" size={20} color="#f97316" /></TouchableOpacity>
                 
                 <View style={{ flexDirection: "row", gap: 12, marginBottom: 12 }}>
                   <View style={{ flex: 1 }}>
                     <Text style={{ fontSize: 13, fontWeight: "600", color: "#334155", marginBottom: 6 }}>Start Time</Text>
-                    <TextInput style={{ borderWidth: 1, borderColor: "#cbd5e1", borderRadius: 10, padding: 12, backgroundColor: "#fff" }} value={formData.startTime} onChangeText={t => handleFieldChange("startTime", t)} placeholder="HH:MM" />
+                    <TouchableOpacity onPress={() => setTimePickerField("startTime")} style={{ borderWidth: 1, borderColor: "#cbd5e1", borderRadius: 10, padding: 12, backgroundColor: "#fff", flexDirection: "row", justifyContent: "space-between" }}><Text style={{ color: "#0f172a" }}>{formData.startTime}</Text><Ionicons name="time-outline" size={20} color="#f97316" /></TouchableOpacity>
                   </View>
                   <View style={{ flex: 1 }}>
                     <Text style={{ fontSize: 13, fontWeight: "600", color: "#334155", marginBottom: 6 }}>End Time</Text>
-                    <TextInput style={{ borderWidth: 1, borderColor: "#cbd5e1", borderRadius: 10, padding: 12, backgroundColor: "#fff" }} value={formData.endTime} onChangeText={t => handleFieldChange("endTime", t)} placeholder="HH:MM" />
+                    <TouchableOpacity onPress={() => setTimePickerField("endTime")} style={{ borderWidth: 1, borderColor: "#cbd5e1", borderRadius: 10, padding: 12, backgroundColor: "#fff", flexDirection: "row", justifyContent: "space-between" }}><Text style={{ color: "#0f172a" }}>{formData.endTime}</Text><Ionicons name="time-outline" size={20} color="#f97316" /></TouchableOpacity>
                   </View>
                 </View>
                 
@@ -466,16 +508,16 @@ export default function AdminCalendarScreen() {
                 <TextInput style={{ borderWidth: 1, borderColor: "#cbd5e1", borderRadius: 10, padding: 12, backgroundColor: "#fff", marginBottom: 12 }} value={formData.interviewPerson} onChangeText={t => handleFieldChange("interviewPerson", t)} placeholder="Name of interviewee" />
                 
                 <Text style={{ fontSize: 13, fontWeight: "600", color: "#334155", marginBottom: 6 }}>Date *</Text>
-                <TextInput style={{ borderWidth: 1, borderColor: "#cbd5e1", borderRadius: 10, padding: 12, backgroundColor: "#fff", marginBottom: 12 }} value={formData.startDate} onChangeText={t => handleFieldChange("startDate", t)} placeholder="YYYY-MM-DD" />
+                <TouchableOpacity onPress={() => setDatePickerField("startDate")} style={{ borderWidth: 1, borderColor: "#cbd5e1", borderRadius: 10, padding: 12, backgroundColor: "#fff", marginBottom: 12, flexDirection: "row", justifyContent: "space-between" }}><Text style={{ color: "#0f172a" }}>{formData.startDate}</Text><Ionicons name="calendar-outline" size={20} color="#f97316" /></TouchableOpacity>
                 
                 <View style={{ flexDirection: "row", gap: 12, marginBottom: 12 }}>
                   <View style={{ flex: 1 }}>
                     <Text style={{ fontSize: 13, fontWeight: "600", color: "#334155", marginBottom: 6 }}>Start Time</Text>
-                    <TextInput style={{ borderWidth: 1, borderColor: "#cbd5e1", borderRadius: 10, padding: 12, backgroundColor: "#fff" }} value={formData.startTime} onChangeText={t => handleFieldChange("startTime", t)} placeholder="HH:MM" />
+                    <TouchableOpacity onPress={() => setTimePickerField("startTime")} style={{ borderWidth: 1, borderColor: "#cbd5e1", borderRadius: 10, padding: 12, backgroundColor: "#fff", flexDirection: "row", justifyContent: "space-between" }}><Text style={{ color: "#0f172a" }}>{formData.startTime}</Text><Ionicons name="time-outline" size={20} color="#f97316" /></TouchableOpacity>
                   </View>
                   <View style={{ flex: 1 }}>
                     <Text style={{ fontSize: 13, fontWeight: "600", color: "#334155", marginBottom: 6 }}>End Time</Text>
-                    <TextInput style={{ borderWidth: 1, borderColor: "#cbd5e1", borderRadius: 10, padding: 12, backgroundColor: "#fff" }} value={formData.endTime} onChangeText={t => handleFieldChange("endTime", t)} placeholder="HH:MM" />
+                    <TouchableOpacity onPress={() => setTimePickerField("endTime")} style={{ borderWidth: 1, borderColor: "#cbd5e1", borderRadius: 10, padding: 12, backgroundColor: "#fff", flexDirection: "row", justifyContent: "space-between" }}><Text style={{ color: "#0f172a" }}>{formData.endTime}</Text><Ionicons name="time-outline" size={20} color="#f97316" /></TouchableOpacity>
                   </View>
                 </View>
               </>
@@ -486,10 +528,10 @@ export default function AdminCalendarScreen() {
                 <CustomSelect label="Project" value={formData.project} options={projects.map(p => p.project_name)} onSelect={(v: string) => handleFieldChange("project", v)} />
                 
                 <Text style={{ fontSize: 13, fontWeight: "600", color: "#334155", marginBottom: 6 }}>Date *</Text>
-                <TextInput style={{ borderWidth: 1, borderColor: "#cbd5e1", borderRadius: 10, padding: 12, backgroundColor: "#fff", marginBottom: 12 }} value={formData.startDate} onChangeText={t => handleFieldChange("startDate", t)} placeholder="YYYY-MM-DD" />
+                <TouchableOpacity onPress={() => setDatePickerField("startDate")} style={{ borderWidth: 1, borderColor: "#cbd5e1", borderRadius: 10, padding: 12, backgroundColor: "#fff", marginBottom: 12, flexDirection: "row", justifyContent: "space-between" }}><Text style={{ color: "#0f172a" }}>{formData.startDate}</Text><Ionicons name="calendar-outline" size={20} color="#f97316" /></TouchableOpacity>
                 
                 <Text style={{ fontSize: 13, fontWeight: "600", color: "#334155", marginBottom: 6 }}>Deadline Time</Text>
-                <TextInput style={{ borderWidth: 1, borderColor: "#cbd5e1", borderRadius: 10, padding: 12, backgroundColor: "#fff", marginBottom: 12 }} value={formData.endTime} onChangeText={t => handleFieldChange("endTime", t)} placeholder="HH:MM" />
+                <TouchableOpacity onPress={() => setTimePickerField("endTime")} style={{ borderWidth: 1, borderColor: "#cbd5e1", borderRadius: 10, padding: 12, backgroundColor: "#fff", marginBottom: 12, flexDirection: "row", justifyContent: "space-between" }}><Text style={{ color: "#0f172a" }}>{formData.endTime}</Text><Ionicons name="time-outline" size={20} color="#f97316" /></TouchableOpacity>
                 
                 <Text style={{ fontSize: 13, fontWeight: "600", color: "#334155", marginBottom: 6 }}>Description</Text>
                 <TextInput style={{ borderWidth: 1, borderColor: "#cbd5e1", borderRadius: 10, padding: 12, backgroundColor: "#fff", marginBottom: 12, minHeight: 60 }} multiline value={formData.description} onChangeText={t => handleFieldChange("description", t)} placeholder="Description..." />
@@ -501,6 +543,8 @@ export default function AdminCalendarScreen() {
             </TouchableOpacity>
             <View style={{ height: 40 }} />
           </ScrollView>
+          {datePickerField && <DateTimePicker value={dateFromValue(formData[datePickerField])} mode="date" minimumDate={new Date()} onChange={handleDatePickerChange} />}
+          {timePickerField && <DateTimePicker value={timeFromValue(formData[timePickerField])} mode="time" onChange={handleTimePickerChange} />}
         </SafeAreaView>
 
         {/* Employee Selector Modal */}

@@ -1,4 +1,5 @@
 import { Ionicons } from "@expo/vector-icons";
+import DateTimePicker, { DateTimePickerEvent } from "@react-native-community/datetimepicker";
 import * as DocumentPicker from "expo-document-picker";
 import { useFocusEffect, useRouter } from "expo-router";
 import type { ReactNode } from "react";
@@ -167,6 +168,7 @@ function CreateEventModal({ visible, initialDate, userId, onClose, onSaved }: { 
   const [values, setValues] = useState<CreateEventValues>(() => createEventDefaults(initialDate));
   const [documentFile, setDocumentFile] = useState<DocumentPicker.DocumentPickerAsset | null>(null);
   const [saving, setSaving] = useState(false);
+  const [picker, setPicker] = useState<"date" | "startTime" | "endTime" | null>(null);
 
   useEffect(() => {
     if (visible) {
@@ -177,6 +179,27 @@ function CreateEventModal({ visible, initialDate, userId, onClose, onSaved }: { 
 
   const update = (field: keyof CreateEventValues, value: string) => setValues((current) => ({ ...current, [field]: value }));
   const updateChecklist = (index: number, value: string) => setValues((current) => ({ ...current, checklistItems: current.checklistItems.map((item, itemIndex) => itemIndex === index ? value : item) }));
+
+  const pickerValue = () => {
+    if (picker === "date") {
+      const parsed = new Date(`${values.planDate}T12:00:00`);
+      return validDate(parsed) ? parsed : new Date();
+    }
+    const value = picker === "startTime" ? values.startTime : values.endTime;
+    const [hours, minutes] = value.split(":").map(Number);
+    const date = new Date();
+    date.setHours(hours || 0, minutes || 0, 0, 0);
+    return date;
+  };
+
+  const handlePickerChange = (event: DateTimePickerEvent, value?: Date) => {
+    if (event.type === "dismissed" || !value || !picker) {
+      setPicker(null);
+      return;
+    }
+    update(picker === "date" ? "planDate" : picker, picker === "date" ? dateKey(value) : value.toTimeString().slice(0, 5));
+    setPicker(null);
+  };
 
   const pickDocument = async () => {
     const result = await DocumentPicker.getDocumentAsync({ type: "*/*", copyToCacheDirectory: true });
@@ -236,8 +259,8 @@ function CreateEventModal({ visible, initialDate, userId, onClose, onSaved }: { 
       <ScrollView contentContainerStyle={{ gap: 14, padding: 20, paddingBottom: 36 }} keyboardShouldPersistTaps="handled">
         <FormField label="Plan title *" value={values.planTitle} onChangeText={(val) => update("planTitle", val)} placeholder="Enter plan title" />
         <FormField label="Description" value={values.description} onChangeText={(val) => update("description", val)} placeholder="Describe your plan" multiline />
-        <View style={{ flexDirection: "row", gap: 10 }}><View style={{ flex: 1 }}><FormField label="Plan date *" value={values.planDate} onChangeText={(val) => update("planDate", val)} placeholder="YYYY-MM-DD" /></View><View style={{ flex: 1 }}><FormField label="Category" value={values.category} onChangeText={(val) => update("category", val)} placeholder="Meeting, task..." /></View></View>
-        <View style={{ flexDirection: "row", gap: 10 }}><View style={{ flex: 1 }}><FormField label="Start time *" value={values.startTime} onChangeText={(val) => update("startTime", val)} placeholder="09:00 - 20:00" /></View><View style={{ flex: 1 }}><FormField label="End time *" value={values.endTime} onChangeText={(val) => update("endTime", val)} placeholder="09:00 - 20:00" /></View></View>
+        <View style={{ flexDirection: "row", gap: 10 }}><View style={{ flex: 1 }}><FormField label="Plan date *" value={values.planDate} onChangeText={(val) => update("planDate", val)} placeholder="YYYY-MM-DD" /><TouchableOpacity onPress={() => setPicker("date")} style={{ position: "absolute", right: 12, bottom: 16 }}><Ionicons name="calendar-outline" size={20} color="#f97316" /></TouchableOpacity></View><View style={{ flex: 1 }}><FormField label="Category" value={values.category} onChangeText={(val) => update("category", val)} placeholder="Meeting, task..." /></View></View>
+        <View style={{ flexDirection: "row", gap: 10 }}><View style={{ flex: 1 }}><FormField label="Start time *" value={values.startTime} onChangeText={(val) => update("startTime", val)} placeholder="09:00 - 20:00" /><TouchableOpacity onPress={() => setPicker("startTime")} style={{ position: "absolute", right: 12, bottom: 16 }}><Ionicons name="time-outline" size={20} color="#f97316" /></TouchableOpacity></View><View style={{ flex: 1 }}><FormField label="End time *" value={values.endTime} onChangeText={(val) => update("endTime", val)} placeholder="09:00 - 20:00" /><TouchableOpacity onPress={() => setPicker("endTime")} style={{ position: "absolute", right: 12, bottom: 16 }}><Ionicons name="time-outline" size={20} color="#f97316" /></TouchableOpacity></View></View>
         <View style={{ flexDirection: "row", gap: 10 }}><View style={{ flex: 1 }}><FormField label="Priority" value={values.priority} onChangeText={(val) => update("priority", val)} placeholder="Low / Medium / High" /></View><View style={{ flex: 1 }}><FormField label="Status" value={values.status} onChangeText={(val) => update("status", val)} placeholder="Pending" /></View></View>
         <FormField label="Location" value={values.location} onChangeText={(val) => update("location", val)} placeholder="Office, room, or address" />
         <FormField label="Meeting link" value={values.meetingLink} onChangeText={(val) => update("meetingLink", val)} placeholder="https://..." />
@@ -246,6 +269,7 @@ function CreateEventModal({ visible, initialDate, userId, onClose, onSaved }: { 
         <View style={{ gap: 8 }}><Text style={{ fontSize: 12, fontWeight: "700", color: "#475569" }}>Upload document (optional)</Text><Pressable onPress={pickDocument} style={{ flexDirection: "row", alignItems: "center", gap: 8, borderRadius: 12, borderWidth: 1, borderColor: "#cbd5e1", backgroundColor: "#fff", padding: 12 }}><Ionicons name="document-attach-outline" size={20} color="#f97316" /><Text style={{ flex: 1, color: "#475569" }}>{documentFile?.name || "Choose a document"}</Text></Pressable></View>
         <Pressable disabled={saving} onPress={save} style={{ flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8, borderRadius: 14, backgroundColor: saving ? "#fdba74" : "#f97316", paddingVertical: 14 }}><Ionicons name={saving ? "hourglass-outline" : "save-outline"} size={18} color="#fff" /><Text style={{ color: "#fff", fontSize: 15, fontWeight: "800" }}>{saving ? "Saving..." : "Save event"}</Text></Pressable>
       </ScrollView>
+      {picker && <DateTimePicker value={pickerValue()} mode={picker === "date" ? "date" : "time"} minimumDate={picker === "date" ? new Date() : undefined} onChange={handlePickerChange} />}
     </KeyboardAvoidingView>
   </Modal>;
 }
