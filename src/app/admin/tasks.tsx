@@ -4,22 +4,21 @@ import * as DocumentPicker from "expo-document-picker";
 import { LinearGradient } from "expo-linear-gradient";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import {
-    ActivityIndicator,
-    Image,
-    KeyboardAvoidingView,
-    Modal,
-    Platform,
-    Pressable,
-    RefreshControl,
-    ScrollView,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View,
+  ActivityIndicator,
+  Image,
+  KeyboardAvoidingView,
+  Modal,
+  Platform,
+  Pressable,
+  RefreshControl,
+  ScrollView,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
 } from "react-native";
 
 import api, { API_BASE_URL } from "../../api";
-import { activeEmployeesOnly } from "../../auth/employeeUtils";
 import { AdminBottomBar } from "../../components/admin-bottom-bar";
 import { FAB } from "../../components/FAB";
 import { TopHeader } from "../../components/TopHeader";
@@ -101,6 +100,18 @@ const firstValue = (...values: unknown[]) =>
     (value) =>
       value !== undefined && value !== null && String(value).trim() !== "",
   );
+
+const extractEmployeeRows = (payload: any): any[] => {
+  if (Array.isArray(payload)) return payload;
+  if (!payload || typeof payload !== "object") return [];
+
+  for (const key of ["assignedEmployees", "employees", "users", "rows", "results", "data"]) {
+    const rows = extractEmployeeRows(payload[key]);
+    if (rows.length) return rows;
+  }
+
+  return extractEmployeeRows(payload.project);
+};
 
 const displayStatus = (value: unknown) => {
   if (!value) return "Pending";
@@ -264,7 +275,7 @@ export default function TasksScreen() {
     "startDate" | "dueDate" | null
   >(null);
   const [showDatePicker, setShowDatePicker] = useState(false);
-  
+
   // Custom Date Range State
   const [customRangeVisible, setCustomRangeVisible] = useState(false);
   const [customStart, setCustomStart] = useState("");
@@ -414,34 +425,67 @@ export default function TasksScreen() {
       api.get(`/projects/${taskForm.projectId}/assignments`),
       api.get("/project-plans"),
     ])
-      .then(([employeeResponse, planResponse]) => {
-        const employeePayload = employeeResponse.data;
-        const employeeRows =
-          employeePayload?.assignedEmployees ||
-          employeePayload?.project?.assignedEmployees ||
-          employeePayload?.project?.employees ||
-          employeePayload?.data ||
-          [];
-        setEmployees(
-          activeEmployeesOnly(employeeRows).map((employee: any) => {
-            const source = employee.employee || employee.user || employee.profile || employee;
+      .then(async ([employeeResponse, planResponse]) => {
+        const employeeRows = extractEmployeeRows(employeeResponse.data);
+
+        const availableEmployees = employeeRows.length
+          ? employeeRows
+          : extractEmployeeRows(
+            (await api.get("/employees?limit=1000&page=1")).data
+          );
+
+        const mappedEmployees = availableEmployees
+          .map((employee: any) => {
+            // Get the actual employee object first
+            const source =
+              employee.employee ||
+              employee.user ||
+              employee.profile ||
+              employee;
+
             return {
-            id: String(
-              source.employee_id ??
-              source.id ??
-              source.employeeCode ??
-              source.employee_code,
-            ),
-            name: String(
-              source.full_name ||
-              source.employee_name ||
-              `${source.first_name || ""} ${source.last_name || ""}`.trim() ||
-              "Employee",
-            ),
-            role: source.designation || source.role,
+              id: String(
+                source.employee_id ??
+                source.id ??
+                source.employeeCode ??
+                source.employee_code ??
+                ""
+              ),
+              name: String(
+                source.full_name ||
+                source.employee_name ||
+                `${source.first_name || ""} ${source.last_name || ""}`.trim() ||
+                "Employee"
+              ),
+              role: source.designation || source.role || "",
+
+              // Keep status for filtering
+              status:
+                source.status ??
+                source.employee_status ??
+                source.employment_status ??
+                source.is_active,
             };
-          }),
-        );
+          })
+          .filter((employee: any) => {
+            const status = employee.status;
+
+            // boolean API value
+            if (status === true || status === 1) return true;
+            if (status === false || status === 0) return false;
+
+            // string API values
+            if (!status) return true;
+
+            return [
+              "active",
+              "activated",
+              "enabled",
+              "working",
+            ].includes(String(status).trim().toLowerCase());
+          });
+
+        setEmployees(mappedEmployees);
 
         const plans =
           planResponse.data?.data ||
@@ -630,21 +674,21 @@ export default function TasksScreen() {
 
   const filteredTasks = useMemo(() => {
     const query = search.trim().toLowerCase();
-    
+
     // Helper to check date filters
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     const yesterday = new Date(today);
     yesterday.setDate(today.getDate() - 1);
-    
+
     const startOfWeek = new Date(today);
     startOfWeek.setDate(today.getDate() - today.getDay());
     const endOfWeek = new Date(today);
     endOfWeek.setDate(today.getDate() + (6 - today.getDay()));
-    
+
     const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
     const endOfMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0);
-    
+
     const startOfLastMonth = new Date(today.getFullYear(), today.getMonth() - 1, 1);
     const endOfLastMonth = new Date(today.getFullYear(), today.getMonth(), 0);
 
@@ -653,12 +697,12 @@ export default function TasksScreen() {
       const matchesSearch = !query || [task.title, task.project, task.assignee, task.priority].some((value) =>
         value.toLowerCase().includes(query),
       );
-      
+
       let matchesDate = true;
       if (dateFilter !== "All" && task.date && task.date !== "No due date") {
         const taskDate = new Date(task.date);
         taskDate.setHours(0, 0, 0, 0);
-        
+
         switch (dateFilter) {
           case "Today":
             matchesDate = taskDate.getTime() === today.getTime();
@@ -828,8 +872,8 @@ export default function TasksScreen() {
               className="text-xs font-medium text-slate-700"
               numberOfLines={1}
             >
-              {dateFilter === "Custom Range" && customStart && customEnd 
-                ? `${new Date(customStart).toLocaleDateString(undefined, {month: "short", day: "numeric"})} - ${new Date(customEnd).toLocaleDateString(undefined, {month: "short", day: "numeric"})}`
+              {dateFilter === "Custom Range" && customStart && customEnd
+                ? `${new Date(customStart).toLocaleDateString(undefined, { month: "short", day: "numeric" })} - ${new Date(customEnd).toLocaleDateString(undefined, { month: "short", day: "numeric" })}`
                 : dateFilter === "All" ? "All Dates" : dateFilter}
             </Text>
 
@@ -924,7 +968,7 @@ export default function TasksScreen() {
           <View className="flex-1 bg-black/40 justify-center px-8">
             <View className="bg-white rounded-2xl overflow-hidden p-6">
               <Text className="text-lg font-bold text-slate-900 mb-4">Select Date Range</Text>
-              
+
               <View className="mb-4">
                 <Text className="text-sm font-medium text-slate-700 mb-1">Start Date</Text>
                 <Pressable
@@ -972,9 +1016,8 @@ export default function TasksScreen() {
                 <TouchableOpacity
                   onPress={() => setCustomRangeVisible(false)}
                   disabled={!customStart || !customEnd}
-                  className={`flex-1 h-12 items-center justify-center rounded-xl ${
-                    customStart && customEnd ? "bg-orange-500" : "bg-orange-300"
-                  }`}
+                  className={`flex-1 h-12 items-center justify-center rounded-xl ${customStart && customEnd ? "bg-orange-500" : "bg-orange-300"
+                    }`}
                 >
                   <Text className="font-bold text-white">Apply</Text>
                 </TouchableOpacity>
