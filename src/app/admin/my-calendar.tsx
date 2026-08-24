@@ -1,27 +1,28 @@
 import { Ionicons } from "@expo/vector-icons";
+import dayjs from "dayjs";
+import isSameOrAfter from "dayjs/plugin/isSameOrAfter";
 import * as DocumentPicker from "expo-document-picker";
 import { useFocusEffect, useRouter } from "expo-router";
 import type { ReactNode } from "react";
-import React, { useCallback, useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import {
-  ActivityIndicator,
-  Alert,
-  KeyboardAvoidingView,
-  Modal,
-  Platform,
-  Pressable,
-  RefreshControl,
-  ScrollView,
-  Text,
-  TextInput,
-  View,
-  TouchableOpacity
+    ActivityIndicator,
+    Alert,
+    KeyboardAvoidingView,
+    Modal,
+    Platform,
+    Pressable,
+    RefreshControl,
+    ScrollView,
+    Text,
+    TextInput,
+    TouchableOpacity,
+    View
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import dayjs from "dayjs";
-import isSameOrAfter from "dayjs/plugin/isSameOrAfter";
 import api from "../../api";
 import { useAuth } from "../../auth/AuthContext";
+import { isAllowedEventTime, isTodayOrFutureDate } from "../../auth/calendarUtils";
 import { FAB } from "../../components/FAB";
 
 dayjs.extend(isSameOrAfter);
@@ -240,6 +241,14 @@ function CreateEventModal({ visible, initialData, initialDate, userId, onClose, 
       Alert.alert("Required fields", "Please enter a title, date, start time, and end time.");
       return;
     }
+    if (!isTodayOrFutureDate(String(formData.planDate))) {
+      Alert.alert("Invalid date", "Events can only be scheduled for today or a future date.");
+      return;
+    }
+    if (!isAllowedEventTime(String(formData.startTime), String(formData.endTime))) {
+      Alert.alert("Invalid time", "Events must be scheduled between 9:00 AM and 8:00 PM, with the end time after the start time.");
+      return;
+    }
     setSaving(true);
     try {
       const payloadData = new FormData();
@@ -308,8 +317,8 @@ function CreateEventModal({ visible, initialData, initialDate, userId, onClose, 
                   <View style={{ flex: 1 }}><CustomSelect label="Category *" value={formData.category} options={Object.keys(CATEGORY_COLORS)} onSelect={v => update("category", v)} /></View>
                 </View>
                 <View style={{ flexDirection: "row", gap: 12 }}>
-                  <View style={{ flex: 1 }}><FormField label="Start Time *" value={formData.startTime} onChangeText={(v) => update("startTime", v)} placeholder="HH:MM" /></View>
-                  <View style={{ flex: 1 }}><FormField label="End Time *" value={formData.endTime} onChangeText={(v) => update("endTime", v)} placeholder="HH:MM" /></View>
+                  <View style={{ flex: 1 }}><FormField label="Start Time *" value={formData.startTime} onChangeText={(v) => update("startTime", v)} placeholder="09:00 - 20:00" /></View>
+                  <View style={{ flex: 1 }}><FormField label="End Time *" value={formData.endTime} onChangeText={(v) => update("endTime", v)} placeholder="09:00 - 20:00" /></View>
                 </View>
                 <FormField label="Description" value={formData.description} onChangeText={(v) => update("description", v)} placeholder="Describe your plan" multiline />
                 <View style={{ flexDirection: "row", gap: 12 }}>
@@ -633,7 +642,7 @@ export default function AdminMyCalendarScreen() {
           <>
             <View style={{ borderRadius: 22, backgroundColor: "#fff", borderWidth: 1, borderColor: "#e2e8f0", padding: 16, shadowColor: "#000", shadowOpacity: 0.04, shadowRadius: 8, elevation: 2 }}>
               <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
-                <TouchableOpacity onPress={() => setCurrentDate(currentDate.subtract(1, 'month'))} style={{ padding: 4 }}><Ionicons name="chevron-back" size={20} color="#64748b" /></TouchableOpacity>
+                <TouchableOpacity disabled={currentDate.isSame(dayjs(), 'month')} onPress={() => setCurrentDate(currentDate.subtract(1, 'month'))} style={{ padding: 4, opacity: currentDate.isSame(dayjs(), 'month') ? 0.35 : 1 }}><Ionicons name="chevron-back" size={20} color="#64748b" /></TouchableOpacity>
                 <Text style={{ fontSize: 16, fontWeight: "800", color: "#0f172a" }}>{currentDate.format('MMMM YYYY')}</Text>
                 <TouchableOpacity onPress={() => setCurrentDate(currentDate.add(1, 'month'))} style={{ padding: 4 }}><Ionicons name="chevron-forward" size={20} color="#64748b" /></TouchableOpacity>
               </View>
@@ -655,6 +664,7 @@ export default function AdminMyCalendarScreen() {
                       onPress={() => {
                         if (day !== null) {
                           const d = currentDate.date(day);
+                          if (d.isBefore(dayjs(), 'day')) return;
                           setSelectedDate(selectedDate?.isSame(d, 'day') ? null : d);
                         }
                       }}

@@ -20,8 +20,7 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import api from "../../api";
 import { useAuth } from "../../auth/AuthContext";
-import { BottomHome } from "../../components/BottomHome";
-import { TopHeader } from "../../components/TopHeader";
+import { getTodayDateKey, isAllowedEventTime, isTodayOrFutureDate } from "../../auth/calendarUtils";
 import { FAB } from "../../components/FAB";
 
 type Attachment = string | { originalName?: string; fileName?: string; path?: string };
@@ -189,6 +188,14 @@ function CreateEventModal({ visible, initialDate, userId, onClose, onSaved }: { 
       Alert.alert("Required fields", "Please enter a title, date, start time, and end time.");
       return;
     }
+    if (!isTodayOrFutureDate(values.planDate)) {
+      Alert.alert("Invalid date", "Events can only be scheduled for today or a future date.");
+      return;
+    }
+    if (!isAllowedEventTime(values.startTime, values.endTime)) {
+      Alert.alert("Invalid time", "Events must be scheduled between 9:00 AM and 8:00 PM, with the end time after the start time.");
+      return;
+    }
     setSaving(true);
     try {
       const formData = new FormData();
@@ -230,7 +237,7 @@ function CreateEventModal({ visible, initialDate, userId, onClose, onSaved }: { 
         <FormField label="Plan title *" value={values.planTitle} onChangeText={(val) => update("planTitle", val)} placeholder="Enter plan title" />
         <FormField label="Description" value={values.description} onChangeText={(val) => update("description", val)} placeholder="Describe your plan" multiline />
         <View style={{ flexDirection: "row", gap: 10 }}><View style={{ flex: 1 }}><FormField label="Plan date *" value={values.planDate} onChangeText={(val) => update("planDate", val)} placeholder="YYYY-MM-DD" /></View><View style={{ flex: 1 }}><FormField label="Category" value={values.category} onChangeText={(val) => update("category", val)} placeholder="Meeting, task..." /></View></View>
-        <View style={{ flexDirection: "row", gap: 10 }}><View style={{ flex: 1 }}><FormField label="Start time *" value={values.startTime} onChangeText={(val) => update("startTime", val)} /></View><View style={{ flex: 1 }}><FormField label="End time *" value={values.endTime} onChangeText={(val) => update("endTime", val)} /></View></View>
+        <View style={{ flexDirection: "row", gap: 10 }}><View style={{ flex: 1 }}><FormField label="Start time *" value={values.startTime} onChangeText={(val) => update("startTime", val)} placeholder="09:00 - 20:00" /></View><View style={{ flex: 1 }}><FormField label="End time *" value={values.endTime} onChangeText={(val) => update("endTime", val)} placeholder="09:00 - 20:00" /></View></View>
         <View style={{ flexDirection: "row", gap: 10 }}><View style={{ flex: 1 }}><FormField label="Priority" value={values.priority} onChangeText={(val) => update("priority", val)} placeholder="Low / Medium / High" /></View><View style={{ flex: 1 }}><FormField label="Status" value={values.status} onChangeText={(val) => update("status", val)} placeholder="Pending" /></View></View>
         <FormField label="Location" value={values.location} onChangeText={(val) => update("location", val)} placeholder="Office, room, or address" />
         <FormField label="Meeting link" value={values.meetingLink} onChangeText={(val) => update("meetingLink", val)} placeholder="https://..." />
@@ -431,7 +438,7 @@ export default function MyCalendarScreen() {
       <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: 10 }}><View style={{ flex: 1 }}></View><View style={{ flexDirection: "row", gap: 8 }}></View></View>
       <View style={{ flexDirection: "row", marginTop: 20, borderRadius: 12, backgroundColor: "#e2e8f0", padding: 3 }}>{(["Month", "Week", "Day", "Agenda"] as ViewMode[]).map((mode) => <Pressable key={mode} onPress={() => setViewMode(mode)} style={{ flex: 1, alignItems: "center", borderRadius: 9, backgroundColor: viewMode === mode ? "#fff" : "transparent", paddingVertical: 9 }}><Text style={{ color: viewMode === mode ? "#f97316" : "#64748b", fontSize: 12, fontWeight: "700" }}>{mode}</Text></Pressable>)}</View>
 
-      {viewMode !== "Agenda" && <View style={{ marginTop: 16, borderRadius: 20, borderWidth: 1, borderColor: "#e2e8f0", backgroundColor: "#fff", padding: 16 }}><View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: 14 }}><Pressable onPress={() => viewMode === "Day" ? setSelectedDate((current) => new Date(current.getFullYear(), current.getMonth(), current.getDate() - 1)) : viewMode === "Week" ? setSelectedDate((current) => new Date(current.getFullYear(), current.getMonth(), current.getDate() - 7)) : changeMonth(-1)} style={{ padding: 6 }}><Ionicons name="chevron-back" size={20} color="#475569" /></Pressable><Text style={{ fontSize: 17, fontWeight: "800", color: "#0f172a" }}>{viewMode === "Day" ? selectedDate.toLocaleDateString(undefined, { weekday: "long", month: "long", day: "numeric" }) : viewMode === "Week" ? `${weekDays[0].toLocaleDateString(undefined, { month: "short", day: "numeric" })} - ${weekDays[6].toLocaleDateString(undefined, { month: "short", day: "numeric" })}` : month.toLocaleDateString(undefined, { month: "long", year: "numeric" })}</Text><Pressable onPress={() => viewMode === "Day" ? setSelectedDate((current) => new Date(current.getFullYear(), current.getMonth(), current.getDate() + 1)) : viewMode === "Week" ? setSelectedDate((current) => new Date(current.getFullYear(), current.getMonth(), current.getDate() + 7)) : changeMonth(1)} style={{ padding: 6 }}><Ionicons name="chevron-forward" size={20} color="#475569" /></Pressable></View>
+      {viewMode !== "Agenda" && <View style={{ marginTop: 16, borderRadius: 20, borderWidth: 1, borderColor: "#e2e8f0", backgroundColor: "#fff", padding: 16 }}><View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: 14 }}><Pressable disabled={viewMode === "Day" ? dateKey(selectedDate) === getTodayDateKey() : viewMode === "Week" ? weekDays[0] <= new Date(getTodayDateKey()) : month.getFullYear() === new Date().getFullYear() && month.getMonth() === new Date().getMonth()} onPress={() => viewMode === "Day" ? setSelectedDate((current) => new Date(current.getFullYear(), current.getMonth(), current.getDate() - 1)) : viewMode === "Week" ? setSelectedDate((current) => new Date(current.getFullYear(), current.getMonth(), current.getDate() - 7)) : changeMonth(-1)} style={{ padding: 6 }}><Ionicons name="chevron-back" size={20} color="#475569" /></Pressable><Text style={{ fontSize: 17, fontWeight: "800", color: "#0f172a" }}>{viewMode === "Day" ? selectedDate.toLocaleDateString(undefined, { weekday: "long", month: "long", day: "numeric" }) : viewMode === "Week" ? `${weekDays[0].toLocaleDateString(undefined, { month: "short", day: "numeric" })} - ${weekDays[6].toLocaleDateString(undefined, { month: "short", day: "numeric" })}` : month.toLocaleDateString(undefined, { month: "long", year: "numeric" })}</Text><Pressable onPress={() => viewMode === "Day" ? setSelectedDate((current) => new Date(current.getFullYear(), current.getMonth(), current.getDate() + 1)) : viewMode === "Week" ? setSelectedDate((current) => new Date(current.getFullYear(), current.getMonth(), current.getDate() + 7)) : changeMonth(1)} style={{ padding: 6 }}><Ionicons name="chevron-forward" size={20} color="#475569" /></Pressable></View>
         {viewMode === "Month" && (
           <>
             <View style={{ flexDirection: "row", marginBottom: 6 }}>
@@ -449,7 +456,7 @@ export default function MyCalendarScreen() {
                   <Pressable
                     key={day ? dateKey(day) : `empty-${index}`}
                     disabled={!day}
-                    onPress={() => day && setSelectedDate(day)}
+                    onPress={() => day && dateKey(day) >= getTodayDateKey() && setSelectedDate(day)}
                     style={{ width: `${100 / 7}%`, aspectRatio: 1, alignItems: "center", justifyContent: "center" }}
                   >
                     {day && (
