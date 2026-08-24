@@ -9,6 +9,7 @@ import {
   Platform,
   Pressable,
   ScrollView,
+  RefreshControl,
   Text,
   TextInput,
   View,
@@ -31,81 +32,108 @@ export default function LoginScreen() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [serverError, setServerError] = useState("");
   const [fieldError, setFieldError] = useState("");
+  const [refreshing, setRefreshing] = useState(false);
 
-useEffect(() => {
-  const trimmedUsername = username.trim();
+  useEffect(() => {
+    const trimmedUsername = username.trim();
 
-  if (
-    !trimmedUsername ||
-    !password ||
-    password.length < 6 ||
-    isAttemptingRef.current
-  ) {
-    return;
-  }
-
-  const credentialsKey = `${trimmedUsername}|${password}`;
-
-  // Don't check the exact same credentials again
-  if (lastCheckedCredentialsRef.current === credentialsKey) {
-    return;
-  }
-
-  const timer = setTimeout(async () => {
     if (
-      isAttemptingRef.current ||
-      lastCheckedCredentialsRef.current === credentialsKey
+      !trimmedUsername ||
+      !password ||
+      password.length < 6 ||
+      isAttemptingRef.current
     ) {
       return;
     }
 
-    isAttemptingRef.current = true;
-    setIsSubmitting(true);
+    const credentialsKey = `${trimmedUsername}|${password}`;
+
+    // Don't check the exact same credentials again
+    if (lastCheckedCredentialsRef.current === credentialsKey) {
+      return;
+    }
+
+    const timer = setTimeout(async () => {
+      if (
+        isAttemptingRef.current ||
+        lastCheckedCredentialsRef.current === credentialsKey
+      ) {
+        return;
+      }
+
+      isAttemptingRef.current = true;
+      setIsSubmitting(true);
+      setServerError("");
+      setFieldError("");
+
+      try {
+        const { data } = await api.post("/users/login", {
+          identifier: trimmedUsername,
+          password,
+        });
+
+        const roleHome = getRoleHome(data.user?.role);
+
+        if (!roleHome || !data.user || !data.token) {
+          throw new Error("Invalid credentials");
+        }
+
+        // Remember this credential combination as checked
+        lastCheckedCredentialsRef.current = credentialsKey;
+
+        // Save login
+        await login(data.user, data.token);
+
+        // ✅ Automatically enter the app
+        router.replace(roleHome);
+
+      } catch (error) {
+        // Remember this exact combination so it is
+        // checked only once
+        lastCheckedCredentialsRef.current = credentialsKey;
+
+        setServerError(
+          "Invalid credentials. Please check your email and password."
+        );
+      } finally {
+        isAttemptingRef.current = false;
+        setIsSubmitting(false);
+      }
+    }, 700);
+
+    return () => clearTimeout(timer);
+  }, [
+    username,
+    password,
+    login,
+    router,
+  ]);
+
+  const handleRefresh = () => {
+    setRefreshing(true);
+
+    // Clear login credentials
+    setUsername("");
+    setPassword("");
+
+    // Clear errors
     setServerError("");
     setFieldError("");
 
-    try {
-      const { data } = await api.post("/users/login", {
-        identifier: trimmedUsername,
-        password,
-      });
+    // Reset remember me
+    setRememberMe(false);
 
-      const roleHome = getRoleHome(data.user?.role);
+    // Allow the same credentials to be checked again
+    lastCheckedCredentialsRef.current = "";
+    isAttemptingRef.current = false;
 
-      if (!roleHome || !data.user || !data.token) {
-        throw new Error("Invalid credentials");
-      }
+    // Stop loading state
+    setIsSubmitting(false);
 
-      // Remember this credential combination as checked
-      lastCheckedCredentialsRef.current = credentialsKey;
-
-      // Save login
-      await login(data.user, data.token);
-
-      // ✅ Automatically enter the app
-      router.replace(roleHome);
-
-    } catch (error) {
-      // Remember this exact combination so it is
-      // checked only once
-      lastCheckedCredentialsRef.current = credentialsKey;
-
-      setServerError(
-        "Invalid credentials. Please check your email and password."
-      );
-    } finally {
-      isAttemptingRef.current = false;
-      setIsSubmitting(false);
-    }
-  }, 700);
-
-  return () => clearTimeout(timer);
-}, [
-  username,
-  password,
-  login,
-  router,
-]);
+    setTimeout(() => {
+      setRefreshing(false);
+    }, 500);
+  };
 
   const handleSubmit = async () => {
     if (!username.trim()) {
@@ -186,6 +214,14 @@ useEffect(() => {
           showsVerticalScrollIndicator={false}
           bounces={true}
           automaticallyAdjustKeyboardInsets={true}
+          refreshControl={
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={handleRefresh}
+              colors={["#f97316"]}
+              tintColor="#f97316"
+            />
+          }
         >
           {/* Top Brand */}
           <View className="mb-8 items-center">
