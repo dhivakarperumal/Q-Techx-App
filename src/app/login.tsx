@@ -34,6 +34,20 @@ export default function LoginScreen() {
   const [fieldError, setFieldError] = useState("");
   const [refreshing, setRefreshing] = useState(false);
 
+  const getLoginErrorMessage = (error: any) => {
+    const responseMessage = error?.response?.data?.message;
+
+    if (responseMessage) {
+      return responseMessage;
+    }
+
+    if (error?.message) {
+      return error.message;
+    }
+
+    return "Invalid credentials. Please check your email and password.";
+  };
+
   useEffect(() => {
     const trimmedUsername = username.trim();
 
@@ -87,14 +101,12 @@ export default function LoginScreen() {
         // ✅ Automatically enter the app
         router.replace(roleHome);
 
-      } catch (error) {
+      } catch (error: any) {
         // Remember this exact combination so it is
         // checked only once
         lastCheckedCredentialsRef.current = credentialsKey;
 
-        setServerError(
-          "Invalid credentials. Please check your email and password."
-        );
+        setServerError(getLoginErrorMessage(error));
       } finally {
         isAttemptingRef.current = false;
         setIsSubmitting(false);
@@ -172,9 +184,7 @@ export default function LoginScreen() {
       await login(data.user, data.token);
       router.replace(roleHome);
     } catch (error: any) {
-      const message =
-        error?.message ||
-        (error instanceof Error ? error.message : "Login failed");
+      const message = getLoginErrorMessage(error);
 
       const isNetworkError =
         error instanceof TypeError ||
@@ -185,7 +195,7 @@ export default function LoginScreen() {
       setServerError(
         isNetworkError
           ? "Network error. Check that the API server is running and your phone is on the same Wi-Fi network."
-          : message,
+          : message
       );
     } finally {
       setIsSubmitting(false);
