@@ -1,9 +1,10 @@
-import React, { useState, useEffect } from "react";
-import { View, Text, ScrollView, TouchableOpacity, TextInput, Modal, ActivityIndicator, Alert, RefreshControl, Pressable } from "react-native";
-import { Receipt, DollarSign, Filter, PlusCircle, X, ChevronDown, Check } from "lucide-react-native";
-import { PieChart } from "react-native-gifted-charts";
 import { Ionicons } from "@expo/vector-icons";
+import DateTimePicker from "@react-native-community/datetimepicker";
 import { LinearGradient } from "expo-linear-gradient";
+import { Receipt, X } from "lucide-react-native";
+import React, { useEffect, useState } from "react";
+import { ActivityIndicator, Alert, Modal, Pressable, RefreshControl, ScrollView, Text, TextInput, TouchableOpacity, View } from "react-native";
+import { PieChart } from "react-native-gifted-charts";
 import api from "../../api";
 import { FAB } from "../FAB";
 
@@ -25,6 +26,7 @@ export default function ExpensesTab() {
   const [showFundForm, setShowFundForm] = useState(false);
   const [showExpenseForm, setShowExpenseForm] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [showPaymentDatePicker, setShowPaymentDatePicker] = useState(false);
 
   const [searchQuery, setSearchQuery] = useState("");
   const [expenseTypeDropdownOpen, setExpenseTypeDropdownOpen] = useState(false);
@@ -522,13 +524,10 @@ export default function ExpensesTab() {
 
               <View>
                 <Text className="text-slate-500 text-xs font-bold uppercase mb-1">Date</Text>
-                <TextInput
-                  className="bg-slate-50 border border-slate-200 rounded-xl p-3 text-slate-900 font-medium"
-                  placeholder="YYYY-MM-DD"
-                  placeholderTextColor="#94a3b8"
-                  value={expenseData.date_of_payment}
-                  onChangeText={(text) => setExpenseData({ ...expenseData, date_of_payment: text })}
-                />
+                <TouchableOpacity onPress={() => setShowPaymentDatePicker(true)} className="bg-slate-50 border border-slate-200 rounded-xl p-3 flex-row items-center justify-between">
+                  <Text className="text-slate-900 font-medium">{expenseData.date_of_payment || "Select date"}</Text>
+                  <Ionicons name="calendar-outline" size={20} color="#f97316" />
+                </TouchableOpacity>
               </View>
 
               <View>
@@ -577,6 +576,7 @@ export default function ExpensesTab() {
             </ScrollView>
           </View>
         </View>
+        {showPaymentDatePicker && <DateTimePicker value={expenseData.date_of_payment ? new Date(`${expenseData.date_of_payment}T12:00:00`) : new Date()} mode="date" display="default" onChange={(event, date) => { setShowPaymentDatePicker(false); if (event.type === "set" && date) setExpenseData({ ...expenseData, date_of_payment: date.toISOString().slice(0, 10) }); }} />}
       </Modal>
     </ScrollView>
 

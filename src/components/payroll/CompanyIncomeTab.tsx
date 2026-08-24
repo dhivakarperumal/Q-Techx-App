@@ -1,8 +1,8 @@
-import React, { useState, useEffect } from "react";
-import { View, Text, ScrollView, TouchableOpacity, TextInput, Modal, ActivityIndicator, Alert, RefreshControl, Pressable } from "react-native";
-import { X, History, Edit, Trash2, Briefcase, Eye } from "lucide-react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
+import { Briefcase, Edit, Eye, History, Trash2, X } from "lucide-react-native";
+import React, { useEffect, useState } from "react";
+import { ActivityIndicator, Alert, Modal, Pressable, RefreshControl, ScrollView, Text, TextInput, TouchableOpacity, View } from "react-native";
 import api from "../../api";
 import { FAB } from "../FAB";
 
@@ -10,6 +10,7 @@ export default function CompanyIncomeTab() {
   const [interns, setInterns] = useState([]);
   const [history, setHistory] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [showPaymentDatePicker, setShowPaymentDatePicker] = useState(false);
   const [historyLoading, setHistoryLoading] = useState(false);
   
   const [showForm, setShowForm] = useState(false);
@@ -546,12 +547,10 @@ export default function CompanyIncomeTab() {
 
               <View>
                 <Text className="text-slate-500 text-xs font-bold uppercase mb-1">Date</Text>
-                <TextInput
-                  className="bg-slate-50 border border-slate-200 rounded-xl p-3 text-slate-900"
-                  value={formData.date_of_payment}
-                  onChangeText={(val) => setFormData({ ...formData, date_of_payment: val })}
-                  placeholder="YYYY-MM-DD"
-                />
+                <TouchableOpacity onPress={() => setShowPaymentDatePicker(true)} className="bg-slate-50 border border-slate-200 rounded-xl p-3 flex-row items-center justify-between">
+                  <Text className="text-slate-900">{formData.date_of_payment || "Select date"}</Text>
+                  <Ionicons name="calendar-outline" size={20} color="#f97316" />
+                </TouchableOpacity>
               </View>
               
               <View>
@@ -574,6 +573,7 @@ export default function CompanyIncomeTab() {
             </ScrollView>
           </View>
         </View>
+        {showPaymentDatePicker && <DateTimePicker value={formData.date_of_payment ? new Date(`${formData.date_of_payment}T12:00:00`) : new Date()} mode="date" display="default" onChange={(event, date) => { setShowPaymentDatePicker(false); if (event.type === "set" && date) setFormData({ ...formData, date_of_payment: date.toISOString().slice(0, 10) }); }} />}
       </Modal>
 
       {/* View Details Modal */}

@@ -1,8 +1,9 @@
-import React, { useState, useEffect } from "react";
-import { View, Text, ScrollView, TouchableOpacity, TextInput, Modal, ActivityIndicator, Alert, RefreshControl, Pressable } from "react-native";
-import { DollarSign, X, History, Edit, Trash2, Eye } from "lucide-react-native";
 import { Ionicons } from "@expo/vector-icons";
+import DateTimePicker from "@react-native-community/datetimepicker";
 import { LinearGradient } from "expo-linear-gradient";
+import { DollarSign, Edit, Eye, History, Trash2, X } from "lucide-react-native";
+import React, { useEffect, useState } from "react";
+import { ActivityIndicator, Alert, Modal, Pressable, RefreshControl, ScrollView, Text, TextInput, TouchableOpacity, View } from "react-native";
 import api from "../../api";
 import { FAB } from "../FAB";
 
@@ -10,6 +11,7 @@ export default function ProjectPaymentTab() {
   const [projects, setProjects] = useState([]);
   const [history, setHistory] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [paymentPicker, setPaymentPicker] = useState<"date" | "time" | null>(null);
   const [historyLoading, setHistoryLoading] = useState(false);
   
   const [showForm, setShowForm] = useState(false);
@@ -535,21 +537,17 @@ export default function ProjectPaymentTab() {
               <View className="flex-row gap-4">
                 <View className="flex-1">
                   <Text className="text-slate-500 text-xs font-bold uppercase mb-1">Date</Text>
-                  <TextInput
-                    className="bg-slate-50 border border-slate-200 rounded-xl p-3 text-slate-900"
-                    value={formData.date_of_payment}
-                    onChangeText={(val) => setFormData({ ...formData, date_of_payment: val })}
-                    placeholder="YYYY-MM-DD"
-                  />
+                  <TouchableOpacity onPress={() => setPaymentPicker("date")} className="bg-slate-50 border border-slate-200 rounded-xl p-3 flex-row items-center justify-between">
+                    <Text className="text-slate-900">{formData.date_of_payment || "Select date"}</Text>
+                    <Ionicons name="calendar-outline" size={20} color="#f97316" />
+                  </TouchableOpacity>
                 </View>
                 <View className="flex-1">
                   <Text className="text-slate-500 text-xs font-bold uppercase mb-1">Time</Text>
-                  <TextInput
-                    className="bg-slate-50 border border-slate-200 rounded-xl p-3 text-slate-900"
-                    value={formData.time_of_payment}
-                    onChangeText={(val) => setFormData({ ...formData, time_of_payment: val })}
-                    placeholder="HH:MM"
-                  />
+                  <TouchableOpacity onPress={() => setPaymentPicker("time")} className="bg-slate-50 border border-slate-200 rounded-xl p-3 flex-row items-center justify-between">
+                    <Text className="text-slate-900">{formData.time_of_payment || "Select time"}</Text>
+                    <Ionicons name="time-outline" size={20} color="#f97316" />
+                  </TouchableOpacity>
                 </View>
               </View>
 
@@ -564,6 +562,7 @@ export default function ProjectPaymentTab() {
             </ScrollView>
           </View>
         </View>
+        {paymentPicker && <DateTimePicker value={paymentPicker === "date" ? new Date(`${formData.date_of_payment}T12:00:00`) : new Date(`1970-01-01T${formData.time_of_payment || "09:00"}:00`)} mode={paymentPicker} display="default" onChange={(event, date) => { setPaymentPicker(null); if (event.type === "set" && date) setFormData({ ...formData, ...(paymentPicker === "date" ? { date_of_payment: date.toISOString().slice(0, 10) } : { time_of_payment: date.toTimeString().slice(0, 5) }) }); }} />}
       </Modal>
 
       {/* View Details Modal */}

@@ -1,4 +1,5 @@
 import { Ionicons } from "@expo/vector-icons";
+import DateTimePicker from "@react-native-community/datetimepicker";
 import { LinearGradient } from "expo-linear-gradient";
 import { Edit, Eye, Receipt, Search, Trash2, User, X } from "lucide-react-native";
 import React, { useEffect, useState } from "react";
@@ -25,6 +26,7 @@ export default function EmployeeSalaryTab() {
   const [selectedMonth, setSelectedMonth] = useState((new Date().getMonth() + 1).toString().padStart(2, '0'));
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear().toString());
   const [selectedEmployee, setSelectedEmployee] = useState("");
+  const [showMonthPicker, setShowMonthPicker] = useState(false);
   
   const [salaryDetails, setSalaryDetails] = useState(null);
   const [fetchingDetails, setFetchingDetails] = useState(false);
@@ -442,25 +444,17 @@ export default function EmployeeSalaryTab() {
               <View className="flex-row gap-4">
                 <View className="flex-1">
                   <Text className="text-slate-500 text-xs font-bold uppercase mb-1">Month</Text>
-                  <TextInput
-                    className="bg-slate-50 border border-slate-200 rounded-xl p-3 text-slate-900"
-                    value={selectedMonth}
-                    onChangeText={setSelectedMonth}
-                    keyboardType="numeric"
-                    placeholder="MM"
-                    editable={!editId}
-                  />
+                  <TouchableOpacity disabled={Boolean(editId)} onPress={() => setShowMonthPicker(true)} className="bg-slate-50 border border-slate-200 rounded-xl p-3 flex-row items-center justify-between">
+                    <Text className="text-slate-900">{selectedMonth}</Text>
+                    <Ionicons name="calendar-outline" size={20} color="#f97316" />
+                  </TouchableOpacity>
                 </View>
                 <View className="flex-1">
                   <Text className="text-slate-500 text-xs font-bold uppercase mb-1">Year</Text>
-                  <TextInput
-                    className="bg-slate-50 border border-slate-200 rounded-xl p-3 text-slate-900"
-                    value={selectedYear}
-                    onChangeText={setSelectedYear}
-                    keyboardType="numeric"
-                    placeholder="YYYY"
-                    editable={!editId}
-                  />
+                  <TouchableOpacity disabled={Boolean(editId)} onPress={() => setShowMonthPicker(true)} className="bg-slate-50 border border-slate-200 rounded-xl p-3 flex-row items-center justify-between">
+                    <Text className="text-slate-900">{selectedYear}</Text>
+                    <Ionicons name="calendar-outline" size={20} color="#f97316" />
+                  </TouchableOpacity>
                 </View>
               </View>
 
@@ -565,6 +559,7 @@ export default function EmployeeSalaryTab() {
             </ScrollView>
           </View>
         </View>
+        {showMonthPicker && <DateTimePicker value={new Date(Number(selectedYear), Number(selectedMonth) - 1, 1)} mode="date" display="default" onChange={(event, date) => { setShowMonthPicker(false); if (event.type === "set" && date) { setSelectedMonth(String(date.getMonth() + 1).padStart(2, "0")); setSelectedYear(String(date.getFullYear())); } }} />}
       </Modal>
 
       {/* View Details Modal */}
