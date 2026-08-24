@@ -1,5 +1,5 @@
 import { Ionicons } from "@expo/vector-icons";
-import { DateTimePickerEvent } from "@react-native-community/datetimepicker";
+import DateTimePicker, { DateTimePickerEvent } from "@react-native-community/datetimepicker";
 import dayjs from "dayjs";
 import isSameOrAfter from "dayjs/plugin/isSameOrAfter";
 import { useRouter } from "expo-router";
