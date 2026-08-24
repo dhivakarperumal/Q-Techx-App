@@ -5,12 +5,12 @@ import React, { useCallback, useEffect, useMemo, useState } from "react";
 import {
     ActivityIndicator,
     Modal,
+    Pressable,
     ScrollView,
     Text,
     TextInput,
     TouchableOpacity,
     View,
-    Pressable,
 } from "react-native";
 
 import api from "../../api";
@@ -63,6 +63,19 @@ export default function ProjectsScreen() {
   const [assigning, setAssigning] = useState(false);
   const [statusDropdownOpen, setStatusDropdownOpen] = useState(false);
   const [assignmentDropdownOpen, setAssignmentDropdownOpen] = useState(false);
+
+  const openProject = useCallback(
+    (project: any) => {
+      const projectId = project?.uuid || project?.projectId;
+      if (!projectId) return;
+
+      router.push({
+        pathname: "/admin/project-detail/[uuid]",
+        params: { uuid: String(projectId) },
+      });
+    },
+    [router],
+  );
 
   const normalizeProject = useCallback((proj: any) => {
     const rawUuid =
@@ -680,11 +693,7 @@ export default function ProjectsScreen() {
                 key={`${project.uuid || project.projectId || idx}`}
                 className="mb-4 bg-white rounded-[24px] p-4 border border-slate-100 shadow-sm"
                 activeOpacity={0.9}
-                onPress={() =>
-                  router.push(
-                    `/admin/project-detail/${project.uuid || project.projectId}`,
-                  )
-                }
+                onPress={() => openProject(project)}
               >
                 <View className="flex-row items-start justify-between mb-3">
                   <View className="flex-row flex-1">
@@ -766,11 +775,7 @@ export default function ProjectsScreen() {
                   {activeTab === "unassigned" ? (
                     <View className="flex-row items-center justify-between gap-2">
                       <TouchableOpacity
-                        onPress={() =>
-                          router.push(
-                            `/admin/project-detail/${project.uuid || project.projectId}`,
-                          )
-                        }
+                        onPress={() => openProject(project)}
                         className="flex-1 rounded-2xl border border-orange-200 bg-orange-50 px-4 py-2.5"
                       >
                         <Text className="text-center text-xs font-black text-orange-700">
