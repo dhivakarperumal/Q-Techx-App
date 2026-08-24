@@ -1,10 +1,17 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
-import React from 'react';
-import { ScrollView, Text, TouchableOpacity, View } from 'react-native';
+import React, { useState } from 'react';
+import {
+  ActivityIndicator,
+  ScrollView,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
+} from 'react-native';
 import { useAuth } from '../../auth/AuthContext';
 import { AdminBottomBar } from '../../components/admin-bottom-bar';
-
+import api from '../../api';
 
 
 const quickStats = [
@@ -16,6 +23,78 @@ const quickStats = [
 export default function ProfileScreen() {
   const router = useRouter();
   const { user, logout } = useAuth();
+  const [showPasswordModal, setShowPasswordModal] = useState(false);
+
+  const [passwordForm, setPasswordForm] = useState({
+    currentPassword: '',
+    newPassword: '',
+    confirmPassword: '',
+  });
+
+  const [isChangingPassword, setIsChangingPassword] = useState(false);
+
+  const [showCurrentPassword, setShowCurrentPassword] = useState(false);
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+
+
+  const handlePasswordChange = async () => {
+    const { currentPassword, newPassword, confirmPassword } = passwordForm;
+
+    if (!currentPassword || !newPassword || !confirmPassword) {
+      alert('Please fill all password fields.');
+      return;
+    }
+
+    if (newPassword !== confirmPassword) {
+      alert('New passwords do not match.');
+      return;
+    }
+
+    if (newPassword.length < 6) {
+      alert('New password must be at least 6 characters.');
+      return;
+    }
+
+    if (currentPassword === newPassword) {
+      alert('New password must be different from your current password.');
+      return;
+    }
+
+    setIsChangingPassword(true);
+
+    try {
+      const response = await post('/users/change-password', {
+        currentPassword,
+        newPassword,
+      });
+
+      alert(response?.message || 'Password changed successfully!');
+
+      setShowPasswordModal(false);
+
+      setPasswordForm({
+        currentPassword: '',
+        newPassword: '',
+        confirmPassword: '',
+      });
+
+      setShowCurrentPassword(false);
+      setShowNewPassword(false);
+      setShowConfirmPassword(false);
+    } catch (error: any) {
+      console.error('Change password error:', error);
+
+      const message =
+        error?.response?.data?.message ||
+        error?.message ||
+        'Failed to change password. Please try again.';
+
+      alert(message);
+    } finally {
+      setIsChangingPassword(false);
+    }
+  };
 
   const rawName = (user?.name as string) || (user?.full_name as string) || 'Admin User';
   const userEmail = (user?.email as string) || 'admin@company.com';
@@ -70,7 +149,7 @@ export default function ProfileScreen() {
       </View>
 
       <ScrollView className="flex-1" contentContainerStyle={{ paddingBottom: 120 }}>
-        
+
         {/* ── ORANGE BACKGROUND EXTENSION ── */}
         <View style={{ backgroundColor: '#f97316', height: 80 }} />
 
@@ -106,7 +185,7 @@ export default function ProfileScreen() {
           </View>
         </View>
 
-    
+
 
         {/* ── PERSONAL INFORMATION CARD ── */}
         <View className="mx-5 mb-5 bg-white rounded-[24px] border border-slate-100 shadow-sm overflow-hidden">
@@ -141,6 +220,23 @@ export default function ProfileScreen() {
           </TouchableOpacity>
         </View>
 
+        <View className="mx-5 mb-4">
+          <TouchableOpacity
+            onPress={() => setShowPasswordModal(true)}
+            className="bg-white border border-orange-200 rounded-2xl py-4 items-center justify-center flex-row"
+          >
+            <Ionicons
+              name="lock-closed-outline"
+              size={18}
+              color="#f97316"
+            />
+
+            <Text className="text-orange-500 font-bold text-sm ml-2">
+              Change Password
+            </Text>
+          </TouchableOpacity>
+        </View>
+
         {/* ── LOGOUT BUTTON ── */}
         <View className="mx-5">
           <TouchableOpacity
@@ -156,6 +252,225 @@ export default function ProfileScreen() {
         </View>
 
       </ScrollView>
+
+      {showPasswordModal && (
+        <View
+          className="absolute inset-0 bg-black/60 items-center justify-center px-5"
+          style={{ zIndex: 100 }}
+        >
+          <View className="w-full bg-white rounded-3xl overflow-hidden">
+
+            {/* Header */}
+            <View className="bg-orange-500 px-5 py-4 flex-row items-center justify-between">
+              <View className="flex-row items-center">
+                <Ionicons
+                  name="lock-closed-outline"
+                  size={20}
+                  color="#fff"
+                />
+
+                <Text className="text-white font-black text-lg ml-2">
+                  Change Password
+                </Text>
+              </View>
+
+              <TouchableOpacity
+                disabled={isChangingPassword}
+                onPress={() => {
+                  setShowPasswordModal(false);
+
+                  setPasswordForm({
+                    currentPassword: '',
+                    newPassword: '',
+                    confirmPassword: '',
+                  });
+
+                  setShowCurrentPassword(false);
+                  setShowNewPassword(false);
+                  setShowConfirmPassword(false);
+                }}
+              >
+                <Ionicons
+                  name="close"
+                  size={24}
+                  color="#fff"
+                />
+              </TouchableOpacity>
+            </View>
+
+            {/* Form */}
+            <View className="p-5">
+
+              {/* Current Password */}
+              <Text className="text-slate-700 font-semibold text-sm mb-2">
+                Current Password
+              </Text>
+
+              <View className="flex-row items-center border border-slate-200 rounded-xl px-3 mb-4">
+                <Ionicons
+                  name="lock-closed-outline"
+                  size={18}
+                  color="#94a3b8"
+                />
+
+                <TextInput
+                  className="flex-1 text-slate-900 py-3 px-3"
+                  placeholder="Enter current password"
+                  placeholderTextColor="#94a3b8"
+                  secureTextEntry={!showCurrentPassword}
+                  value={passwordForm.currentPassword}
+                  onChangeText={(text) =>
+                    setPasswordForm({
+                      ...passwordForm,
+                      currentPassword: text,
+                    })
+                  }
+                />
+
+                <TouchableOpacity
+                  onPress={() =>
+                    setShowCurrentPassword(!showCurrentPassword)
+                  }
+                >
+                  <Ionicons
+                    name={
+                      showCurrentPassword
+                        ? 'eye-off-outline'
+                        : 'eye-outline'
+                    }
+                    size={20}
+                    color="#64748b"
+                  />
+                </TouchableOpacity>
+              </View>
+
+              {/* New Password */}
+              <Text className="text-slate-700 font-semibold text-sm mb-2">
+                New Password
+              </Text>
+
+              <View className="flex-row items-center border border-slate-200 rounded-xl px-3 mb-4">
+                <Ionicons
+                  name="key-outline"
+                  size={18}
+                  color="#94a3b8"
+                />
+
+                <TextInput
+                  className="flex-1 text-slate-900 py-3 px-3"
+                  placeholder="Enter new password"
+                  placeholderTextColor="#94a3b8"
+                  secureTextEntry={!showNewPassword}
+                  value={passwordForm.newPassword}
+                  onChangeText={(text) =>
+                    setPasswordForm({
+                      ...passwordForm,
+                      newPassword: text,
+                    })
+                  }
+                />
+
+                <TouchableOpacity
+                  onPress={() =>
+                    setShowNewPassword(!showNewPassword)
+                  }
+                >
+                  <Ionicons
+                    name={
+                      showNewPassword
+                        ? 'eye-off-outline'
+                        : 'eye-outline'
+                    }
+                    size={20}
+                    color="#64748b"
+                  />
+                </TouchableOpacity>
+              </View>
+
+              {/* Confirm Password */}
+              <Text className="text-slate-700 font-semibold text-sm mb-2">
+                Confirm New Password
+              </Text>
+
+              <View className="flex-row items-center border border-slate-200 rounded-xl px-3 mb-6">
+                <Ionicons
+                  name="shield-checkmark-outline"
+                  size={18}
+                  color="#94a3b8"
+                />
+
+                <TextInput
+                  className="flex-1 text-slate-900 py-3 px-3"
+                  placeholder="Confirm new password"
+                  placeholderTextColor="#94a3b8"
+                  secureTextEntry={!showConfirmPassword}
+                  value={passwordForm.confirmPassword}
+                  onChangeText={(text) =>
+                    setPasswordForm({
+                      ...passwordForm,
+                      confirmPassword: text,
+                    })
+                  }
+                />
+
+                <TouchableOpacity
+                  onPress={() =>
+                    setShowConfirmPassword(!showConfirmPassword)
+                  }
+                >
+                  <Ionicons
+                    name={
+                      showConfirmPassword
+                        ? 'eye-off-outline'
+                        : 'eye-outline'
+                    }
+                    size={20}
+                    color="#64748b"
+                  />
+                </TouchableOpacity>
+              </View>
+
+              {/* Buttons */}
+              <View className="flex-row gap-3">
+
+                <TouchableOpacity
+                  disabled={isChangingPassword}
+                  onPress={() => {
+                    setShowPasswordModal(false);
+
+                    setPasswordForm({
+                      currentPassword: '',
+                      newPassword: '',
+                      confirmPassword: '',
+                    });
+                  }}
+                  className="flex-1 border border-slate-200 rounded-xl py-3.5 items-center"
+                >
+                  <Text className="text-slate-600 font-bold">
+                    Cancel
+                  </Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  disabled={isChangingPassword}
+                  onPress={handlePasswordChange}
+                  className="flex-1 bg-orange-500 rounded-xl py-3.5 items-center"
+                >
+                  {isChangingPassword ? (
+                    <ActivityIndicator color="#fff" />
+                  ) : (
+                    <Text className="text-white font-bold">
+                      Save Changes
+                    </Text>
+                  )}
+                </TouchableOpacity>
+
+              </View>
+
+            </View>
+          </View>
+        </View>
+      )}
 
       <AdminBottomBar />
     </View>
