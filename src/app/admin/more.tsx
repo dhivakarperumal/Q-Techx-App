@@ -242,6 +242,41 @@ export default function MoreScreen() {
               />
             </TouchableOpacity>
 
+            {/* Contact Requests */}
+            <TouchableOpacity
+              activeOpacity={0.85}
+              onPress={() => router.push("/admin/contact-requests" as any)}
+              className="bg-white rounded-[20px] p-[18px] flex-row items-center border border-slate-100 shadow-sm"
+            >
+              <View className="w-[52px] h-[52px] rounded-2xl bg-orange-50 items-center justify-center">
+                <Ionicons
+                  name="mail-outline"
+                  size={26}
+                  color="#f97316"
+                />
+              </View>
+
+              <View className="flex-1 ml-4">
+                <Text className="text-orange-500 text-[10px] font-bold tracking-[1px] uppercase">
+                  Requests
+                </Text>
+
+                <Text className="text-slate-900 text-[17px] font-extrabold mt-0.5">
+                  Contact Requests
+                </Text>
+
+                <Text className="text-slate-500 text-[12px] mt-0.5">
+                  Manage customer contact inquiries
+                </Text>
+              </View>
+
+              <Ionicons
+                name="chevron-forward"
+                size={20}
+                color="#cbd5e1"
+              />
+            </TouchableOpacity>
+
             {/* Employee Leave Management */}
             <TouchableOpacity
               activeOpacity={0.85}
