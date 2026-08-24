@@ -422,17 +422,11 @@ export default function TasksScreen() {
 
     setProjectDataLoading(true);
     Promise.all([
-      api.get(`/projects/${taskForm.projectId}/assignments`),
+      api.get("/employees?limit=1000&page=1"),
       api.get("/project-plans"),
     ])
-      .then(async ([employeeResponse, planResponse]) => {
-        const employeeRows = extractEmployeeRows(employeeResponse.data);
-
-        const availableEmployees = employeeRows.length
-          ? employeeRows
-          : extractEmployeeRows(
-            (await api.get("/employees?limit=1000&page=1")).data
-          );
+      .then(([employeeResponse, planResponse]) => {
+        const availableEmployees = extractEmployeeRows(employeeResponse.data);
 
         const mappedEmployees = availableEmployees
           .map((employee: any) => {
