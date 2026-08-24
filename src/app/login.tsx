@@ -21,7 +21,8 @@ import { getRoleHome } from "../auth/roleUtils";
 export default function LoginScreen() {
   const router = useRouter();
   const { login } = useAuth();
-  const isAttemptingRef = useRef<string | false>(false);
+  const isAttemptingRef = useRef(false);
+  const lastCheckedCredentialsRef = useRef("");
 
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
@@ -31,73 +32,80 @@ export default function LoginScreen() {
   const [serverError, setServerError] = useState("");
   const [fieldError, setFieldError] = useState("");
 
-  useEffect(() => {
-    const trimmedUsername = username.trim();
+useEffect(() => {
+  const trimmedUsername = username.trim();
 
+  if (
+    !trimmedUsername ||
+    !password ||
+    password.length < 6 ||
+    isAttemptingRef.current
+  ) {
+    return;
+  }
+
+  const credentialsKey = `${trimmedUsername}|${password}`;
+
+  // Don't check the exact same credentials again
+  if (lastCheckedCredentialsRef.current === credentialsKey) {
+    return;
+  }
+
+  const timer = setTimeout(async () => {
     if (
-      !trimmedUsername ||
-      !password ||
-      password.length < 6 ||
-      isAttemptingRef.current
+      isAttemptingRef.current ||
+      lastCheckedCredentialsRef.current === credentialsKey
     ) {
       return;
     }
 
-    // Prevent checking the exact same credentials repeatedly
-    const credentialsKey = `${trimmedUsername}|${password}`;
+    isAttemptingRef.current = true;
+    setIsSubmitting(true);
+    setServerError("");
+    setFieldError("");
 
-    if (isAttemptingRef.current === credentialsKey) {
-      return;
-    }
+    try {
+      const { data } = await api.post("/users/login", {
+        identifier: trimmedUsername,
+        password,
+      });
 
-    const timer = setTimeout(async () => {
-      // Check again before making request
-      if (isAttemptingRef.current) return;
+      const roleHome = getRoleHome(data.user?.role);
 
-      isAttemptingRef.current = credentialsKey;
-      setIsSubmitting(true);
-      setServerError("");
-      setFieldError("");
-
-      try {
-        const { data } = await api.post("/users/login", {
-          identifier: trimmedUsername,
-          password,
-        });
-
-        const roleHome = getRoleHome(data.user?.role);
-
-        if (!roleHome || !data.user || !data.token) {
-          throw new Error(
-            "Your account has no supported admin or employee role"
-          );
-        }
-
-        await login(data.user, data.token);
-
-        // ✅ Correct credentials → automatically enter app
-        router.replace(roleHome);
-
-      } catch (error: any) {
-        // ❌ Wrong credentials
-        setServerError(
-          "Invalid credentials. Please check your email and password."
-        );
-      } finally {
-        setIsSubmitting(false);
-
-        // Keep the attempted credentials stored.
-        // It will only try again when the user changes them.
+      if (!roleHome || !data.user || !data.token) {
+        throw new Error("Invalid credentials");
       }
-    }, 700);
 
-    return () => clearTimeout(timer);
-  }, [
-    username,
-    password,
-    login,
-    router,
-  ]);
+      // Remember this credential combination as checked
+      lastCheckedCredentialsRef.current = credentialsKey;
+
+      // Save login
+      await login(data.user, data.token);
+
+      // ✅ Automatically enter the app
+      router.replace(roleHome);
+
+    } catch (error) {
+      // Remember this exact combination so it is
+      // checked only once
+      lastCheckedCredentialsRef.current = credentialsKey;
+
+      setServerError(
+        "Invalid credentials. Please check your email and password."
+      );
+    } finally {
+      isAttemptingRef.current = false;
+      setIsSubmitting(false);
+    }
+  }, 700);
+
+  return () => clearTimeout(timer);
+}, [
+  username,
+  password,
+  login,
+  router,
+]);
 
   const handleSubmit = async () => {
     if (!username.trim()) {
