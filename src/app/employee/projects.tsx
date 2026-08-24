@@ -529,7 +529,7 @@ export default function EmployeeProjectsScreen() {
               <Pressable
                 key={project.uuid}
                 onPress={() =>
-                  router.push(`/employee/projects/${project.uuid}` as any)
+                  router.push(`/employee/project-detail/${project.uuid}` as any)
                 }
                 className="mb-4 overflow-hidden rounded-[24px] border border-orange-200 bg-white p-0 active:opacity-90"
                 style={{
