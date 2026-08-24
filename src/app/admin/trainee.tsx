@@ -1,21 +1,21 @@
 import { Ionicons } from "@expo/vector-icons";
-import DateTimePicker, { DateTimePickerEvent } from "@react-native-community/datetimepicker";
+import DateTimePicker from "@react-native-community/datetimepicker";
 import * as DocumentPicker from "expo-document-picker";
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 import React, { useCallback, useEffect, useState } from "react";
 import {
-  ActivityIndicator,
-  Alert,
-  Modal,
-  Platform,
-  Pressable,
-  RefreshControl,
-  ScrollView,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  View,
+    ActivityIndicator,
+    Alert,
+    Modal,
+    Platform,
+    Pressable,
+    RefreshControl,
+    ScrollView,
+    Text,
+    TextInput,
+    TouchableOpacity,
+    View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import api from "../../api";
@@ -46,6 +46,7 @@ const emptyForm: Record<string, any> = {
   designation: "",
   reporting_manager: "",
   joining_date: "",
+  confirmation_date: "",
   end_date: "",
   status: "Active",
   mobile_number: "",
@@ -214,6 +215,50 @@ function Field({
         textAlignVertical={multiline ? "top" : "center"}
         className={inputClass}
       />
+    </View>
+  );
+}
+
+function DateField({
+  label,
+  value,
+  onChange,
+}: {
+  label: string;
+  value: string;
+  onChange: (value: string) => void;
+}) {
+  const [visible, setVisible] = useState(false);
+  const selectedDate = dateValue(value) || new Date();
+
+  return (
+    <View className="mb-3">
+      <Text className="mb-1.5 text-xs font-bold text-slate-500">{label}</Text>
+      <Pressable
+        onPress={() => setVisible(true)}
+        className={inputClass + " flex-row items-center justify-between"}
+      >
+        <Text className={value ? "text-sm text-slate-900" : "text-sm text-slate-400"}>
+          {value || "Select date"}
+        </Text>
+        <Ionicons name="calendar-outline" size={18} color="#f97316" />
+      </Pressable>
+      {visible && (
+        <DateTimePicker
+          value={selectedDate}
+          mode="date"
+          display="default"
+          onChange={(event, date) => {
+            setVisible(false);
+            if (event.type === "set" && date) {
+              onChange(
+                `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`,
+              );
+            }
+          }}
+          accentColor="#f97316"
+        />
+      )}
     </View>
   );
 }
@@ -519,6 +564,10 @@ function TraineeForm({
             ...emptyForm,
             ...member,
             joining_date: joiningDateOf(member)?.slice?.(0, 10) || "",
+            confirmation_date:
+              member.confirmation_date?.slice?.(0, 10) ||
+              member.confirmationDate?.slice?.(0, 10) ||
+              "",
             end_date: member.end_date?.slice?.(0, 10) || "",
             password: "",
           }
@@ -647,13 +696,18 @@ function TraineeForm({
               value={form.reporting_manager}
               onChange={(value) => set("reporting_manager", value)}
             />
-            <Field
-              label="Joining Date (YYYY-MM-DD)"
+            <DateField
+              label="Joining Date"
               value={form.joining_date}
               onChange={(value) => set("joining_date", value)}
             />
-            <Field
-              label="End Date (YYYY-MM-DD)"
+            <DateField
+              label="Confirmation Date"
+              value={form.confirmation_date}
+              onChange={(value) => set("confirmation_date", value)}
+            />
+            <DateField
+              label="End Date"
               value={form.end_date}
               onChange={(value) => set("end_date", value)}
             />
@@ -858,6 +912,7 @@ function DetailModal({
               ["Mobile", member.mobile_number],
               ["Email", member.email_address],
               ["Joining Date", dateText(joiningDateOf(member))],
+              ["Confirmation Date", dateText(member.confirmation_date || member.confirmationDate)],
               ["End Date", dateText(member.end_date)],
               ["College", member.college_university],
               ["Course", member.course],
@@ -922,6 +977,17 @@ const attendanceDate = () => {
     "0"
   )}-${String(date.getDate()).padStart(2, "0")}`;
 };
+
+const currentTime = () => {
+  const date = new Date();
+  return `${String(date.getHours()).padStart(2, "0")}:${String(date.getMinutes()).padStart(2, "0")}`;
+};
+
+const formatDateValue = (date: Date) =>
+  `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
+
+const formatTimeValue = (date: Date) =>
+  `${String(date.getHours()).padStart(2, "0")}:${String(date.getMinutes()).padStart(2, "0")}`;
 
 const calculateMetrics = (checkIn: string, checkOut: string) => {
   const parseTime = (value: string) => {
@@ -1721,7 +1787,9 @@ function TaskAssignmentModal({
   const [taskUuid, setTaskUuid] = useState("");
   const [memberUuid, setMemberUuid] = useState("");
   const [assignedDate, setAssignedDate] = useState(attendanceDate());
+  const [assignedTime, setAssignedTime] = useState(currentTime());
   const [dueDate, setDueDate] = useState("");
+  const [showAssignedTimePicker, setShowAssignedTimePicker] = useState(false);
   const [saving, setSaving] = useState(false);
   const save = async () => {
     if (!taskUuid || !memberUuid || !assignedDate)
@@ -1735,7 +1803,7 @@ function TaskAssignmentModal({
       body.append("trainee_task_uuid", taskUuid);
       body.append("trainee_intern_uuid", memberUuid);
       body.append("assigned_date", assignedDate);
-      body.append("assigned_time", "");
+      body.append("assigned_time", assignedTime);
       body.append("due_date", dueDate);
       await api.post("/trainee-task-assignments", body, {
         headers: { "Content-Type": "multipart/form-data" },
@@ -1835,18 +1903,15 @@ function TaskAssignmentModal({
                 </Pressable>
               ))}
             </ScrollView>
-            <Field
-              label="Assigned Date *"
-              value={assignedDate}
-              onChange={setAssignedDate}
-              placeholder="YYYY-MM-DD"
-            />
-            <Field
-              label="Due Date"
-              value={dueDate}
-              onChange={setDueDate}
-              placeholder="YYYY-MM-DD"
-            />
+            <DateField label="Assigned Date *" value={assignedDate} onChange={setAssignedDate} />
+            <View className="mb-3">
+              <Text className="mb-1.5 text-xs font-bold text-slate-500">Assigned Time</Text>
+              <Pressable onPress={() => setShowAssignedTimePicker(true)} className={inputClass + " flex-row items-center justify-between"}>
+                <Text className="text-sm text-slate-900">{assignedTime}</Text>
+                <Ionicons name="time-outline" size={18} color="#f97316" />
+              </Pressable>
+            </View>
+            <DateField label="Due Date" value={dueDate} onChange={setDueDate} />
             <Pressable
               disabled={saving}
               onPress={save}
@@ -1857,6 +1922,23 @@ function TaskAssignmentModal({
               </Text>
             </Pressable>
           </View>
+          {showAssignedTimePicker && (
+            <DateTimePicker
+              value={(() => {
+                const date = new Date();
+                const [hours, minutes] = assignedTime.split(":").map(Number);
+                date.setHours(hours || 0, minutes || 0, 0, 0);
+                return date;
+              })()}
+              mode="time"
+              display="default"
+              onChange={(event, date) => {
+                setShowAssignedTimePicker(false);
+                if (event.type === "set" && date) setAssignedTime(formatTimeValue(date));
+              }}
+              accentColor="#f97316"
+            />
+          )}
         </ScrollView>
       </View>
     </Modal>
