@@ -21,7 +21,7 @@ import { getRoleHome } from "../auth/roleUtils";
 export default function LoginScreen() {
   const router = useRouter();
   const { login } = useAuth();
-  const isAttemptingRef = useRef(false);
+  const isAttemptingRef = useRef<string | false>(false);
 
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
@@ -30,6 +30,74 @@ export default function LoginScreen() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [serverError, setServerError] = useState("");
   const [fieldError, setFieldError] = useState("");
+
+  useEffect(() => {
+    const trimmedUsername = username.trim();
+
+    if (
+      !trimmedUsername ||
+      !password ||
+      password.length < 6 ||
+      isAttemptingRef.current
+    ) {
+      return;
+    }
+
+    // Prevent checking the exact same credentials repeatedly
+    const credentialsKey = `${trimmedUsername}|${password}`;
+
+    if (isAttemptingRef.current === credentialsKey) {
+      return;
+    }
+
+    const timer = setTimeout(async () => {
+      // Check again before making request
+      if (isAttemptingRef.current) return;
+
+      isAttemptingRef.current = credentialsKey;
+      setIsSubmitting(true);
+      setServerError("");
+      setFieldError("");
+
+      try {
+        const { data } = await api.post("/users/login", {
+          identifier: trimmedUsername,
+          password,
+        });
+
+        const roleHome = getRoleHome(data.user?.role);
+
+        if (!roleHome || !data.user || !data.token) {
+          throw new Error(
+            "Your account has no supported admin or employee role"
+          );
+        }
+
+        await login(data.user, data.token);
+
+        // ✅ Correct credentials → automatically enter app
+        router.replace(roleHome);
+
+      } catch (error: any) {
+        // ❌ Wrong credentials
+        setServerError(
+          "Invalid credentials. Please check your email and password."
+        );
+      } finally {
+        setIsSubmitting(false);
+
+        // Keep the attempted credentials stored.
+        // It will only try again when the user changes them.
+      }
+    }, 700);
+
+    return () => clearTimeout(timer);
+  }, [
+    username,
+    password,
+    login,
+    router,
+  ]);
 
   const handleSubmit = async () => {
     if (!username.trim()) {
@@ -50,66 +118,6 @@ export default function LoginScreen() {
     setFieldError("");
     setServerError("");
     setIsSubmitting(true);
-
-    useEffect(() => {
-      const trimmedUsername = username.trim();
-
-      // Don't attempt login until both fields are filled
-      if (
-        !trimmedUsername ||
-        !password ||
-        password.length < 6 ||
-        isAttemptingRef.current ||
-        isSubmitting
-      ) {
-        return;
-      }
-
-      // Wait until user stops typing
-      const timer = setTimeout(async () => {
-        if (isAttemptingRef.current) return;
-
-        isAttemptingRef.current = true;
-        setIsSubmitting(true);
-        setServerError("");
-        setFieldError("");
-
-        try {
-          const { data } = await api.post("/users/login", {
-            identifier: trimmedUsername,
-            password,
-          });
-
-          const roleHome = getRoleHome(data.user?.role);
-
-          if (!roleHome || !data.user || !data.token) {
-            throw new Error(
-              "Your account has no supported admin or employee role"
-            );
-          }
-
-          await login(data.user, data.token);
-
-          // Automatically go to dashboard
-          router.replace(roleHome);
-
-        } catch (error) {
-          // Keep silent while typing.
-          // User can continue changing the credentials.
-        } finally {
-          isAttemptingRef.current = false;
-          setIsSubmitting(false);
-        }
-      }, 700);
-
-      return () => clearTimeout(timer);
-    }, [
-      username,
-      password,
-      isSubmitting,
-      login,
-      router,
-    ]);
 
     try {
       const { data } = await api.post("/users/login", {
