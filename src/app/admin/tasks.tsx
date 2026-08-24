@@ -423,21 +423,24 @@ export default function TasksScreen() {
           employeePayload?.data ||
           [];
         setEmployees(
-          activeEmployeesOnly(employeeRows).map((employee: any) => ({
+          activeEmployeesOnly(employeeRows).map((employee: any) => {
+            const source = employee.employee || employee.user || employee.profile || employee;
+            return {
             id: String(
-              employee.employee_id ??
-              employee.id ??
-              employee.employeeCode ??
-              employee.employee_code,
+              source.employee_id ??
+              source.id ??
+              source.employeeCode ??
+              source.employee_code,
             ),
             name: String(
-              employee.full_name ||
-              employee.employee_name ||
-              `${employee.first_name || ""} ${employee.last_name || ""}`.trim() ||
+              source.full_name ||
+              source.employee_name ||
+              `${source.first_name || ""} ${source.last_name || ""}`.trim() ||
               "Employee",
             ),
-            role: employee.designation || employee.role,
-          })),
+            role: source.designation || source.role,
+            };
+          }),
         );
 
         const plans =
