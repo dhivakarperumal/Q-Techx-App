@@ -1,24 +1,25 @@
 import { Ionicons } from "@expo/vector-icons";
-import { LinearGradient } from "expo-linear-gradient";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import * as DocumentPicker from "expo-document-picker";
+import { LinearGradient } from "expo-linear-gradient";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import {
-  ActivityIndicator,
-  Image,
-  KeyboardAvoidingView,
-  Modal,
-  Platform,
-  Pressable,
-  RefreshControl,
-  ScrollView,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  View,
+    ActivityIndicator,
+    Image,
+    KeyboardAvoidingView,
+    Modal,
+    Platform,
+    Pressable,
+    RefreshControl,
+    ScrollView,
+    Text,
+    TextInput,
+    TouchableOpacity,
+    View,
 } from "react-native";
 
 import api, { API_BASE_URL } from "../../api";
+import { activeEmployeesOnly } from "../../auth/employeeUtils";
 import { AdminBottomBar } from "../../components/admin-bottom-bar";
 import { FAB } from "../../components/FAB";
 import { TopHeader } from "../../components/TopHeader";
@@ -422,7 +423,7 @@ export default function TasksScreen() {
           employeePayload?.data ||
           [];
         setEmployees(
-          employeeRows.map((employee: any) => ({
+          activeEmployeesOnly(employeeRows).map((employee: any) => ({
             id: String(
               employee.employee_id ??
               employee.id ??

@@ -1,11 +1,12 @@
-import React, { useState, useEffect } from "react";
-import { ScrollView, Text, TouchableOpacity, View, TextInput, Modal, Switch, RefreshControl, ActivityIndicator, Alert } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
-import { useRouter } from "expo-router";
 import dayjs from "dayjs";
 import isSameOrAfter from "dayjs/plugin/isSameOrAfter";
+import { useRouter } from "expo-router";
+import React, { useEffect, useState } from "react";
+import { ActivityIndicator, Alert, Modal, RefreshControl, ScrollView, Text, TextInput, TouchableOpacity, View } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import api from "../../api"; // Assuming api is at src/api.js
+import { activeEmployeesOnly } from "../../auth/employeeUtils";
 import { FAB } from "../../components/FAB";
 
 dayjs.extend(isSameOrAfter);
@@ -104,7 +105,9 @@ export default function AdminCalendarScreen() {
         api.get('/projects?limit=100&page=1').catch(() => ({ data: { data: [] } }))
       ]);
       setEvents(eventsRes.data || []);
-      setEmployees(Array.isArray(empRes.data?.data) ? empRes.data.data : []);
+      setEmployees(
+        activeEmployeesOnly(Array.isArray(empRes.data?.data) ? empRes.data.data : []),
+      );
       setProjects(Array.isArray(projRes.data?.data) ? projRes.data.data : projRes.data || []);
     } catch (e) {
       console.error(e);

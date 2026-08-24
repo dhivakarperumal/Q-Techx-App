@@ -14,6 +14,7 @@ import {
 } from "react-native";
 
 import api from "../../api";
+import { activeEmployeesOnly } from "../../auth/employeeUtils";
 import { AdminBottomBar } from "../../components/admin-bottom-bar";
 import { FAB } from "../../components/FAB";
 import { TopHeader } from "../../components/TopHeader";
@@ -358,7 +359,7 @@ export default function ProjectsScreen() {
         }),
       );
 
-      setEmployees(normalized);
+      setEmployees(activeEmployeesOnly(normalized));
     } catch (error) {
       console.error("Failed to fetch employees for assignment modal:", error);
       setEmployees([]);

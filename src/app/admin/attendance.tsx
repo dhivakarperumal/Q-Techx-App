@@ -4,21 +4,21 @@ import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import {
-  ActivityIndicator,
-  Alert,
-  KeyboardAvoidingView,
-  Modal,
-  Platform,
-  Pressable,
-  RefreshControl,
-  ScrollView,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  View,
+    ActivityIndicator,
+    Alert,
+    KeyboardAvoidingView,
+    Modal,
+    Platform,
+    RefreshControl,
+    ScrollView,
+    Text,
+    TextInput,
+    TouchableOpacity,
+    View
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import api from "../../api";
+import { activeEmployeesOnly } from "../../auth/employeeUtils";
 import { FAB } from "../../components/FAB";
 
 type Employee = {
@@ -958,7 +958,7 @@ export default function AdminAttendanceScreen() {
         ]);
         const employeeData =
           employeeResponse.data?.data || employeeResponse.data?.employees || [];
-        setEmployees(employeeData);
+        setEmployees(activeEmployeesOnly(employeeData));
         setRows(summaryResponse.data?.data || []);
       } catch (error: any) {
         Alert.alert(

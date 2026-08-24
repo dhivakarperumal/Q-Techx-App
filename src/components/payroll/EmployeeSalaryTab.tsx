@@ -1,9 +1,10 @@
-import React, { useState, useEffect } from "react";
-import { View, Text, ScrollView, TouchableOpacity, TextInput, Modal, ActivityIndicator, Alert, RefreshControl, Pressable } from "react-native";
-import { DollarSign, Search, CheckCircle, Plus, Receipt, User, Calendar, X, Edit, Trash2, Eye } from "lucide-react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
+import { Edit, Eye, Receipt, Search, Trash2, User, X } from "lucide-react-native";
+import React, { useEffect, useState } from "react";
+import { ActivityIndicator, Alert, Modal, Pressable, RefreshControl, ScrollView, Text, TextInput, TouchableOpacity, View } from "react-native";
 import api from "../../api";
+import { activeEmployeesOnly } from "../../auth/employeeUtils";
 import { FAB } from "../FAB";
 
 export default function EmployeeSalaryTab() {
@@ -54,9 +55,9 @@ export default function EmployeeSalaryTab() {
     try {
       const { data } = await api.get("/employees?limit=200");
       if (data.data) {
-        setEmployees(data.data);
+        setEmployees(activeEmployeesOnly(data.data));
       } else if (data.employees) {
-        setEmployees(data.employees);
+        setEmployees(activeEmployeesOnly(data.employees));
       }
     } catch (error) {
       console.warn("Failed to load employees");

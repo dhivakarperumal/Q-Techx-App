@@ -2,18 +2,19 @@ import { Ionicons } from "@expo/vector-icons";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import React, { useCallback, useEffect, useState } from "react";
 import {
-  ActivityIndicator,
-  Alert,
-  Modal,
-  Pressable,
-  ScrollView,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  View,
+    ActivityIndicator,
+    Alert,
+    Modal,
+    Pressable,
+    ScrollView,
+    Text,
+    TextInput,
+    TouchableOpacity,
+    View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import api from "../../../api";
+import { activeEmployeesOnly } from "../../../auth/employeeUtils";
 
 /* ─── constants ────────────────────────────────────────────── */
 const ROLES = ["Project Manager", "Developer", "QA", "UI/UX", "Support"];
@@ -323,7 +324,7 @@ export default function ProjectDetailScreen() {
         ? d
         : (d?.data ?? d?.employees ?? d?.rows ?? []);
       setEmployees(
-        rows.map((e: any) => ({
+        activeEmployeesOnly(rows).map((e: any) => ({
           id: e.employee_id ?? e.id ?? e.uuid ?? "",
           name:
             e.full_name ??
