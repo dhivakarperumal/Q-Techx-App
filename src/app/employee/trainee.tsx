@@ -5,14 +5,15 @@ import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 import { useCallback, useEffect, useState } from "react";
 import {
-    ActivityIndicator,
-    Alert,
-    Modal,
-    Pressable,
-    ScrollView,
-    Text,
-    TextInput,
-    View,
+  ActivityIndicator,
+  Alert,
+  Modal,
+  Pressable,
+  ScrollView,
+  Text,
+  TextInput,
+  RefreshControl,
+  View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import api from "../../api";
@@ -874,6 +875,7 @@ export default function TraineeScreen() {
   const [members, setMembers] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [refreshing, setRefreshing] = useState(false);
 
   const [page] = useState(1);
   const [limit] = useState(10);
@@ -930,8 +932,8 @@ export default function TraineeScreen() {
     } catch (requestError: any) {
       setError(
         requestError?.response?.data?.message ||
-          requestError.message ||
-          "Failed to load members",
+        requestError.message ||
+        "Failed to load members",
       );
     } finally {
       setLoading(false);
@@ -988,10 +990,10 @@ export default function TraineeScreen() {
       // Strictly filter tasks created by this employee
       const filteredTasks = employeeId
         ? allTasks.filter(
-            (t: any) =>
-              String(t.employee_id) === String(employeeId) ||
-              String(t.created_by) === String(employeeId),
-          )
+          (t: any) =>
+            String(t.employee_id) === String(employeeId) ||
+            String(t.created_by) === String(employeeId),
+        )
         : allTasks;
       setTasks(filteredTasks);
 
@@ -1002,16 +1004,30 @@ export default function TraineeScreen() {
       // Strictly filter assignments for trainees that belong to this employee
       const filteredAssignments = employeeId
         ? allAssignments.filter(
-            (a: any) =>
-              String(a.employee_id) === String(employeeId) ||
-              String(a.assigned_by) === String(employeeId),
-          )
+          (a: any) =>
+            String(a.employee_id) === String(employeeId) ||
+            String(a.assigned_by) === String(employeeId),
+        )
         : allAssignments;
       setTaskAssignments(filteredAssignments);
     } catch (err) {
       // silent
     }
   }, [employeeId]);
+
+  const handleRefresh = useCallback(async () => {
+    setRefreshing(true);
+
+    try {
+      await Promise.all([
+        loadMembers(),
+        fetchStats(),
+        loadTasks(),
+      ]);
+    } finally {
+      setRefreshing(false);
+    }
+  }, [loadMembers, fetchStats, loadTasks]);
 
   useEffect(() => {
     loadTasks();
@@ -1100,9 +1116,20 @@ export default function TraineeScreen() {
       </View>
       <ScrollView
         style={{ flex: 1 }}
-        contentContainerStyle={{ padding: 20, paddingBottom: 32 }}
+        contentContainerStyle={{
+          padding: 20,
+          paddingBottom: 32,
+        }}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={handleRefresh}
+            colors={["#f97316"]}
+            tintColor="#f97316"
+          />
+        }
       >
-      
+
 
         {error ? (
           <View
@@ -1421,7 +1448,7 @@ export default function TraineeScreen() {
                     </Text>
                   </View>
                 </View>
-                
+
                 <View style={{ height: 1, backgroundColor: "#f1f5f9", marginVertical: 14 }} />
 
                 <View
@@ -1516,8 +1543,8 @@ export default function TraineeScreen() {
       <View style={{ position: "absolute", bottom: 24, right: 24, alignItems: "flex-end", zIndex: 100 }}>
         {fabMenuVisible && (
           <View style={{ gap: 14, marginBottom: 16 }}>
-            <Pressable 
-              onPress={() => { setTaskVisible(true); setFabMenuVisible(false); }} 
+            <Pressable
+              onPress={() => { setTaskVisible(true); setFabMenuVisible(false); }}
               style={{ flexDirection: "row", alignItems: "center", justifyContent: "flex-end", gap: 12 }}
             >
               <Text style={{ backgroundColor: "#fff", paddingHorizontal: 14, paddingVertical: 8, borderRadius: 10, overflow: "hidden", fontWeight: "700", elevation: 3, shadowColor: "#000", shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.1, shadowRadius: 4, color: "#334155" }}>Add Task</Text>
@@ -1525,8 +1552,8 @@ export default function TraineeScreen() {
                 <Ionicons name="add" size={24} color="#f97316" />
               </View>
             </Pressable>
-            <Pressable 
-              onPress={() => { setTaskAssignmentVisible(true); setFabMenuVisible(false); }} 
+            <Pressable
+              onPress={() => { setTaskAssignmentVisible(true); setFabMenuVisible(false); }}
               style={{ flexDirection: "row", alignItems: "center", justifyContent: "flex-end", gap: 12 }}
             >
               <Text style={{ backgroundColor: "#fff", paddingHorizontal: 14, paddingVertical: 8, borderRadius: 10, overflow: "hidden", fontWeight: "700", elevation: 3, shadowColor: "#000", shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.1, shadowRadius: 4, color: "#334155" }}>Assign Task</Text>
@@ -1536,7 +1563,7 @@ export default function TraineeScreen() {
             </Pressable>
           </View>
         )}
-        <Pressable 
+        <Pressable
           onPress={() => setFabMenuVisible(!fabMenuVisible)}
           style={{ width: 60, height: 60, borderRadius: 30, backgroundColor: "#f97316", alignItems: "center", justifyContent: "center", elevation: 5, shadowColor: "#f97316", shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.3, shadowRadius: 6 }}
         >
