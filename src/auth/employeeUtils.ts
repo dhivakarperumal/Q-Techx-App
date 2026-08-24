@@ -17,6 +17,11 @@ const normalizeStatus = (value: unknown) =>
 export const isActiveEmployee = (employee: any) => {
   if (!employee || typeof employee !== "object") return false;
 
+  const nestedEmployee = employee.employee || employee.user || employee.profile;
+  if (nestedEmployee && typeof nestedEmployee === "object") {
+    return isActiveEmployee(nestedEmployee);
+  }
+
   const statusValues = [
     employee.status,
     employee.employment_status,

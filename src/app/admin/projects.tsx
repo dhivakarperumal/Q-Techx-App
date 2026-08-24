@@ -6,10 +6,10 @@ import {
   ActivityIndicator,
   Modal,
   Pressable,
+  RefreshControl,
   ScrollView,
   Text,
   TextInput,
-  RefreshControl,
   TouchableOpacity,
   View,
 } from "react-native";
@@ -338,34 +338,37 @@ export default function ProjectsScreen() {
         ? payload
         : payload?.data || payload?.employees || payload?.rows || [];
 
-      const normalized = (Array.isArray(rows) ? rows : []).map(
-        (employee: any) => ({
+      const normalized = activeEmployeesOnly(Array.isArray(rows) ? rows : []).map(
+        (employee: any) => {
+          const source = employee.employee || employee.user || employee.profile || employee;
+          return {
           id:
-            employee.employee_id ||
-            employee.employeeId ||
-            employee.id ||
-            employee.employeeCode ||
-            employee.uuid ||
-            employee.staff_id ||
+            source.employee_id ||
+            source.employeeId ||
+            source.id ||
+            source.employeeCode ||
+            source.uuid ||
+            source.staff_id ||
             "",
           name:
-            employee.full_name ||
-            employee.employee_name ||
-            employee.name ||
-            `${employee.first_name || ""} ${employee.last_name || ""}`.trim() ||
-            employee.username ||
+            source.full_name ||
+            source.employee_name ||
+            source.name ||
+            `${source.first_name || ""} ${source.last_name || ""}`.trim() ||
+            source.username ||
             "Employee",
           activeProjectCount: Number(
-            employee.active_projects ||
-            employee.activeProjects ||
-            employee.active_project_count ||
-            employee.activeProjectCount ||
-            employee.project_count ||
-            employee.current_projects ||
+            source.active_projects ||
+            source.activeProjects ||
+            source.active_project_count ||
+            source.activeProjectCount ||
+            source.project_count ||
+            source.current_projects ||
             0,
           ),
           raw: employee,
-        }),
+          };
+        },
       );
 
       setEmployees(activeEmployeesOnly(normalized));

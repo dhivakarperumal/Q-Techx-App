@@ -5,6 +5,7 @@ import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { ActivityIndicator, Pressable, RefreshControl, ScrollView, Text, View } from "react-native";
 import api from "../../api";
 import { useAuth } from "../../auth/AuthContext";
+import { activeEmployeesOnly } from "../../auth/employeeUtils";
 import { AdminBottomBar } from "../../components/admin-bottom-bar";
 import { TopHeader } from "../../components/TopHeader";
 
@@ -91,8 +92,30 @@ export default function AdminDashboard() {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState("");
+  const [activeEmployeeCount, setActiveEmployeeCount] = useState<number | null>(null);
   const fetchDashboard = useCallback(async (refresh = false) => { if (refresh) setRefreshing(true); else setLoading(true); try { const response = await api.get("/dashboard"); setDashboard(response.data?.data || response.data || null); setError(""); } catch (requestError: any) { setError(requestError?.message || "Unable to load dashboard data."); } finally { setLoading(false); setRefreshing(false); } }, []);
-  useEffect(() => { fetchDashboard(); const interval = setInterval(() => fetchDashboard(true), 30000); return () => clearInterval(interval); }, [fetchDashboard]);
+  useEffect(() => {
+    const loadActiveEmployeeCount = async () => {
+      try {
+        const response = await api.get("/employees?limit=1000&page=1");
+        const payload = response.data;
+        const rows = Array.isArray(payload)
+          ? payload
+          : payload?.data || payload?.employees || payload?.rows || [];
+        setActiveEmployeeCount(activeEmployeesOnly(Array.isArray(rows) ? rows : []).length);
+      } catch {
+        setActiveEmployeeCount(null);
+      }
+    };
+
+    fetchDashboard();
+    loadActiveEmployeeCount();
+    const interval = setInterval(() => {
+      fetchDashboard(true);
+      loadActiveEmployeeCount();
+    }, 30000);
+    return () => clearInterval(interval);
+  }, [fetchDashboard]);
 
   const displayName = String(user?.name || user?.full_name || user?.first_name || "Admin").split(" ")[0];
   const attendance = dashboard?.attendanceToday;
@@ -101,7 +124,7 @@ export default function AdminDashboard() {
   const overview = dashboard?.overviewData || [];
   const maxIncome = Math.max(...overview.map((entry) => valueOf(entry.income)), 1);
   const traineeTotal = useMemo(() => (dashboard?.traineeStats || []).reduce((sum, item) => sum + valueOf(item.count), 0), [dashboard?.traineeStats]);
-  const stats = [["people", "Total Employees", String(valueOf(dashboard?.totalEmployees)), "#2563eb", "#eff6ff"], ["folder", "Active Projects", String(valueOf(dashboard?.activeProjects)), "#f97316", "#fff7ed"], ["checkbox", "Total Tasks", String(valueOf(dashboard?.totalTasks)), "#10b981", "#ecfdf5"], ["school", "Active Trainees", String(valueOf(dashboard?.activeTrainees)), "#8b5cf6", "#f5f3ff"], ["book", "Intern Students", String(valueOf(dashboard?.internshipStudents)), "#ec4899", "#fdf2f8"], ["cash", "Monthly Payroll", money(dashboard?.monthlyPayroll), "#0f766e", "#f0fdfa"], ["chatbubbles", "Pending Follow-ups", String(valueOf(dashboard?.clientStats?.pendingFollowUps)), "#dc2626", "#fef2f2"], ["calendar", "Attendance Today", `${valueOf(attendance?.present)}/${valueOf(attendance?.total)}`, "#2563eb", "#eff6ff"]] as const;
+  const stats = [["people", "Active Employees", String(activeEmployeeCount ?? 0), "#2563eb", "#eff6ff"], ["folder", "Active Projects", String(valueOf(dashboard?.activeProjects)), "#f97316", "#fff7ed"], ["checkbox", "Total Tasks", String(valueOf(dashboard?.totalTasks)), "#10b981", "#ecfdf5"], ["school", "Active Trainees", String(valueOf(dashboard?.activeTrainees)), "#8b5cf6", "#f5f3ff"], ["book", "Intern Students", String(valueOf(dashboard?.internshipStudents)), "#ec4899", "#fdf2f5"], ["cash", "Monthly Payroll", money(dashboard?.monthlyPayroll), "#0f766e", "#f0fdfa"], ["chatbubbles", "Pending Follow-ups", String(valueOf(dashboard?.clientStats?.pendingFollowUps)), "#dc2626", "#fef2f2"], ["calendar", "Attendance Today", `${valueOf(attendance?.present)}/${valueOf(attendance?.total)}`, "#2563eb", "#eff6ff"]] as const;
 
   return <View className="flex-1 bg-white"><TopHeader /><ScrollView className="flex-1" contentContainerStyle={{ paddingHorizontal: 20, paddingTop: 12, paddingBottom: 120 }} refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => fetchDashboard(true)} tintColor="#f97316" />}>
     <View className="mb-5 flex-row items-end justify-between"><View className="flex-1 pr-3"><Text className="text-xs font-bold uppercase tracking-[2px] text-orange-500">{new Date().toLocaleDateString("en-IN", { weekday: "long", month: "short", day: "numeric" })}</Text><Text className="mt-1 text-3xl font-black text-black">Good {new Date().getHours() < 12 ? "Morning" : new Date().getHours() < 17 ? "Afternoon" : "Evening"}, {displayName}</Text><Text className="mt-1 text-sm text-gray-500">Your command center at a glance.</Text></View><View className="h-14 w-14 items-center justify-center rounded-2xl bg-black shadow-lg"><Ionicons name="pulse" size={28} color="#f97316" /></View></View>
