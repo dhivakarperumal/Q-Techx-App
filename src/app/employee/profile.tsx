@@ -3,6 +3,7 @@ import { useRouter } from 'expo-router';
 import React, { useState } from 'react';
 import {
   ActivityIndicator,
+  Modal,
   ScrollView,
   Text,
   TextInput,
@@ -17,6 +18,8 @@ export default function EmployeeProfileScreen() {
   const { user, logout } = useAuth();
 
   const [showPasswordModal, setShowPasswordModal] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const [passwordForm, setPasswordForm] = useState({
     currentPassword: '',
@@ -115,6 +118,62 @@ export default function EmployeeProfileScreen() {
       );
     } finally {
       setIsChangingPassword(false);
+    }
+  };
+
+  const handleDeleteAccount = async () => {
+    const targetUserId =
+      user?.user_id ||
+      user?.id ||
+      user?.userId ||
+      (user as any)?.employee?.user_id ||
+      (user as any)?.employee?.id;
+
+    if (!targetUserId) {
+      alert('User identifier not found. Please log in again.');
+      return;
+    }
+
+    setIsDeleting(true);
+
+    try {
+      let successMessage =
+        'Your account has been deactivated successfully. Login access is now revoked.';
+
+      try {
+        const response = await api.put(`/users/${targetUserId}`, {
+          status: 'Inactive',
+        });
+        if (response?.data?.message) {
+          successMessage = response.data.message;
+        }
+      } catch (putErr: any) {
+        // Fallback to DELETE endpoint if PUT fails
+        try {
+          const deleteResponse = await api.delete(`/users/${targetUserId}`);
+          if (deleteResponse?.data?.message) {
+            successMessage = deleteResponse.data.message;
+          }
+        } catch (delErr: any) {
+          throw putErr || delErr;
+        }
+      }
+
+      setShowDeleteModal(false);
+      alert(successMessage);
+
+      // Log out and navigate back to login screen
+      await logout();
+      router.replace('/login');
+    } catch (error: any) {
+      console.error('Delete account error:', error);
+      const errorMsg =
+        error?.response?.data?.message ||
+        error?.message ||
+        'Failed to delete account. Please try again or contact your administrator.';
+      alert(errorMsg);
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -233,16 +292,28 @@ export default function EmployeeProfileScreen() {
         </View>
 
         {/* ── LOGOUT BUTTON ── */}
-        <View className="mx-5">
+        <View className="mx-5 mb-4">
           <TouchableOpacity
             onPress={async () => {
               await logout();
               router.replace('/login');
             }}
-            className="border border-red-200 bg-red-50 rounded-2xl py-4 items-center justify-center flex-row"
+            className="border border-slate-200 bg-white rounded-2xl py-4 items-center justify-center flex-row shadow-sm"
           >
-            <Ionicons name="log-out-outline" size={18} color="#ef4444" />
-            <Text className="text-red-500 font-bold text-sm ml-2">Log Out</Text>
+            <Ionicons name="log-out-outline" size={18} color="#64748b" />
+            <Text className="text-slate-700 font-bold text-sm ml-2">Log Out</Text>
+          </TouchableOpacity>
+        </View>
+
+        {/* ── DELETE ACCOUNT BUTTON ── */}
+        <View className="mx-5">
+          <TouchableOpacity
+            activeOpacity={0.8}
+            onPress={() => setShowDeleteModal(true)}
+            className="border border-red-200 bg-red-50 rounded-2xl py-4 items-center justify-center flex-row shadow-sm"
+          >
+            <Ionicons name="trash-outline" size={18} color="#ef4444" />
+            <Text className="text-red-500 font-bold text-sm ml-2">Delete Account</Text>
           </TouchableOpacity>
         </View>
 
@@ -464,6 +535,167 @@ export default function EmployeeProfileScreen() {
           </View>
         </View>
       )}
+
+      {/* ── CUSTOMIZED DELETE ACCOUNT CONFIRMATION MODAL ── */}
+      <Modal
+        visible={showDeleteModal}
+        transparent={true}
+        animationType="fade"
+        statusBarTranslucent={true}
+        onRequestClose={() => {
+          if (!isDeleting) setShowDeleteModal(false);
+        }}
+      >
+        <View className="flex-1 bg-black/75 items-center justify-center px-5">
+          <View
+            className="w-full max-w-md bg-[#0f1117] rounded-3xl overflow-hidden border border-white/10"
+            style={{
+              shadowColor: '#000',
+              shadowOffset: { width: 0, height: 12 },
+              shadowOpacity: 0.5,
+              shadowRadius: 24,
+              elevation: 20,
+            }}
+          >
+            {/* Top Red Accent Bar */}
+            <View style={{ height: 6, width: '100%', backgroundColor: '#e11d48' }} />
+
+            <View className="p-6">
+              {/* Header Icon + Title */}
+              <View className="flex-row items-start justify-between mb-4">
+                <View className="flex-row items-center flex-1">
+                  <View className="w-12 h-12 rounded-2xl bg-rose-500/15 border border-rose-500/30 items-center justify-center mr-3">
+                    <Ionicons name="alert-circle-outline" size={24} color="#f43f5e" />
+                  </View>
+                  <View className="flex-1">
+                    <Text className="text-white font-black text-lg">
+                      Delete Account?
+                    </Text>
+                    <Text className="text-white/50 text-xs mt-0.5">
+                      Deactivate and revoke portal access
+                    </Text>
+                  </View>
+                </View>
+
+                <TouchableOpacity
+                  disabled={isDeleting}
+                  onPress={() => setShowDeleteModal(false)}
+                  className="p-1 rounded-full bg-white/5"
+                >
+                  <Ionicons name="close" size={20} color="#94a3b8" />
+                </TouchableOpacity>
+              </View>
+
+              {/* User Details Summary Card */}
+              <View className="bg-white/[0.04] border border-white/10 rounded-2xl p-3.5 mb-4">
+                <View className="flex-row items-center justify-between pb-3 border-b border-white/5 mb-3">
+                  <View className="flex-row items-center flex-1 pr-2">
+                    <View className="w-9 h-9 rounded-xl bg-orange-500/20 border border-orange-500/30 items-center justify-center mr-2.5">
+                      <Text className="text-orange-400 font-black text-sm">
+                        {avatarLetter}
+                      </Text>
+                    </View>
+                    <View className="flex-1">
+                      <Text className="text-white font-bold text-sm" numberOfLines={1}>
+                        {displayName}
+                      </Text>
+                      <Text className="text-white/40 text-xs" numberOfLines={1}>
+                        {userEmail}
+                      </Text>
+                    </View>
+                  </View>
+                  <View className="bg-emerald-500/15 border border-emerald-500/30 px-2.5 py-1 rounded-xl">
+                    <Text className="text-emerald-300 font-bold text-[10px]">
+                      {userRole}
+                    </Text>
+                  </View>
+                </View>
+
+                <View className="flex-row justify-between items-center text-xs">
+                  <View>
+                    <Text className="text-white/40 text-[10px] uppercase font-bold tracking-wider">
+                      Current Status
+                    </Text>
+                    <View className="flex-row items-center mt-1">
+                      <View className="w-2 h-2 rounded-full bg-emerald-400 mr-1.5" />
+                      <Text className="text-emerald-400 font-bold text-xs">
+                        Active
+                      </Text>
+                    </View>
+                  </View>
+
+                  <View className="items-end">
+                    <Text className="text-white/40 text-[10px] uppercase font-bold tracking-wider">
+                      New Status
+                    </Text>
+                    <View className="flex-row items-center mt-1">
+                      <View className="w-2 h-2 rounded-full bg-rose-400 mr-1.5" />
+                      <Text className="text-rose-400 font-bold text-xs">
+                        Inactive (Blocked)
+                      </Text>
+                    </View>
+                  </View>
+                </View>
+              </View>
+
+              {/* Contextual Warning Box */}
+              <View className="bg-rose-500/10 border border-rose-500/25 rounded-2xl p-3.5 mb-5">
+                <View className="flex-row items-center mb-1">
+                  <Ionicons name="shield-outline" size={15} color="#fb7185" />
+                  <Text className="text-rose-200 font-bold text-xs ml-1.5">
+                    Login Access Will Be Revoked
+                  </Text>
+                </View>
+                <Text className="text-rose-300/80 text-xs leading-5">
+                  Deactivating this account will immediately revoke all portal login permissions. Any active session will end, and you will not be able to log back in.
+                </Text>
+              </View>
+
+              {/* Action Buttons */}
+              <View className="flex-row gap-3">
+                <TouchableOpacity
+                  disabled={isDeleting}
+                  onPress={() => setShowDeleteModal(false)}
+                  className="flex-1 bg-white/10 border border-white/10 rounded-xl py-3.5 items-center"
+                >
+                  <Text className="text-white/80 font-bold text-sm">
+                    Cancel
+                  </Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  disabled={isDeleting}
+                  onPress={handleDeleteAccount}
+                  className="flex-1 bg-rose-600 rounded-xl py-3.5 items-center justify-center flex-row shadow-lg"
+                  style={{
+                    shadowColor: '#e11d48',
+                    shadowOffset: { width: 0, height: 4 },
+                    shadowOpacity: 0.3,
+                    shadowRadius: 8,
+                    elevation: 6,
+                  }}
+                >
+                  {isDeleting ? (
+                    <>
+                      <ActivityIndicator color="#fff" size="small" />
+                      <Text className="text-white font-bold text-sm ml-2">
+                        Deleting...
+                      </Text>
+                    </>
+                  ) : (
+                    <>
+                      <Ionicons name="trash-outline" size={16} color="#fff" />
+                      <Text className="text-white font-bold text-sm ml-1.5">
+                        Yes, Delete
+                      </Text>
+                    </>
+                  )}
+                </TouchableOpacity>
+              </View>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }
