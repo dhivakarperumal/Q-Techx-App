@@ -13,6 +13,7 @@ import {
   Text,
   TextInput,
   View,
+  Image,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import api from "../api";
@@ -235,20 +236,15 @@ export default function LoginScreen() {
         >
           {/* Top Brand */}
           <View className="mb-8 items-center">
-            <View
-              className="h-16 w-16 items-center justify-center rounded-2xl bg-black"
-              style={{
-                shadowColor: "#f97316",
-                shadowOffset: { width: 0, height: 6 },
-                shadowOpacity: 0.18,
-                shadowRadius: 10,
-                elevation: 5,
-              }}
-            >
-              <Ionicons
-                name="shield-checkmark"
-                size={30}
-                color="#f97316"
+            <View className="h-16 w-16 items-center justify-center rounded-2xl overflow-hidden">
+              <Image
+                source={require("../../assets/images/bgicon.png")}
+                style={{
+                  width: 52,
+                  height: 52,
+                  borderRadius: 16,
+                }}
+                resizeMode="cover"
               />
             </View>
 
