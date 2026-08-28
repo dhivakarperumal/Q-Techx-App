@@ -122,42 +122,13 @@ export default function EmployeeProfileScreen() {
   };
 
   const handleDeleteAccount = async () => {
-    const targetUserId =
-      user?.user_id ||
-      user?.id ||
-      user?.userId ||
-      (user as any)?.employee?.user_id ||
-      (user as any)?.employee?.id;
-
-    if (!targetUserId) {
-      alert('User identifier not found. Please log in again.');
-      return;
-    }
-
     setIsDeleting(true);
 
     try {
-      let successMessage =
+      const response = await api.post('/users/delete-account');
+      const successMessage =
+        response?.data?.message ||
         'Your account has been deactivated successfully. Login access is now revoked.';
-
-      try {
-        const response = await api.put(`/users/${targetUserId}`, {
-          status: 'Inactive',
-        });
-        if (response?.data?.message) {
-          successMessage = response.data.message;
-        }
-      } catch (putErr: any) {
-        // Fallback to DELETE endpoint if PUT fails
-        try {
-          const deleteResponse = await api.delete(`/users/${targetUserId}`);
-          if (deleteResponse?.data?.message) {
-            successMessage = deleteResponse.data.message;
-          }
-        } catch (delErr: any) {
-          throw putErr || delErr;
-        }
-      }
 
       setShowDeleteModal(false);
       alert(successMessage);
