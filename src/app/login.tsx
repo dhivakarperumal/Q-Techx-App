@@ -2,18 +2,18 @@ import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import { useEffect, useRef, useState } from "react";
 import {
-  ActivityIndicator,
-  Alert,
-  KeyboardAvoidingView,
-  Linking,
-  Platform,
-  Pressable,
-  ScrollView,
-  RefreshControl,
-  Text,
-  TextInput,
-  View,
-  Image,
+    ActivityIndicator,
+    Alert,
+    Image,
+    KeyboardAvoidingView,
+    Linking,
+    Platform,
+    Pressable,
+    RefreshControl,
+    ScrollView,
+    Text,
+    TextInput,
+    View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import api from "../api";
@@ -238,7 +238,7 @@ export default function LoginScreen() {
           <View className="mb-8 items-center">
             <View className="h-16 w-16 items-center justify-center rounded-2xl overflow-hidden">
               <Image
-                source={require("../../assets/images/bgicon.png")}
+                source={require("../../assets/images/bgicon1.png")}
                 style={{
                   width: 52,
                   height: 52,
