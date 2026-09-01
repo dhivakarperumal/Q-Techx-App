@@ -4,6 +4,9 @@ import * as Location from "expo-location";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
     ActivityIndicator,
+    Alert,
+    Linking,
+    Platform,
     Pressable,
     RefreshControl,
     ScrollView,
@@ -159,22 +162,135 @@ export default function AttendanceScreen() {
   const presentDays = history.filter((record) => record.attendance_status === "Present").length;
   const canClockIn = !todayRecord?.check_in_time && !todayHoliday && !approvedLeaveToday && distance !== null && distance <= ALLOWED_RADIUS_METERS;
 
+  const getLocationWithFallback = async () => {
+    // 1. Ensure device location services (GPS) are enabled
+    let isServiceEnabled = await Location.hasServicesEnabledAsync();
+    if (!isServiceEnabled) {
+      if (Platform.OS === "android") {
+        try {
+          await Location.enableNetworkProviderAsync();
+          isServiceEnabled = await Location.hasServicesEnabledAsync();
+        } catch {
+          // User dismissed the enable dialog or provider failed
+        }
+      }
+    }
+
+    if (!isServiceEnabled) {
+      Alert.alert(
+        "Location Services Disabled",
+        "Please enable Location (GPS) on your device to verify your office location.",
+        [
+          { text: "Cancel", style: "cancel" },
+          { text: "Open Settings", onPress: () => Linking.openSettings() },
+        ]
+      );
+      throw new Error("Device location services are turned off. Please enable GPS and try again.");
+    }
+
+    // 2. Check and request foreground permissions
+    let permission = await Location.getForegroundPermissionsAsync();
+    if (permission.status !== "granted") {
+      permission = await Location.requestForegroundPermissionsAsync();
+    }
+
+    if (permission.status !== "granted") {
+      if (!permission.canAskAgain) {
+        Alert.alert(
+          "Location Permission Required",
+          "Location permission was previously denied. Please enable location permissions in App Settings.",
+          [
+            { text: "Cancel", style: "cancel" },
+            { text: "Open Settings", onPress: () => Linking.openSettings() },
+          ]
+        );
+        throw new Error("Location permission denied. Please enable it in Settings.");
+      }
+      throw new Error("Location permission is required to verify your office location.");
+    }
+
+    // Helper to race a promise against a timeout
+    const withTimeout = <T,>(promise: Promise<T>, ms: number): Promise<T> => {
+      return Promise.race([
+        promise,
+        new Promise<T>((_, reject) => setTimeout(() => reject(new Error("Timeout")), ms)),
+      ]);
+    };
+
+    // 3. Try High Accuracy
+    try {
+      const highPos = await withTimeout(
+        Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.High }),
+        6000
+      );
+      if (highPos?.coords) return highPos;
+    } catch {
+      // Fallback
+    }
+
+    // 4. Try Balanced Accuracy
+    try {
+      const balancedPos = await withTimeout(
+        Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced }),
+        5000
+      );
+      if (balancedPos?.coords) return balancedPos;
+    } catch {
+      // Fallback
+    }
+
+    // 5. Try Lowest Accuracy
+    try {
+      const lowPos = await withTimeout(
+        Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Lowest }),
+        4000
+      );
+      if (lowPos?.coords) return lowPos;
+    } catch {
+      // Fallback
+    }
+
+    // 6. Try Last Known Position (within 5 minutes)
+    try {
+      const lastKnown = await Location.getLastKnownPositionAsync({ maxAge: 300000 });
+      if (lastKnown?.coords) return lastKnown;
+    } catch {
+      // Fallback
+    }
+
+    // 7. Try any available Last Known Position
+    try {
+      const anyLastKnown = await Location.getLastKnownPositionAsync();
+      if (anyLastKnown?.coords) return anyLastKnown;
+    } catch {
+      // Fallback
+    }
+
+    throw new Error("Unable to obtain GPS fix. Please ensure you have a clear GPS or Wi-Fi signal and try again.");
+  };
+
   const handleLocation = async () => {
     try {
       setLocationLoading(true);
       setError("");
-      const permission = await Location.requestForegroundPermissionsAsync();
-      if (permission.status !== "granted") {
-        setError("Location permission is required to verify your office location.");
-        return;
-      }
-      const current = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.High });
-      const currentDistance = getDistanceInMeters(current.coords.latitude, current.coords.longitude, OFFICE_LAT, OFFICE_LNG);
+      const current = await getLocationWithFallback();
+      const currentDistance = getDistanceInMeters(
+        current.coords.latitude,
+        current.coords.longitude,
+        OFFICE_LAT,
+        OFFICE_LNG
+      );
       setDistance(currentDistance);
       setLocationText(`Latitude: ${current.coords.latitude.toFixed(6)}\nLongitude: ${current.coords.longitude.toFixed(6)}`);
-      if (currentDistance > ALLOWED_RADIUS_METERS) setError(`You are ${Math.round(currentDistance)}m away. You must be within ${ALLOWED_RADIUS_METERS}m of the office.`);
-    } catch {
-      setError("Unable to fetch your location. Please enable location services and try again.");
+
+      if (currentDistance <= ALLOWED_RADIUS_METERS) {
+        setSuccessMessage(`Location verified! You are ${Math.round(currentDistance)}m from the office (within ${ALLOWED_RADIUS_METERS}m).`);
+        setTimeout(() => setSuccessMessage(""), 4000);
+      } else {
+        setError(`You are ${Math.round(currentDistance)}m away. You must be within ${ALLOWED_RADIUS_METERS}m of the office to clock in.`);
+      }
+    } catch (locErr: any) {
+      setError(locErr?.message || "Unable to fetch your location. Please enable location services and try again.");
     } finally {
       setLocationLoading(false);
     }
@@ -185,7 +301,14 @@ export default function AttendanceScreen() {
     if (endpoint === "/attendance/clock-in") {
       if (todayHoliday) return setError("Attendance cannot be marked on a holiday.");
       if (approvedLeaveToday) return setError("Attendance cannot be marked while approved leave exists for today.");
-      if (!canClockIn) return setError(`You must verify your location within ${ALLOWED_RADIUS_METERS}m of the office before clocking in.`);
+      if (!canClockIn) {
+        if (distance === null) {
+          setError(`Please verify your location first to confirm you are within ${ALLOWED_RADIUS_METERS}m of the office.`);
+        } else {
+          setError(`You must be within ${ALLOWED_RADIUS_METERS}m of the office to clock in (currently ${Math.round(distance)}m away).`);
+        }
+        return;
+      }
     }
     try {
       setActionLoading(true);
@@ -207,13 +330,94 @@ export default function AttendanceScreen() {
       <ScrollView className="flex-1" contentContainerStyle={{ padding: 20, paddingBottom: 32 }} refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => fetchAttendance(true)} tintColor="#2563eb" />}>
        
         {successMessage ? <View className="mt-4 rounded-2xl border border-emerald-200 bg-emerald-50 p-4"><Text className="text-sm font-semibold text-emerald-700">{successMessage}</Text></View> : null}
-        {error ? <View className="mt-4 flex-row rounded-2xl border border-rose-200 bg-rose-50 p-4"><Ionicons name="alert-circle-outline" size={18} color="#e11d48" /><Text className="ml-2 flex-1 text-sm text-rose-700">{error}</Text></View> : null}
+        {error ? (
+          <View className="mt-4 rounded-2xl border border-rose-200 bg-rose-50 p-4">
+            <View className="flex-row items-center">
+              <Ionicons name="alert-circle-outline" size={18} color="#e11d48" />
+              <Text className="ml-2 flex-1 text-sm text-rose-700">{error}</Text>
+            </View>
+            {error.toLowerCase().includes("permission") || error.toLowerCase().includes("settings") ? (
+              <Pressable
+                onPress={() => Linking.openSettings()}
+                className="mt-3 self-start rounded-xl bg-rose-600 px-4 py-2"
+              >
+                <Text className="text-xs font-bold text-white">Open Device Settings</Text>
+              </Pressable>
+            ) : null}
+          </View>
+        ) : null}
         {todayHoliday ? <View className="mt-4 rounded-2xl border border-amber-200 bg-amber-50 p-4"><Text className="text-sm font-semibold text-amber-800">Today is a holiday. Attendance is blocked.</Text></View> : null}
         {approvedLeaveToday ? <View className="mt-4 rounded-2xl border border-orange-200 bg-orange-50 p-4"><Text className="text-sm font-semibold text-orange-800">Approved leave exists for today. Attendance is blocked.</Text></View> : null}
 
         <View className="mt-6 rounded-3xl bg-slate-900 p-5"><View className="flex-row items-center justify-between"><View><Text className="text-xs font-bold uppercase tracking-widest text-slate-400">Live status</Text><Text className="mt-2 text-2xl font-black text-white">{status}</Text></View><View className="h-12 w-12 items-center justify-center rounded-2xl bg-blue-500/20"><Ionicons name="time-outline" size={26} color="#60a5fa" /></View></View><Text className="mt-5 text-center text-4xl font-black tracking-wider text-white">{liveDuration}</Text><Text className="mt-2 text-center text-xs text-slate-400">Working duration today</Text><View className="mt-5 flex-row gap-3">{!todayRecord?.check_in_time ? <Pressable onPress={() => executeAction("/attendance/clock-in")} disabled={actionLoading || !canClockIn} className="flex-1 items-center rounded-2xl bg-emerald-500 py-3 disabled:opacity-40"><Text className="font-bold text-white">{actionLoading ? "Updating..." : "Clock In"}</Text></Pressable> : !todayRecord.check_out_time ? <><Pressable onPress={() => executeAction(todayRecord.break_start_time && !todayRecord.break_end_time ? "/attendance/break-end" : "/attendance/break-start")} disabled={actionLoading || Boolean(todayRecord.break_end_time)} className="flex-1 items-center rounded-2xl bg-orange-500 py-3 disabled:opacity-50"><Text className="font-bold text-white">{todayRecord.break_start_time && !todayRecord.break_end_time ? "End Break" : todayRecord.break_end_time ? "Break Done" : "Start Break"}</Text></Pressable><Pressable onPress={() => executeAction("/attendance/clock-out")} disabled={actionLoading || Boolean(todayRecord.break_start_time && !todayRecord.break_end_time)} className="flex-1 items-center rounded-2xl bg-rose-500 py-3 disabled:opacity-40"><Text className="font-bold text-white">Clock Out</Text></Pressable></> : <View className="flex-1 items-center rounded-2xl bg-white/10 py-3"><Text className="font-bold text-slate-300">Shift Completed</Text></View>}</View></View>
 
-        {!todayRecord?.check_in_time && <View className="mt-4 rounded-2xl border border-slate-200 bg-white p-4"><Text className="text-base font-bold text-slate-900">Office verification</Text><Text className="mt-1 text-sm text-slate-500">You must be within {ALLOWED_RADIUS_METERS}m of the office to clock in.</Text><Pressable onPress={handleLocation} disabled={locationLoading || todayHoliday || approvedLeaveToday} className="mt-4 flex-row items-center justify-center rounded-xl border border-blue-200 bg-blue-50 py-3 disabled:opacity-50">{locationLoading ? <ActivityIndicator color="#f97316" /> : <><Ionicons name="location-outline" size={18} color="#2563eb" /><Text className="ml-2 font-bold text-blue-700">{distance === null ? "Verify my location" : `${Math.round(distance)}m from office`}</Text></>}</Pressable>{locationText ? <Text className="mt-3 text-xs text-slate-500">{locationText}</Text> : null}</View>}
+        {!todayRecord?.check_in_time && (
+          <View className="mt-4 rounded-2xl border border-slate-200 bg-white p-4">
+            <View className="flex-row items-center justify-between">
+              <Text className="text-base font-bold text-slate-900">Office verification</Text>
+              {distance !== null && (
+                <View className={`rounded-full px-2.5 py-0.5 ${distance <= ALLOWED_RADIUS_METERS ? "bg-emerald-100" : "bg-rose-100"}`}>
+                  <Text className={`text-xs font-bold ${distance <= ALLOWED_RADIUS_METERS ? "text-emerald-700" : "text-rose-700"}`}>
+                    {distance <= ALLOWED_RADIUS_METERS ? "Verified" : "Out of range"}
+                  </Text>
+                </View>
+              )}
+            </View>
+            <Text className="mt-1 text-sm text-slate-500">You must be within {ALLOWED_RADIUS_METERS}m of the office to clock in.</Text>
+            <Pressable
+              onPress={handleLocation}
+              disabled={locationLoading || todayHoliday || approvedLeaveToday}
+              className={`mt-4 flex-row items-center justify-center rounded-xl border py-3 disabled:opacity-50 ${
+                distance !== null && distance <= ALLOWED_RADIUS_METERS
+                  ? "border-emerald-300 bg-emerald-50"
+                  : distance !== null && distance > ALLOWED_RADIUS_METERS
+                  ? "border-rose-300 bg-rose-50"
+                  : "border-blue-200 bg-blue-50"
+              }`}
+            >
+              {locationLoading ? (
+                <View className="flex-row items-center">
+                  <ActivityIndicator color="#2563eb" />
+                  <Text className="ml-2 font-bold text-blue-700">Verifying location...</Text>
+                </View>
+              ) : (
+                <>
+                  <Ionicons
+                    name={
+                      distance !== null && distance <= ALLOWED_RADIUS_METERS
+                        ? "checkmark-circle"
+                        : "location-outline"
+                    }
+                    size={18}
+                    color={
+                      distance !== null && distance <= ALLOWED_RADIUS_METERS
+                        ? "#059669"
+                        : distance !== null && distance > ALLOWED_RADIUS_METERS
+                        ? "#e11d48"
+                        : "#2563eb"
+                    }
+                  />
+                  <Text
+                    className={`ml-2 font-bold ${
+                      distance !== null && distance <= ALLOWED_RADIUS_METERS
+                        ? "text-emerald-700"
+                        : distance !== null && distance > ALLOWED_RADIUS_METERS
+                        ? "text-rose-700"
+                        : "text-blue-700"
+                    }`}
+                  >
+                    {distance === null
+                      ? "Verify my location"
+                      : distance <= ALLOWED_RADIUS_METERS
+                      ? `Verified (${Math.round(distance)}m from office)`
+                      : `${Math.round(distance)}m from office (Retry)`}
+                  </Text>
+                </>
+              )}
+            </Pressable>
+            {locationText ? <Text className="mt-3 text-xs text-slate-500">{locationText}</Text> : null}
+          </View>
+        )}
 
         {/* ── STATS SECTION ── */}
         <View className="mt-6 mb-6 flex-row justify-between">

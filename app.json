@@ -17,7 +17,10 @@
       "backgroundColor": "#FFFFFF"
     },
     "ios": {
-      "icon": "./assets/images/bgicon1.png"
+      "icon": "./assets/images/bgicon1.png",
+      "infoPlist": {
+        "NSLocationWhenInUseUsageDescription": "Allow Q TECHX to access your location to verify your presence at the office for attendance."
+      }
     },
     "android": {
       "predictiveBackGestureEnabled": false,
@@ -34,7 +37,13 @@
     },
     "plugins": [
       "expo-router",
-      "expo-location",
+      [
+        "expo-location",
+        {
+          "locationAlwaysAndWhenInUsePermission": "Allow Q TECHX to use your location to verify office attendance.",
+          "locationWhenInUsePermission": "Allow Q TECHX to use your location to verify office attendance."
+        }
+      ],
       [
         "expo-splash-screen",
         {
