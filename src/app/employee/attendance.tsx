@@ -58,6 +58,12 @@ const getLocalDateKey = (value: string | Date = new Date()) => {
   return [date.getFullYear(), String(date.getMonth() + 1).padStart(2, "0"), String(date.getDate()).padStart(2, "0")].join("-");
 };
 
+const getLocalTimeString = (value: string | Date = new Date()) => {
+  const date = typeof value === "string" ? new Date(value) : value;
+  if (Number.isNaN(date.getTime())) return "";
+  return [String(date.getHours()).padStart(2, "0"), String(date.getMinutes()).padStart(2, "0")].join(":");
+};
+
 const formatDate = (value?: string) => {
   if (!value) return "-";
   const date = new Date(value);
@@ -160,7 +166,8 @@ export default function AttendanceScreen() {
 
   const status = !todayRecord ? "Offline" : todayRecord.check_out_time ? todayRecord.attendance_status || "Present" : todayRecord.break_start_time && !todayRecord.break_end_time ? "On Break" : "Working";
   const presentDays = history.filter((record) => record.attendance_status === "Present").length;
-  const canClockIn = !todayRecord?.check_in_time && !todayHoliday && !approvedLeaveToday && distance !== null && distance <= ALLOWED_RADIUS_METERS;
+  const isSundayToday = now.getDay() === 0;
+  const canClockIn = !todayRecord?.check_in_time && !todayHoliday && !approvedLeaveToday && !isSundayToday && distance !== null && distance <= ALLOWED_RADIUS_METERS;
 
   const getLocationWithFallback = async () => {
     // 1. Ensure device location services (GPS) are enabled
@@ -298,7 +305,11 @@ export default function AttendanceScreen() {
 
   const executeAction = async (endpoint: string) => {
     if (!employeeId) return;
+    const currentNow = new Date();
+    const isSunday = currentNow.getDay() === 0;
+
     if (endpoint === "/attendance/clock-in") {
+      if (isSunday) return setError("Attendance cannot be marked on Sundays.");
       if (todayHoliday) return setError("Attendance cannot be marked on a holiday.");
       if (approvedLeaveToday) return setError("Attendance cannot be marked while approved leave exists for today.");
       if (!canClockIn) {
@@ -310,10 +321,34 @@ export default function AttendanceScreen() {
         return;
       }
     }
+
+    const todayDate = getLocalDateKey(currentNow);
+    const currentTime = getLocalTimeString(currentNow);
+
+    const payload: Record<string, any> = {
+      employee_id: employeeId,
+      location: locationText,
+      date: todayDate,
+    };
+
+    if (endpoint === "/attendance/clock-in") {
+      payload.check_in_time = currentTime;
+    } else if (endpoint === "/attendance/break-start") {
+      payload.break_start_time = currentTime;
+    } else if (endpoint === "/attendance/break-end") {
+      payload.break_end_time = currentTime;
+    } else if (endpoint === "/attendance/clock-out") {
+      payload.check_out_time = currentTime;
+    }
+
     try {
       setActionLoading(true);
       setError("");
-      const response = await api({ method: endpoint === "/attendance/clock-in" ? "post" : "put", url: endpoint, data: { employee_id: employeeId, location: locationText } });
+      const response = await api({
+        method: endpoint === "/attendance/clock-in" ? "post" : "put",
+        url: endpoint,
+        data: payload,
+      });
       setSuccessMessage(response.data?.message || "Attendance updated successfully.");
       await fetchAttendance(true);
       setTimeout(() => setSuccessMessage(""), 4000);
@@ -348,6 +383,7 @@ export default function AttendanceScreen() {
         ) : null}
         {todayHoliday ? <View className="mt-4 rounded-2xl border border-amber-200 bg-amber-50 p-4"><Text className="text-sm font-semibold text-amber-800">Today is a holiday. Attendance is blocked.</Text></View> : null}
         {approvedLeaveToday ? <View className="mt-4 rounded-2xl border border-orange-200 bg-orange-50 p-4"><Text className="text-sm font-semibold text-orange-800">Approved leave exists for today. Attendance is blocked.</Text></View> : null}
+        {isSundayToday ? <View className="mt-4 rounded-2xl border border-rose-200 bg-rose-50 p-4"><Text className="text-sm font-semibold text-rose-800">Today is Sunday. Attendance cannot be marked on Sundays.</Text></View> : null}
 
         <View className="mt-6 rounded-3xl bg-slate-900 p-5"><View className="flex-row items-center justify-between"><View><Text className="text-xs font-bold uppercase tracking-widest text-slate-400">Live status</Text><Text className="mt-2 text-2xl font-black text-white">{status}</Text></View><View className="h-12 w-12 items-center justify-center rounded-2xl bg-blue-500/20"><Ionicons name="time-outline" size={26} color="#60a5fa" /></View></View><Text className="mt-5 text-center text-4xl font-black tracking-wider text-white">{liveDuration}</Text><Text className="mt-2 text-center text-xs text-slate-400">Working duration today</Text><View className="mt-5 flex-row gap-3">{!todayRecord?.check_in_time ? <Pressable onPress={() => executeAction("/attendance/clock-in")} disabled={actionLoading || !canClockIn} className="flex-1 items-center rounded-2xl bg-emerald-500 py-3 disabled:opacity-40"><Text className="font-bold text-white">{actionLoading ? "Updating..." : "Clock In"}</Text></Pressable> : !todayRecord.check_out_time ? <><Pressable onPress={() => executeAction(todayRecord.break_start_time && !todayRecord.break_end_time ? "/attendance/break-end" : "/attendance/break-start")} disabled={actionLoading || Boolean(todayRecord.break_end_time)} className="flex-1 items-center rounded-2xl bg-orange-500 py-3 disabled:opacity-50"><Text className="font-bold text-white">{todayRecord.break_start_time && !todayRecord.break_end_time ? "End Break" : todayRecord.break_end_time ? "Break Done" : "Start Break"}</Text></Pressable><Pressable onPress={() => executeAction("/attendance/clock-out")} disabled={actionLoading || Boolean(todayRecord.break_start_time && !todayRecord.break_end_time)} className="flex-1 items-center rounded-2xl bg-rose-500 py-3 disabled:opacity-40"><Text className="font-bold text-white">Clock Out</Text></Pressable></> : <View className="flex-1 items-center rounded-2xl bg-white/10 py-3"><Text className="font-bold text-slate-300">Shift Completed</Text></View>}</View></View>
 
@@ -366,7 +402,7 @@ export default function AttendanceScreen() {
             <Text className="mt-1 text-sm text-slate-500">You must be within {ALLOWED_RADIUS_METERS}m of the office to clock in.</Text>
             <Pressable
               onPress={handleLocation}
-              disabled={locationLoading || todayHoliday || approvedLeaveToday}
+              disabled={locationLoading || todayHoliday || approvedLeaveToday || isSundayToday}
               className={`mt-4 flex-row items-center justify-center rounded-xl border py-3 disabled:opacity-50 ${
                 distance !== null && distance <= ALLOWED_RADIUS_METERS
                   ? "border-emerald-300 bg-emerald-50"
