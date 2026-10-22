@@ -1,5 +1,6 @@
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
+import { cssInterop } from "nativewind";
 import { useCallback, useEffect, useState } from "react";
 import {
     ActivityIndicator,
@@ -13,6 +14,10 @@ import api from "../../api";
 import { useAuth } from "../../auth/AuthContext";
 import { BottomHome } from "../../components/BottomHome";
 import { TopHeader } from "../../components/TopHeader";
+
+const StyledLinearGradient = cssInterop(LinearGradient, {
+  className: "style",
+});
 
 type Dashboard = {
   employee?: { first_name?: string; employee_code?: string };
@@ -82,11 +87,11 @@ function Metric({
         elevation: 4,
       }}
     >
-      <LinearGradient
+      <StyledLinearGradient
         colors={["#ffffff", "#fff7ed"]}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
-        style={{ paddingHorizontal: 16, paddingVertical: 16 }}
+        className="px-4 py-4"
       >
         {/* Icon + Label */}
         <View className="mb-3 flex-row items-center">
@@ -114,7 +119,7 @@ function Metric({
             {value}
           </Text>
         </View>
-      </LinearGradient>
+      </StyledLinearGradient>
     </View>
   );
 }
@@ -202,18 +207,11 @@ export default function EmployeeScreen() {
           </View>
         ) : (
           <>
-            <LinearGradient
+            <StyledLinearGradient
               colors={["#ea580c", "#171717"]}
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 1 }}
-              style={{
-                marginBottom: 20,
-                overflow: "hidden",
-                borderRadius: 28,
-                borderWidth: 1,
-                borderColor: "rgba(255,255,255,0.1)",
-                padding: 20,
-              }}
+              className="mb-5 overflow-hidden rounded-[28px] border border-white/10 p-5"
             >
               {/* Header */}
               <View className="flex-row items-start justify-between">
@@ -318,7 +316,7 @@ export default function EmployeeScreen() {
                   </Text>
                 </View>
               </View>
-            </LinearGradient>
+            </StyledLinearGradient>
             <View className="mt-5 flex-row gap-3">
               <Metric
                 label="Attendance This Month"
@@ -386,7 +384,7 @@ export default function EmployeeScreen() {
             {/* Today's Tasks */}
             <View className="mb-5 mt-3 overflow-hidden rounded-3xl bg-white shadow-md">
               {/* Orange top accent */}
-              <LinearGradient
+              <StyledLinearGradient
                 colors={["#fb923c", "#f97316"]}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 0 }}
@@ -500,7 +498,7 @@ export default function EmployeeScreen() {
             {/* Active Projects */}
             <View className="mb-5 overflow-hidden rounded-3xl bg-white shadow-md">
               {/* Orange top accent */}
-              <LinearGradient
+              <StyledLinearGradient
                 colors={["#fb923c", "#f97316"]}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 0 }}
@@ -570,7 +568,7 @@ export default function EmployeeScreen() {
 
                         {/* Progress bar */}
                         <View className="mt-3 h-2 overflow-hidden rounded-full bg-white">
-                          <LinearGradient
+                          <StyledLinearGradient
                             colors={["#fb923c", "#f97316"]}
                             start={{ x: 0, y: 0 }}
                             end={{ x: 1, y: 0 }}
@@ -655,7 +653,7 @@ export default function EmployeeScreen() {
 
                     {/* Progress Bar */}
                     <View className="mt-3 h-2 overflow-hidden rounded-full bg-white">
-                      <LinearGradient
+                      <StyledLinearGradient
                         colors={["#fb923c", "#f97316"]}
                         start={{ x: 0, y: 0 }}
                         end={{ x: 1, y: 0 }}
@@ -710,7 +708,7 @@ export default function EmployeeScreen() {
             {/* Salary & Leave Summary */}
             <View className="mb-5 overflow-hidden rounded-3xl bg-white shadow-md">
               {/* Orange top accent */}
-              <LinearGradient
+              <StyledLinearGradient
                 colors={["#fb923c", "#f97316"]}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 0 }}
@@ -800,7 +798,7 @@ export default function EmployeeScreen() {
             {/* Recent Leave */}
             <View className="mb-5 overflow-hidden rounded-3xl bg-white shadow-md">
               {/* Orange top accent */}
-              <LinearGradient
+              <StyledLinearGradient
                 colors={["#fb923c", "#f97316"]}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 0 }}
@@ -919,7 +917,7 @@ export default function EmployeeScreen() {
             {/* Upcoming Meetings */}
             <View className="mb-5 overflow-hidden rounded-3xl bg-white shadow-md">
               {/* Orange top accent */}
-              <LinearGradient
+              <StyledLinearGradient
                 colors={["#fb923c", "#f97316"]}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 0 }}
