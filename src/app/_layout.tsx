@@ -12,6 +12,7 @@ import "../../global.css";
 import { AuthProvider, useAuth } from "../auth/AuthContext";
 import { getRoleHome } from "../auth/roleUtils";
 import { CustomAlertProvider } from "../context/CustomAlertContext";
+import { NotificationProvider } from "../context/NotificationContext";
 function RootLayoutNav() {
   const { user, isLoading } = useAuth();
   const segments = useSegments();
@@ -66,9 +67,11 @@ export default function RootLayout() {
       <StatusBar style="dark" />
       <NavigationBar style="dark" />
       <AuthProvider>
-        <CustomAlertProvider>
-          <RootLayoutNav />
-        </CustomAlertProvider>
+        <NotificationProvider>
+          <CustomAlertProvider>
+            <RootLayoutNav />
+          </CustomAlertProvider>
+        </NotificationProvider>
       </AuthProvider>
     </SafeAreaProvider>
   );

@@ -6,7 +6,7 @@ import {
   useEffect,
   useState,
 } from "react";
-import { clearTokenCache } from "../api";
+import api, { clearTokenCache } from "../api";
 
 export type AuthUser = {
   id?: string | number;
@@ -75,6 +75,15 @@ export function AuthProvider({ children }: PropsWithChildren) {
   };
 
   const logout = async () => {
+    try {
+      const pushToken = await AsyncStorage.getItem("registeredPushToken");
+      if (pushToken) {
+        await api.delete("/notifications/push-token", { data: { token: pushToken } });
+        await AsyncStorage.removeItem("registeredPushToken");
+      }
+    } catch (error) {
+      console.error("[Auth] Failed to unregister notification push token:", error);
+    }
     clearTokenCache();
     setUser(null);
     setToken(null);

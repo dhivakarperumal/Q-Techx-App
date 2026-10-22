@@ -23,6 +23,7 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useAuth } from "../auth/AuthContext";
 import api from "../api";
+import { NotificationInbox, useNotifications } from "../context/NotificationContext";
 
 const { width } = Dimensions.get("window");
 
@@ -119,6 +120,7 @@ export function TopHeader({ title, subtitle }: TopHeaderProps) {
   const router = useRouter();
   const segments = useSegments();
   const { user, logout } = useAuth();
+  const { unreadCount, refresh: refreshNotificationInbox } = useNotifications();
 
   // Profile Dropdown state
   const [dropdownVisible, setDropdownVisible] = useState(false);
@@ -145,6 +147,7 @@ export function TopHeader({ title, subtitle }: TopHeaderProps) {
   const [employeeFilterTab, setEmployeeFilterTab] = useState<"All" | "Tasks" | "Leaves" | "Meetings">("All");
 
   const [notificationsLoading, setNotificationsLoading] = useState(false);
+  const [notificationInboxVisible, setNotificationInboxVisible] = useState(false);
 
   // Derive display name
   const rawName =
@@ -545,19 +548,6 @@ export function TopHeader({ title, subtitle }: TopHeaderProps) {
     }
   }, [user, isAdmin]);
 
-  // Initial & periodic fetch based on role
-  useEffect(() => {
-    if (isAdmin) {
-      fetchAdminNotifications();
-      const interval = setInterval(fetchAdminNotifications, 30000);
-      return () => clearInterval(interval);
-    } else {
-      fetchEmployeeAlerts();
-      const interval = setInterval(fetchEmployeeAlerts, 30000);
-      return () => clearInterval(interval);
-    }
-  }, [isAdmin, fetchAdminNotifications, fetchEmployeeAlerts]);
-
   // Admin Counts
   const leaveCount = leaveNotifications.length;
   const taskCount = taskNotifications.length;
@@ -718,79 +708,25 @@ export function TopHeader({ title, subtitle }: TopHeaderProps) {
 
         {/* Right — Notifications + Avatar */}
         <View className="flex-row items-center gap-2.5">
-
-          {isAdmin ? (
-            <>
-              {/* ADMIN LEAVE NOTIFICATIONS */}
-              <TouchableOpacity
-                activeOpacity={0.7}
-                onPress={() => setAdminNotificationType("leave")}
-                accessibilityLabel="Leave requests"
-                accessibilityRole="button"
-                className="relative h-10 w-10 items-center justify-center rounded-xl bg-orange-50 border border-orange-100"
-              >
-                <CalendarDays
-                  size={20}
-                  color="#f97316"
-                  strokeWidth={2.2}
-                />
-
-                {leaveCount > 0 && (
-                  <View className="absolute -right-1.5 -top-1.5 min-w-[18px] h-[18px] px-1 items-center justify-center rounded-full bg-orange-500 border-2 border-white">
-                    <Text className="text-[9px] font-black text-white">
-                      {leaveCount > 99 ? "99+" : leaveCount}
-                    </Text>
-                  </View>
-                )}
-              </TouchableOpacity>
-
-              {/* ADMIN TASK NOTIFICATIONS */}
-              <TouchableOpacity
-                activeOpacity={0.7}
-                onPress={() => setAdminNotificationType("task")}
-                accessibilityLabel="Task notifications"
-                accessibilityRole="button"
-                className="relative h-10 w-10 items-center justify-center rounded-xl bg-orange-50 border border-orange-100"
-              >
-                <CheckCircle2
-                  size={20}
-                  color="#f97316"
-                  strokeWidth={2.2}
-                />
-
-                {taskCount > 0 && (
-                  <View className="absolute -right-1.5 -top-1.5 min-w-[18px] h-[18px] px-1 items-center justify-center rounded-full bg-orange-500 border-2 border-white">
-                    <Text className="text-[9px] font-black text-white">
-                      {taskCount > 99 ? "99+" : taskCount}
-                    </Text>
-                  </View>
-                )}
-              </TouchableOpacity>
-            </>
-          ) : (
-            /* EMPLOYEE NOTIFICATIONS BELL */
-            <TouchableOpacity
-              activeOpacity={0.7}
-              onPress={() => setEmployeeModalVisible(true)}
-              accessibilityLabel="Notifications"
-              accessibilityRole="button"
-              className="relative h-10 w-10 items-center justify-center rounded-xl bg-orange-50 border border-orange-100"
-            >
-              <Bell
-                size={20}
-                color="#f97316"
-                strokeWidth={2.2}
-              />
-
-              {employeeUnreadCount > 0 && (
-                <View className="absolute -right-1.5 -top-1.5 min-w-[18px] h-[18px] px-1 items-center justify-center rounded-full bg-orange-500 border-2 border-white">
-                  <Text className="text-[9px] font-black text-white">
-                    {employeeUnreadCount > 99 ? "99+" : employeeUnreadCount}
-                  </Text>
-                </View>
-              )}
-            </TouchableOpacity>
-          )}
+          <TouchableOpacity
+            activeOpacity={0.7}
+            onPress={() => {
+              setNotificationInboxVisible(true);
+              void refreshNotificationInbox();
+            }}
+            accessibilityLabel="Notifications"
+            accessibilityRole="button"
+            className="relative h-10 w-10 items-center justify-center rounded-xl border border-orange-100 bg-orange-50"
+          >
+            <Bell size={20} color="#f97316" strokeWidth={2.2} />
+            {unreadCount > 0 ? (
+              <View className="absolute -right-1.5 -top-1.5 min-w-[18px] h-[18px] items-center justify-center rounded-full border-2 border-white bg-orange-500 px-1">
+                <Text className="text-[9px] font-black text-white">
+                  {unreadCount > 99 ? "99+" : unreadCount}
+                </Text>
+              </View>
+            ) : null}
+          </TouchableOpacity>
 
           {/* Avatar */}
           <TouchableOpacity
@@ -1358,6 +1294,11 @@ export function TopHeader({ title, subtitle }: TopHeaderProps) {
           </Pressable>
         </Pressable>
       </Modal>
+
+      <NotificationInbox
+        visible={notificationInboxVisible}
+        onClose={() => setNotificationInboxVisible(false)}
+      />
 
       {/* ─── PROFILE DROPDOWN MODAL ─── */}
       <Modal
