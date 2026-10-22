@@ -86,7 +86,7 @@ function Metric({
         colors={["#ffffff", "#fff7ed"]}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
-        className="px-4 py-4"
+        style={{ paddingHorizontal: 16, paddingVertical: 16 }}
       >
         {/* Icon + Label */}
         <View className="mb-3 flex-row items-center">
@@ -206,7 +206,14 @@ export default function EmployeeScreen() {
               colors={["#ea580c", "#171717"]}
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 1 }}
-              className="mb-5 overflow-hidden rounded-[28px] border border-white/10 p-5"
+              style={{
+                marginBottom: 20,
+                overflow: "hidden",
+                borderRadius: 28,
+                borderWidth: 1,
+                borderColor: "rgba(255,255,255,0.1)",
+                padding: 20,
+              }}
             >
               {/* Header */}
               <View className="flex-row items-start justify-between">
