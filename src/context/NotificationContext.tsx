@@ -1,7 +1,7 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import Constants from "expo-constants";
 import * as Device from "expo-device";
-import * as Notifications from "expo-notifications";
+import { isRunningInExpoGo } from "expo";
 import { Href, useRouter } from "expo-router";
 import {
   createContext,
@@ -48,15 +48,30 @@ type NotificationContextValue = {
 
 const NotificationContext = createContext<NotificationContextValue | undefined>(undefined);
 const PUSH_TOKEN_STORAGE_KEY = "registeredPushToken";
+type NotificationsModule = typeof import("expo-notifications");
 
-Notifications.setNotificationHandler({
-  handleNotification: async () => ({
-    shouldPlaySound: true,
-    shouldSetBadge: false,
-    shouldShowBanner: true,
-    shouldShowList: true,
-  }),
-});
+async function loadNotificationsModule(): Promise<NotificationsModule | null> {
+  if (isRunningInExpoGo()) return null;
+
+  try {
+    const notifications = await import("expo-notifications");
+    notifications.setNotificationHandler({
+      handleNotification: async () => ({
+        shouldPlaySound: true,
+        shouldSetBadge: false,
+        shouldShowBanner: true,
+        shouldShowList: true,
+      }),
+    });
+    return notifications;
+  } catch (error) {
+    console.warn(
+      "[Notifications] Native notification module unavailable. Rebuild the development app to enable push alerts.",
+      error
+    );
+    return null;
+  }
+}
 
 function normalizeNotification(value: unknown): AppNotification | null {
   if (!value || typeof value !== "object") return null;
@@ -80,29 +95,31 @@ function getInternalLink(link: unknown): string | null {
   return link;
 }
 
-async function registerForPushNotifications(): Promise<string | null> {
+async function registerForPushNotifications(
+  notifications: NotificationsModule
+): Promise<string | null> {
   if (Platform.OS === "web" || !Device.isDevice) return null;
 
   if (Platform.OS === "android") {
-    await Notifications.setNotificationChannelAsync("default", {
+    await notifications.setNotificationChannelAsync("default", {
       name: "Notifications",
-      importance: Notifications.AndroidImportance.MAX,
+      importance: notifications.AndroidImportance.MAX,
       vibrationPattern: [0, 250, 250, 250],
       lightColor: "#f97316",
     });
   }
 
-  const { status: existingStatus } = await Notifications.getPermissionsAsync();
+  const { status: existingStatus } = await notifications.getPermissionsAsync();
   const { status } =
     existingStatus === "granted"
       ? { status: existingStatus }
-      : await Notifications.requestPermissionsAsync();
+      : await notifications.requestPermissionsAsync();
   if (status !== "granted") return null;
 
   const projectId = Constants.expoConfig?.extra?.eas?.projectId ?? Constants.easConfig?.projectId;
   if (!projectId) throw new Error("Expo EAS project ID is missing from app configuration");
 
-  const result = await Notifications.getExpoPushTokenAsync({ projectId });
+  const result = await notifications.getExpoPushTokenAsync({ projectId });
   return result.data;
 }
 
@@ -181,6 +198,7 @@ export function NotificationProvider({ children }: PropsWithChildren) {
     if (isLoading || !token || !user) return;
     let active = true;
     void Promise.resolve().then(() => refresh());
+    let responseSubscription: { remove: () => void } | null = null;
 
     const socketUrl = API_BASE_URL.replace(/\/api\/?$/, "");
     const socket = io(socketUrl, {
@@ -205,7 +223,45 @@ export function NotificationProvider({ children }: PropsWithChildren) {
 
     void (async () => {
       try {
-        const pushToken = await registerForPushNotifications();
+        const notificationsModule = await loadNotificationsModule();
+        if (!active || !notificationsModule) return;
+
+        const handleResponse = (
+          response: import("expo-notifications").NotificationResponse | null
+        ) => {
+          if (!response) return;
+          const requestId = response.notification.request.identifier;
+          if (handledResponseRef.current === requestId) return;
+          handledResponseRef.current = requestId;
+          const data = response.notification.request.content.data;
+          const link = getInternalLink(data?.link);
+          if (link) router.push(link as Href);
+          const notificationId = data?.notificationId;
+          void (async () => {
+            if (typeof notificationId === "string") {
+              try {
+                await api.patch(`/notifications/${encodeURIComponent(notificationId)}/read`);
+                setNotificationState((current) => ({
+                  token,
+                  items: current.token === token
+                    ? current.items.map((item) =>
+                        item.id === notificationId ? { ...item, is_read: true } : item
+                      )
+                    : [],
+                }));
+              } catch (requestError) {
+                console.error("[Notifications] Failed to mark tapped notification as read:", requestError);
+              }
+            }
+            await refresh();
+          })();
+        };
+
+        handleResponse(notificationsModule.getLastNotificationResponse());
+        responseSubscription =
+          notificationsModule.addNotificationResponseReceivedListener(handleResponse);
+
+        const pushToken = await registerForPushNotifications(notificationsModule);
         if (!active || !pushToken) return;
         await api.post("/notifications/push-token", { token: pushToken });
         await AsyncStorage.setItem(PUSH_TOKEN_STORAGE_KEY, pushToken);
@@ -214,41 +270,9 @@ export function NotificationProvider({ children }: PropsWithChildren) {
       }
     })();
 
-    const handleResponse = (response: Notifications.NotificationResponse | null) => {
-      if (!response) return;
-      const requestId = response.notification.request.identifier;
-      if (handledResponseRef.current === requestId) return;
-      handledResponseRef.current = requestId;
-      const data = response.notification.request.content.data;
-      const link = getInternalLink(data?.link);
-      if (link) router.push(link as Href);
-      const notificationId = data?.notificationId;
-      void (async () => {
-        if (typeof notificationId === "string") {
-          try {
-            await api.patch(`/notifications/${encodeURIComponent(notificationId)}/read`);
-            setNotificationState((current) => ({
-              token,
-              items: current.token === token
-                ? current.items.map((item) =>
-                    item.id === notificationId ? { ...item, is_read: true } : item
-                  )
-                : [],
-            }));
-          } catch (requestError) {
-            console.error("[Notifications] Failed to mark tapped notification as read:", requestError);
-          }
-        }
-        await refresh();
-      })();
-    };
-
-    handleResponse(Notifications.getLastNotificationResponse());
-    const responseSubscription = Notifications.addNotificationResponseReceivedListener(handleResponse);
-
     return () => {
       active = false;
-      responseSubscription.remove();
+      responseSubscription?.remove();
       socket.disconnect();
       if (socketRef.current === socket) socketRef.current = null;
     };
